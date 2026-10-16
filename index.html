@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Puzzle Parlour</title>
+<meta name="description" content="A puzzle lounge in a single HTML file: Rubik-style cubes, slide puzzles, jigsaws from your own photos, Lights Out, Tower of Hanoi, Flood and Ball Sort, with a live teacher that shows you how to solve each one. Works offline.">
+<meta name="theme-color" content="#14111c">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: a lounge front (header with stars, then a floor of puzzle tables and a shop counter), or one puzzle: the table is the page with a teacher rail beside it (a bottom sheet on phones).
+   Palette: midnight lounge ink, brass trim and a neon sign; puzzle pieces keep their own colours in both themes. */
+:root{
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;
+  --bg:#f1ede6; --panel:#fffdf8; --ink:#1d1a24; --muted:#615b6a; --line:#dcd4c8; --well:#e8e2d8;
+  --accent:#d1366b; --accent-ink:#fff; --brass:#9a6a12; --brass-soft:#f0d79a; --good:#1f7a45; --bad:#b4322c; --info:#2457c5;
+  --neon:#d1366b; --neon2:#1b8fb0; --glow:transparent;
+  --shadow:0 1px 0 rgba(30,24,34,.05),0 14px 34px -18px rgba(30,24,34,.45);
+  --sign:"Bungee Shade","Bungee",Impact,sans-serif; --display:"Bungee",Impact,"Arial Black",sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --felt:#0f5a4a; --felt-ink:rgba(255,255,255,.9); --rail:#3a2418;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#14111c; --panel:#1d1928; --ink:#f3eff8; --muted:#a9a1b5; --line:#2f2a3d; --well:#0e0c14;
+    --accent:#ff5c93; --accent-ink:#1a0a10; --brass:#f2c14e; --brass-soft:#5e4a1c; --good:#5fd08f; --bad:#ff7a6b; --info:#7aa7ff;
+    --neon:#ff5c93; --neon2:#4fd6ff; --glow:rgba(255,92,147,.55);
+    --shadow:0 1px 0 rgba(0,0,0,.3),0 16px 36px -18px rgba(0,0,0,.9); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14111c; --panel:#1d1928; --ink:#f3eff8; --muted:#a9a1b5; --line:#2f2a3d; --well:#0e0c14;
+  --accent:#ff5c93; --accent-ink:#1a0a10; --brass:#f2c14e; --brass-soft:#5e4a1c; --good:#5fd08f; --bad:#ff7a6b; --info:#7aa7ff;
+  --neon:#ff5c93; --neon2:#4fd6ff; --glow:rgba(255,92,147,.55);
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 16px 36px -18px rgba(0,0,0,.9); color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html{font-size:15.5px;height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.45;min-height:100%;overscroll-behavior:none}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.15;font-weight:400;letter-spacing:.02em;text-wrap:balance}
+p{margin:0}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.muted{color:var(--muted)}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.5rem .8rem;font-weight:700;line-height:1.15;min-height:40px;touch-action:manipulation}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.brass{background:var(--brass);border-color:var(--brass);color:var(--bg)}
+.btn.sm{padding:.3rem .6rem;font-size:.86rem;min-height:34px}
+.btn.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn .ico{font-size:1.05em;line-height:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:none;padding:.42rem .7rem;font-weight:700;min-height:36px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grow{flex:1}
+
+/* header */
+header.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;padding:8px 14px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0}
+.brand svg{width:34px;height:34px;flex:none}
+.brand .bt{font-family:var(--display);font-size:1.15rem;letter-spacing:.04em;color:var(--neon);text-shadow:0 0 12px var(--glow)}
+.stars{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-weight:600;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:.25rem .7rem}
+.stars b{color:var(--brass)}
+.hdr-btns{display:flex;gap:6px;margin-left:auto}
+@media (max-width:560px){.hdr-btns .lbl{display:none}.brand .bt{font-size:1rem}}
+
+main{max-width:1240px;margin:0 auto;padding:14px 16px 40px}
+
+/* lounge */
+.marquee{position:relative;border-radius:18px;padding:26px 22px 22px;background:radial-gradient(120% 140% at 50% 0%,#2b2140 0%,#14111c 70%);color:#fff;overflow:hidden;box-shadow:var(--shadow)}
+.marquee::before{content:"";position:absolute;inset:8px;border-radius:12px;border:2px dotted rgba(242,193,78,.65);pointer-events:none;animation:bulbs 1.6s steps(2) infinite}
+@keyframes bulbs{50%{border-color:rgba(242,193,78,.25)}}
+.marquee h1{font-family:var(--sign);font-size:clamp(2rem,7vw,3.6rem);color:#ff7aa8;text-shadow:0 0 6px #ff5c93,0 0 22px rgba(255,92,147,.7);line-height:1}
+.marquee .sub{font-family:var(--display);color:#7fe3ff;text-shadow:0 0 10px rgba(79,214,255,.7);letter-spacing:.08em;margin-top:6px;font-size:clamp(.8rem,2.6vw,1rem)}
+.marquee p{max-width:60ch;margin-top:12px;color:#ddd5ea}
+.marquee .row{margin-top:14px}
+.marquee .btn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);color:#fff}
+.marquee .btn.primary{background:#ff5c93;border-color:#ff5c93;color:#1a0a10}
+.floor-h{display:flex;align-items:baseline;gap:10px;margin:22px 2px 10px}
+.floor-h h2{font-size:1.05rem}
+.tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.ptable{position:relative;text-align:left;border:0;padding:0;border-radius:16px;background:var(--rail);box-shadow:var(--shadow);overflow:hidden;color:#fff;transition:transform .15s}
+.ptable:hover{transform:translateY(-2px)}
+.ptable .felt{margin:7px;border-radius:11px;background:radial-gradient(130% 120% at 50% 0%,color-mix(in srgb,var(--felt) 80%,#fff 8%) 0%,var(--felt) 55%,color-mix(in srgb,var(--felt) 70%,#000) 100%);padding:12px 12px 14px;min-height:190px;display:flex;flex-direction:column}
+.ptable .art{height:96px;display:grid;place-items:center}
+.ptable .art svg{height:92px;width:auto;filter:drop-shadow(0 6px 8px rgba(0,0,0,.35))}
+.ptable h3{font-size:1rem;margin-top:6px}
+.ptable .d{font-size:.86rem;color:rgba(255,255,255,.82);margin-top:3px}
+.ptable .tag{position:absolute;top:12px;right:12px;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:rgba(0,0,0,.35);border-radius:99px;padding:.15rem .5rem}
+.ptable .best{margin-top:auto;padding-top:8px;font-size:.78rem;color:rgba(255,255,255,.75);font-family:var(--mono)}
+.counter{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:6px}
+@media (max-width:760px){.counter{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+.card h3{font-size:.95rem;margin-bottom:6px}
+
+/* game screen */
+.game{display:grid;grid-template-columns:1fr 330px;gap:14px;align-items:start}
+.game.noteacher{grid-template-columns:1fr}
+.game.noteacher .teacher{display:none}
+.gbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
+.gbar h2{font-size:1.1rem;margin-right:6px}
+.gstats{display:flex;gap:12px;font-family:var(--mono);font-size:.9rem;color:var(--muted)}
+.gstats b{color:var(--ink)}
+.stage{position:relative;border-radius:16px;background:var(--rail);padding:7px;box-shadow:var(--shadow)}
+.stage .felt{position:relative;border-radius:11px;background:radial-gradient(130% 120% at 50% 0%,color-mix(in srgb,var(--felt) 82%,#fff 8%) 0%,var(--felt) 55%,color-mix(in srgb,var(--felt) 68%,#000) 100%);min-height:min(68vh,640px);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.opts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.opts label{font-size:.85rem;color:var(--muted);font-weight:700}
+select{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:.35rem .5rem;min-height:36px}
+
+/* teacher rail */
+.teacher{position:sticky;top:64px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 80px)}
+.tcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px;display:flex;flex-direction:column;gap:8px}
+.thead{display:flex;align-items:center;gap:10px}
+.avatar{width:44px;height:44px;flex:none}
+.thead .nm{font-family:var(--display);font-size:.95rem}
+.thead .st{font-size:.78rem;color:var(--muted)}
+.tstage{font-size:.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brass)}
+.tmsg{font-size:.95rem}
+.tmsg .alg{font-family:var(--mono);background:var(--well);border-radius:6px;padding:.05rem .35rem;white-space:nowrap}
+.tnext{display:flex;align-items:center;gap:10px;background:var(--well);border-radius:10px;padding:8px 10px}
+.tnext .mv{font-family:var(--mono);font-weight:600;font-size:1.25rem;min-width:2.4em;text-align:center;color:var(--accent)}
+.tnext .how{font-size:.85rem}
+.tlog{overflow:auto;max-height:220px;display:flex;flex-direction:column;gap:6px;font-size:.86rem}
+.tlog div{padding:6px 8px;border-radius:8px;background:var(--well)}
+.tlog div.you{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+.prog{height:6px;border-radius:99px;background:var(--well);overflow:hidden}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--brass));width:0;transition:width .3s}
+.tsteps{display:flex;gap:4px;flex-wrap:wrap}
+.tsteps span{font-size:.7rem;padding:.12rem .45rem;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.tsteps span.done{background:var(--good);border-color:var(--good);color:#fff}
+.tsteps span.cur{border-color:var(--accent);color:var(--accent);font-weight:700}
+@media (max-width:900px){
+  .game{grid-template-columns:1fr}
+  .teacher{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:25;max-height:62vh;overflow:auto;padding:0 8px calc(8px + env(safe-area-inset-bottom,0px));gap:0}
+  .teacher .tcard{border-radius:16px 16px 0 0;box-shadow:0 -10px 30px -12px rgba(0,0,0,.5);padding:10px 12px;gap:6px}
+  .teacher:not(.open) .tmsg,.teacher:not(.open) .tsteps,.teacher:not(.open) .prog{display:none}
+  .teacher .tlogcard{display:none}
+  .thead .st{display:none}
+  .avatar{width:32px;height:32px}
+  .thead .seg button{padding:.3rem .55rem;min-height:30px;font-size:.85rem}
+  .tnext{padding:6px 8px}
+  #tActs .btn{min-height:34px}
+  main.ingame{padding-bottom:250px}
+  .stage .felt{height:max(320px,calc(100dvh - 340px));min-height:0}
+}
+@media (max-width:560px){.gbar .lbl{display:none}.gbar h2{font-size:.95rem}.gbar{gap:6px}.gstats{font-size:.8rem;gap:8px}}
+.tgrab{display:none}
+@media (max-width:900px){.tgrab{display:block;width:44px;height:5px;border-radius:9px;background:var(--line);margin:-4px auto 2px;border:0;padding:0}}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(10,8,14,.55);display:grid;place-items:center;padding:16px}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);width:min(640px,100%);max-height:88vh;overflow:auto;padding:18px}
+.modal .box h2{font-size:1.15rem;margin-bottom:10px}
+.modal .x{float:right}
+.set{display:grid;grid-template-columns:1fr auto;gap:10px 14px;align-items:center;margin:12px 0}
+.set .l b{display:block}
+.set .l span{font-size:.84rem;color:var(--muted)}
+.sw{position:relative;width:52px;height:30px;border-radius:99px;background:var(--well);border:1px solid var(--line)}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:.2s}
+.sw.on{background:var(--accent);border-color:var(--accent)}
+.sw.on::after{left:25px;background:#fff}
+.shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.item{border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
+.item .sw8{height:46px;border-radius:8px;display:flex;overflow:hidden}
+.item .sw8 i{flex:1}
+.item .p{font-family:var(--mono);font-size:.85rem;color:var(--brass);font-weight:600}
+.lesson h3{font-size:1rem;margin:12px 0 4px}
+.lesson p,.lesson li{margin:4px 0}
+.lesson .alg{font-family:var(--mono);background:var(--well);border-radius:6px;padding:.05rem .35rem}
+.askrow{display:flex;gap:8px;margin-top:8px}
+.askrow input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:.5rem .7rem}
+.pin{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.ans{margin-top:10px;padding:10px;border-radius:10px;background:var(--well)}
+.toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:80;background:var(--ink);color:var(--bg);padding:.6rem 1rem;border-radius:12px;font-weight:700;box-shadow:var(--shadow);pointer-events:none;max-width:90vw;text-align:center}
+.win{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);z-index:15;color:#fff;text-align:center;padding:18px}
+.win .wb{background:rgba(20,17,28,.92);border:1px solid rgba(242,193,78,.6);border-radius:16px;padding:18px 22px;max-width:360px}
+.win h3{font-family:var(--sign);font-size:2rem;color:#ff7aa8;text-shadow:0 0 14px rgba(255,92,147,.8)}
+.tour{position:fixed;z-index:70;inset:0;pointer-events:none}
+.tour .tb{position:absolute;pointer-events:auto;left:50%;bottom:24px;transform:translateX(-50%);width:min(420px,calc(100% - 32px));background:var(--panel);border:2px solid var(--accent);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+.tour .ring{position:absolute;border:3px solid var(--accent);border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);transition:all .25s}
+
+/* ---- cube ---- */
+.cubewrap{position:absolute;inset:0;perspective:1400px;display:grid;place-items:center}
+.cube3d{position:relative;width:0;height:0;transform-style:preserve-3d}
+.cf{position:absolute;background:#111;border-radius:6%;transform-style:preserve-3d;backface-visibility:visible}
+.cf .stk{position:absolute;inset:6%;border-radius:14%;display:grid;place-items:center;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),inset 0 2px 0 rgba(255,255,255,.25)}
+.cf.hl .stk{outline:3px solid #fff;outline-offset:-3px;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{filter:brightness(1.25)}}
+.cf .ar{font-size:calc(var(--s) * .42);color:#fff;text-shadow:0 0 3px #000,0 0 8px #000;line-height:1;font-weight:700;pointer-events:none}
+.cf .tg{position:absolute;inset:-6%;border:3px solid #fff;border-radius:10%;box-shadow:0 0 12px #fff;pointer-events:none}
+.cubehud{position:absolute;left:10px;right:10px;bottom:10px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;z-index:5}
+.cubehud .btn{background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.25);min-height:36px;padding:.3rem .55rem}
+.pad{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:10px}
+.pad button{font-family:var(--mono);font-weight:600;min-height:38px;border-radius:9px;border:1px solid var(--line);background:var(--panel)}
+.hint-banner{position:absolute;top:10px;left:10px;right:10px;z-index:5;display:flex;justify-content:center;pointer-events:none}
+.hint-banner span{background:rgba(0,0,0,.55);color:#fff;border-radius:99px;padding:.3rem .8rem;font-size:.86rem}
+
+/* ---- slider ---- */
+.sboard{position:absolute;touch-action:none}
+.tile{position:absolute;border-radius:10%;display:grid;place-items:center;font-family:var(--display);color:#fff;box-shadow:inset 0 -4px 0 rgba(0,0,0,.22),inset 0 2px 0 rgba(255,255,255,.25),0 4px 8px rgba(0,0,0,.3);transition:transform .12s ease-out;background-size:cover}
+.tile .n{text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.tile.ok{outline:2px solid rgba(255,255,255,.55);outline-offset:-4px}
+.tile.hint{animation:pulse .8s infinite;outline:4px solid #fff;outline-offset:-4px;z-index:2}
+.tile .ha{position:absolute;right:7%;top:3%;font-size:.6em;color:#fff;text-shadow:0 0 6px #000}
+.lockcell{position:absolute;border-radius:10%;background:rgba(255,255,255,.06)}
+
+/* generic board games */
+.gcanvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
+.colorbar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.colorbar button{width:46px;height:46px;border-radius:12px;border:3px solid rgba(255,255,255,.75);box-shadow:0 3px 8px rgba(0,0,0,.35)}
+.colorbar button.hint{animation:pulse .8s infinite;outline:4px solid #fff;outline-offset:2px}
+.underbar{position:absolute;left:0;right:0;bottom:10px;z-index:5;display:flex;justify-content:center;gap:6px;flex-wrap:wrap;padding:0 8px}
+.underbar .btn{background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.25)}
+.dropzone{border:2px dashed var(--line);border-radius:12px;padding:12px;text-align:center}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.thumbs button{width:72px;height:54px;border-radius:8px;border:2px solid var(--line);background-size:cover;background-position:center;padding:0}
+.thumbs button.on{border-color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="brand" id="hHome" aria-label="Back to the lounge">
+    <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="3" width="42" height="42" rx="10" fill="#14111c"/><rect x="9" y="9" width="9" height="9" rx="2" fill="#ff5c93"/><rect x="19.5" y="9" width="9" height="9" rx="2" fill="#f2c14e"/><rect x="30" y="9" width="9" height="9" rx="2" fill="#4fd6ff"/><rect x="9" y="19.5" width="9" height="9" rx="2" fill="#5fd08f"/><rect x="19.5" y="19.5" width="9" height="9" rx="2" fill="#ffffff"/><rect x="30" y="19.5" width="9" height="9" rx="2" fill="#ff5c93"/><rect x="9" y="30" width="9" height="9" rx="2" fill="#f2c14e"/><rect x="19.5" y="30" width="9" height="9" rx="2" fill="#4fd6ff"/><rect x="30" y="30" width="9" height="9" rx="2" fill="#ff8a3d"/></svg>
+    <span class="bt">Puzzle Parlour</span>
+  </button>
+  <span class="stars" title="Stars earned by solving puzzles. Spend them in the shop."><span aria-hidden="true">★</span><b class="num" id="hStars">0</b></span>
+  <div class="hdr-btns">
+    <button class="btn sm" id="hAsk" title="Ask the lesson book"><span class="ico">?</span><span class="lbl">Ask</span></button>
+    <button class="btn sm" id="hShop" title="Puzzle shop"><span class="ico">🛍</span><span class="lbl">Shop</span></button>
+    <button class="btn sm" id="hSet" title="Settings"><span class="ico">⚙</span><span class="lbl">Settings</span></button>
+  </div>
+</header>
+<main id="main">
+  <section id="lounge"></section>
+  <section id="gameView" hidden>
+    <div class="game" id="gameGrid">
+      <div>
+        <div class="gbar">
+          <button class="btn sm" id="gBack" aria-label="Back to the lounge">← Lounge</button>
+          <h2 id="gTitle">Puzzle</h2>
+          <div class="gstats" id="gStats"></div>
+          <span class="grow"></span>
+          <button class="btn sm" id="gUndo" title="Undo">↶<span class="lbl"> Undo</span></button>
+          <button class="btn sm" id="gHint" title="Hint">💡<span class="lbl"> Hint</span></button>
+          <button class="btn sm" id="gNew" title="New puzzle">↻<span class="lbl"> New</span></button>
+          <button class="btn sm" id="gLearn" title="Lessons for this puzzle">📖<span class="lbl"> Learn</span></button>
+          <button class="btn sm" id="gTeach" title="Show or hide the teacher">🎓<span class="lbl"> Teacher</span></button>
+        </div>
+        <div class="stage"><div class="felt" id="stage"></div></div>
+        <div id="gOpts" class="opts"></div>
+      </div>
+      <aside class="teacher" id="teacher">
+        <div class="tcard">
+          <button class="tgrab" id="tGrab" aria-label="Expand or collapse the teacher"></button>
+          <div class="thead">
+            <svg class="avatar" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#2b2140"/><rect x="11" y="9" width="26" height="6" rx="2" fill="#14111c"/><path d="M8 15h32l-16-6z" fill="#14111c"/><line x1="36" y1="14" x2="39" y2="22" stroke="#f2c14e" stroke-width="2"/><circle cx="24" cy="27" r="11" fill="#f2d3b4"/><circle cx="19.5" cy="26" r="3.6" fill="none" stroke="#14111c" stroke-width="1.6"/><circle cx="28.5" cy="26" r="3.6" fill="none" stroke="#14111c" stroke-width="1.6"/><line x1="23" y1="26" x2="25" y2="26" stroke="#14111c" stroke-width="1.6"/><path d="M20 32q4 3 8 0" stroke="#14111c" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+            <div class="grow"><div class="nm">Professor Pip</div><div class="st" id="tMode">Live teacher</div></div>
+            <div class="seg" id="tModeSeg" role="group" aria-label="Teacher mode"><button data-m="off">Off</button><button data-m="hints">Ask</button><button data-m="live">Live</button></div>
+          </div>
+          <div class="tbody">
+            <div class="tstage" id="tStage" title="Tap for more"></div>
+            <div class="tsteps" id="tSteps"></div>
+            <div class="prog" style="margin:6px 0"><i id="tProg"></i></div>
+            <div class="tmsg" id="tMsg">Pick a puzzle and I'll walk you through it.</div>
+            <div class="tnext" id="tNext" hidden><div class="mv" id="tMv"></div><div class="how" id="tHow"></div></div>
+            <div class="row" id="tActs" style="margin-top:8px"></div>
+          </div>
+        </div>
+        <div class="tcard tlogcard"><div class="eyebrow">Lesson notes</div><div class="tlog" id="tLog"></div></div>
+      </aside>
+    </div>
+  </section>
+</main>
+<div id="modalRoot"></div>
+<div id="tourRoot"></div>
+<input type="file" id="fileIn" accept="image/*" hidden>
+<script>
+'use strict';
+/* =====================================================================
+   Puzzle Parlour — core: storage, settings, sound, teacher, lounge, shop
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const el = (tag, attrs = {}, html) => { const e = document.createElement(tag); for (const k in attrs) { if (k === 'class') e.className = attrs[k]; else if (k.startsWith('on')) e.addEventListener(k.slice(2), attrs[k]); else e.setAttribute(k, attrs[k]); } if (html != null) e.innerHTML = html; return e; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = n => Math.floor(Math.random() * n);
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const fmtTime = ms => { if (ms == null || !isFinite(ms)) return '–'; const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('puzzle-parlour.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('puzzle-parlour.' + k, JSON.stringify(v)); } catch (e) { } }
+};
+
+const DEFAULTS = {
+  theme: 'system', sound: true, haptics: true, speak: false, teacher: 'live', speed: 'normal',
+  tutorials: true, autoHide: true, cubeScheme: 'classic', felt: 'emerald', tileStyle: 'candy', colorblind: false,
+  jigRotate: false, jigGhost: true, owned: ['classic', 'emerald', 'candy'], seenTour: false, seenHow: {}
+};
+const S = Object.assign({}, DEFAULTS, store.get('settings', {}));
+const save = () => store.set('settings', S);
+const P = Object.assign({ stars: 25, stats: {} }, store.get('player', {}));
+const saveP = () => store.set('player', P);
+
+/* ---------- shop catalogue ---------- */
+const CUBE_SCHEMES = {
+  classic: { name: 'Classic', price: 0, c: { U: '#ffd500', D: '#ffffff', F: '#009e60', B: '#0051ba', R: '#ff5800', L: '#c41e3a' } },
+  neon: { name: 'Neon Lounge', price: 30, c: { U: '#fff95b', D: '#f4f4ff', F: '#39ff88', B: '#4f7dff', R: '#ff8a3d', L: '#ff3d8b' } },
+  pastel: { name: 'Pastel', price: 30, c: { U: '#fff1a8', D: '#fbfbfb', F: '#a8e6cf', B: '#a0c4ff', R: '#ffc9a3', L: '#ffadc6' } },
+  vivid: { name: 'High contrast', price: 20, c: { U: '#ffe100', D: '#ffffff', F: '#00a651', B: '#1e3fe0', R: '#ff7f00', L: '#d0021b' } },
+  jewel: { name: 'Jewel box', price: 45, c: { U: '#e9c46a', D: '#f1f1e6', F: '#2a9d8f', B: '#264abd', R: '#e76f51', L: '#9b2242' } }
+};
+const FELTS = {
+  emerald: { name: 'Emerald felt', price: 0, c: '#0f5a4a' }, navy: { name: 'Midnight blue', price: 15, c: '#183a6b' },
+  wine: { name: 'Wine velvet', price: 15, c: '#6b1838' }, plum: { name: 'Plum', price: 15, c: '#45205f' },
+  slate: { name: 'Slate', price: 10, c: '#2f3b46' }, sand: { name: 'Desert sand', price: 20, c: '#8a6a3a' }
+};
+const TILE_STYLES = {
+  candy: { name: 'Candy tiles', price: 0, pal: ['#ff5c93', '#f2a33a', '#3ab0f2', '#5fd08f', '#a77bff', '#ff7a5c', '#27c4b4'] },
+  wood: { name: 'Maple blocks', price: 25, pal: ['#b07a3b', '#9a6a33', '#c48d4c', '#8a5b2b', '#a8743f', '#bf8a4d', '#93622f'] },
+  ocean: { name: 'Deep sea', price: 25, pal: ['#1f6fb2', '#2389a8', '#2a5aa0', '#1c9aa0', '#3a4fa8', '#2177c4', '#16848f'] },
+  mono: { name: 'Ivory', price: 15, pal: ['#e9e4d8', '#ddd6c6', '#efe9dd', '#d6cfbd', '#e4dccb', '#ebe5d6', '#d9d1c0'] }
+};
+const cubeColors = () => (CUBE_SCHEMES[S.cubeScheme] || CUBE_SCHEMES.classic).c;
+const PIECE_COLORS = () => S.colorblind ? ['#e69f00', '#56b4e9', '#009e73', '#f0e442', '#0072b2', '#d55e00', '#cc79a7', '#ffffff', '#555555'] : ['#ff4d6d', '#ffb703', '#3ab0f2', '#5fd08f', '#a77bff', '#ff8a3d', '#27c4b4', '#f4f1ea', '#e85dce'];
+
+/* ---------- theme ---------- */
+function applySettings() {
+  const r = document.documentElement;
+  if (S.theme === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', S.theme);
+  r.style.setProperty('--felt', (FELTS[S.felt] || FELTS.emerald).c);
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', applySettings);
+
+/* ---------- sound & touch feedback ---------- */
+let AC = null;
+function beep(type = 'tick') {
+  if (!S.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+    const spec = { tick: [520, .04, 'triangle', .05], turn: [300, .07, 'square', .025], snap: [880, .06, 'sine', .07], bad: [160, .12, 'sawtooth', .04], win: [660, .5, 'triangle', .08], pick: [740, .05, 'sine', .05] }[type] || [440, .05, 'sine', .05];
+    o.type = spec[2]; o.frequency.setValueAtTime(spec[0], t);
+    if (type === 'win') { o.frequency.setValueAtTime(523, t); o.frequency.setValueAtTime(659, t + .12); o.frequency.setValueAtTime(784, t + .24); o.frequency.setValueAtTime(1046, t + .36); }
+    g.gain.setValueAtTime(spec[3], t); g.gain.exponentialRampToValueAtTime(.0001, t + spec[1]);
+    o.connect(g).connect(AC.destination); o.start(t); o.stop(t + spec[1] + .02);
+  } catch (e) { }
+}
+const buzz = ms => { if (S.haptics && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } };
+function toast(msg, ms = 1800) { const t = el('div', { class: 'toast', role: 'status' }, esc(msg)); document.body.appendChild(t); setTimeout(() => t.remove(), ms); }
+function speak(text) {
+  if (!S.speak || !('speechSynthesis' in window)) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g, '').replace(/'/g, ' prime ')); u.rate = 1.02; speechSynthesis.speak(u); } catch (e) { }
+}
+
+/* ---------- modal ---------- */
+function modal(title, html, onMount) {
+  const root = $('#modalRoot'); root.innerHTML = '';
+  const m = el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': title });
+  m.innerHTML = `<div class="box"><button class="btn sm x" data-close>✕</button><h2>${esc(title)}</h2><div class="mb">${html}</div></div>`;
+  m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]')) closeModal(); });
+  root.appendChild(m); onMount && onMount(m.querySelector('.mb'), m);
+  return m;
+}
+const closeModal = () => { $('#modalRoot').innerHTML = ''; };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* =====================================================================
+   The lesson book — a closed ledger of pages that answers only from them
+   (the same rule as MPLPB: one page owns the question → that page;
+   two pages tie → ask which; none → "not in the book").
+   ===================================================================== */
+const PAGES = [];
+function page(id, game, title, kw, body) { const p = { id, game, title, kw, body }; PAGES.push(p); return p; }
+const STOP = new Set('a an the is are do does i you to of in on for and or how what why when which can my me it this that with be at by as get make your from will should would'.split(' '));
+const toks = s => (s.toLowerCase().match(/[a-z0-9']+/g) || []).map(w => w.replace(/'s$/, '').replace(/(ing|es|s)$/, '')).filter(w => w.length > 1 && !STOP.has(w));
+function askBook(q, scope) {
+  const qt = toks(q); if (!qt.length) return { kind: 'none' };
+  const scored = PAGES.map(p => {
+    const T = toks(p.title), K = toks(p.kw), B = toks(p.body.replace(/<[^>]+>/g, ' '));
+    let s = 0; for (const w of new Set(qt)) { if (K.includes(w)) s += 3; if (T.includes(w)) s += 3; if (B.includes(w)) s += 1; }
+    if (scope && p.game === scope) s *= 1.15;
+    return { p, s };
+  }).filter(x => x.s >= 3).sort((a, b) => b.s - a.s);
+  if (!scored.length) return { kind: 'none' };
+  if (scored[1] && scored[1].s >= scored[0].s * 0.92) return { kind: 'tie', pages: scored.slice(0, 3).filter(x => x.s >= scored[0].s * 0.92).map(x => x.p) };
+  return { kind: 'one', page: scored[0].p };
+}
+function showAsk(scope, preset) {
+  modal('Ask the lesson book', `<p class="muted">Professor Pip answers only from the pages in the lesson book, and tells you which page the answer came from. If no page covers it, he says so.</p>
+   <div class="askrow"><input id="askQ" placeholder="e.g. how do I make the yellow cross?" autocomplete="off"><button class="btn primary" id="askGo">Ask</button></div><div id="askA"></div>
+   <div class="eyebrow" style="margin-top:14px">Browse pages</div><div class="row" id="askList" style="margin-top:6px"></div>`, mb => {
+    const go = () => {
+      const q = $('#askQ', mb).value.trim(); if (!q) return; const r = askBook(q, scope); const a = $('#askA', mb);
+      if (r.kind === 'one') a.innerHTML = renderPage(r.page);
+      else if (r.kind === 'tie') { a.innerHTML = `<div class="ans">Two pages both cover that, so I won't guess. Which one did you mean?<div class="row" style="margin-top:8px">${r.pages.map(p => `<button class="btn sm" data-p="${p.id}">${esc(p.title)}</button>`).join('')}</div></div>`; }
+      else a.innerHTML = `<div class="ans">That isn't in the lesson book, so I can't answer it. Try different words, or browse the pages below.</div>`;
+      if (r.kind === 'one') speak(r.page.title);
+    };
+    $('#askGo', mb).onclick = go; $('#askQ', mb).onkeydown = e => { if (e.key === 'Enter') go(); };
+    mb.addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) $('#askA', mb).innerHTML = renderPage(PAGES.find(p => p.id === b.dataset.p)); });
+    $('#askList', mb).innerHTML = PAGES.filter(p => !scope || p.game === scope || p.game === 'all').map(p => `<button class="btn sm" data-p="${p.id}">${esc(p.title)}</button>`).join('');
+    if (preset) { $('#askQ', mb).value = preset; go(); } else setTimeout(() => $('#askQ', mb).focus(), 50);
+  });
+}
+const renderPage = p => `<div class="ans lesson"><div class="pin">page ${p.id} · ${esc(GAMES[p.game]?.name || 'Lounge')}</div><h3>${esc(p.title)}</h3>${p.body}</div>`;
+function showLessons(game) {
+  const pages = PAGES.filter(p => p.game === game);
+  modal((GAMES[game]?.name || '') + ' lessons', `<div class="row" id="lsTabs"></div><div id="lsBody"></div>`, mb => {
+    const tabs = $('#lsTabs', mb), body = $('#lsBody', mb);
+    const show = i => { $$('button', tabs).forEach((b, j) => b.classList.toggle('on', i === j)); body.innerHTML = renderPage(pages[i]); const act = pages[i].practice; if (act) { const b = el('button', { class: 'btn primary', style: 'margin-top:10px' }, act.label); b.onclick = () => { closeModal(); act.fn(); }; body.appendChild(b); } };
+    pages.forEach((p, i) => { const b = el('button', { class: 'btn sm' }, esc(p.title)); b.onclick = () => show(i); tabs.appendChild(b); });
+    show(0);
+  });
+}
+
+/* =====================================================================
+   Teacher (Professor Pip)
+   ===================================================================== */
+const T = {
+  lastMsg: '',
+  mode() { return S.teacher; },
+  set({ stage = '', steps = null, cur = -1, prog = null, msg = null, next = null, acts = null } = {}) {
+    $('#tStage').textContent = stage;
+    const st = $('#tSteps');
+    if (steps) st.innerHTML = steps.map((s, i) => `<span class="${i < cur ? 'done' : i === cur ? 'cur' : ''}">${esc(s)}</span>`).join(''); else st.innerHTML = '';
+    $('#tProg').style.width = prog == null ? '0' : (clamp(prog, 0, 1) * 100).toFixed(0) + '%';
+    if (msg != null) { $('#tMsg').innerHTML = msg; if (msg !== this.lastMsg) { this.lastMsg = msg; if (S.teacher === 'live') speak(msg); } }
+    const n = $('#tNext');
+    if (next && S.teacher !== 'off') { n.hidden = false; $('#tMv').textContent = next.mv; $('#tHow').innerHTML = next.how || ''; } else n.hidden = true;
+    if (acts) { const a = $('#tActs'); a.innerHTML = ''; acts.forEach(x => { const b = el('button', { class: 'btn sm' + (x.primary ? ' primary' : '') }, x.label); b.onclick = x.fn; a.appendChild(b); }); }
+  },
+  note(text, cls = '') { const l = $('#tLog'); const d = el('div', { class: cls }, text); l.prepend(d); while (l.children.length > 40) l.lastChild.remove(); },
+  clear() { $('#tLog').innerHTML = ''; this.lastMsg = ''; this.set({ msg: '' }); },
+  paintMode() {
+    $$('#tModeSeg button').forEach(b => b.classList.toggle('on', b.dataset.m === S.teacher));
+    $('#tMode').textContent = { off: 'Teacher is resting', hints: 'Helps when you ask', live: 'Live teacher — watching every move' }[S.teacher];
+  }
+};
+$('#tModeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.teacher = b.dataset.m; save(); T.paintMode(); cur?.coach?.('mode'); });
+$('#tGrab').onclick = $('#tStage').onclick = () => $('#teacher').classList.toggle('open');
+
+/* =====================================================================
+   Games registry & screen
+   ===================================================================== */
+const GAMES = {};
+let cur = null, curId = null;
+function registerGame(g) { GAMES[g.id] = g; }
+function stat(id) { return P.stats[id] = P.stats[id] || { solves: 0, best: {}, hintless: 0 }; }
+function award(id, key, { time, moves, stars = 3, hints = 0 }) {
+  const st = stat(id); st.solves++; if (!hints) st.hintless++;
+  const b = st.best[key] = st.best[key] || {};
+  const newBest = b.time == null || time < b.time;
+  if (time != null && newBest) b.time = time; if (moves != null && (b.moves == null || moves < b.moves)) b.moves = moves;
+  const earned = stars + (hints ? 0 : Math.ceil(stars / 2));
+  P.stars += earned; saveP(); paintStars();
+  return { earned, newBest };
+}
+function winOverlay(host, { title = 'Solved!', lines = [], earned = 0, again }) {
+  beep('win'); buzz([30, 40, 30]);
+  const w = el('div', { class: 'win' }, `<div class="wb"><h3>${esc(title)}</h3>${lines.map(l => `<p>${l}</p>`).join('')}<p style="margin-top:6px;color:#f2c14e;font-weight:700">+${earned} ★</p><div class="row" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a>Play again</button><button class="btn" data-l>Lounge</button></div></div>`);
+  w.querySelector('[data-a]').onclick = () => { w.remove(); again(); };
+  w.querySelector('[data-l]').onclick = () => { w.remove(); goLounge(); };
+  host.appendChild(w);
+}
+function paintStars() { $('#hStars').textContent = P.stars; }
+
+function openGame(id, opts) {
+  if (cur && cur.destroy) cur.destroy();
+  curId = id; const g = GAMES[id];
+  $('#lounge').hidden = true; $('#gameView').hidden = false; $('#main').classList.add('ingame');
+  $('#gTitle').textContent = g.name; $('#stage').innerHTML = ''; $('#gOpts').innerHTML = ''; $('#gStats').innerHTML = '';
+  T.clear(); T.paintMode(); $('#gameGrid').classList.toggle('noteacher', S.teacher === 'off' && S.autoHide);
+  cur = g.create($('#stage'), $('#gOpts'), opts || {});
+  history.replaceState(null, '', '#' + id);
+  window.scrollTo(0, 0);
+  if (S.tutorials && !S.seenHow[id]) { S.seenHow[id] = 1; save(); setTimeout(() => howTo(id), 250); }
+}
+function howTo(id) {
+  const g = GAMES[id];
+  modal('How to play: ' + g.name, `<div class="lesson">${g.how}</div><div class="row" style="margin-top:12px"><button class="btn primary" data-close>Let's play</button><button class="btn" id="howL">Open the lessons</button></div>`, mb => { $('#howL', mb).onclick = () => { closeModal(); showLessons(id); }; });
+}
+function goLounge() {
+  if (cur && cur.destroy) cur.destroy(); cur = null; curId = null;
+  $('#lounge').hidden = false; $('#gameView').hidden = true; $('#main').classList.remove('ingame');
+  history.replaceState(null, '', location.pathname); renderLounge();
+}
+$('#gBack').onclick = goLounge; $('#hHome').onclick = goLounge;
+$('#gUndo').onclick = () => cur?.undo?.();
+$('#gHint').onclick = () => cur?.hint?.();
+$('#gNew').onclick = () => cur?.newGame?.();
+$('#gLearn').onclick = () => curId && showLessons(curId);
+$('#gTeach').onclick = () => { const grid = $('#gameGrid'); if (S.teacher === 'off') { S.teacher = 'live'; save(); T.paintMode(); grid.classList.remove('noteacher'); cur?.coach?.('mode'); } else grid.classList.toggle('noteacher'); };
+$('#hAsk').onclick = () => showAsk(curId);
+$('#hShop').onclick = showShop; $('#hSet').onclick = showSettings;
+window.addEventListener('resize', () => cur?.resize?.());
+
+/* ---------- lounge ---------- */
+function renderLounge() {
+  const L = $('#lounge');
+  const total = Object.values(P.stats).reduce((a, s) => a + s.solves, 0);
+  L.innerHTML = `<div class="marquee" id="mq"><h1>PUZZLE PARLOUR</h1><div class="sub">CUBES · SLIDERS · JIGSAWS · AND A TEACHER ON EVERY TABLE</div>
+   <p>Walk up to any table. Every puzzle comes with Professor Pip, a live teacher who watches your moves and shows the next one, plus lessons that teach you the method so you can solve it alone.</p>
+   <div class="row"><button class="btn primary" id="lCube">Learn the cube</button><button class="btn" id="lJig">Make a jigsaw from a photo</button><button class="btn" id="lTour">Tour the lounge</button></div></div>
+   <div class="floor-h"><h2>The floor</h2><span class="muted">${total ? total + ' puzzles solved so far' : 'Tap a table to sit down'}</span></div>
+   <div class="tables" id="tables"></div>
+   <div class="floor-h"><h2>The counter</h2></div>
+   <div class="counter">
+     <div class="card"><h3>🛍 Puzzle shop</h3><p class="muted">Spend stars on cube colour schemes, table felts and tile styles. You earn stars every time you solve, with a bonus when you solve without hints.</p><button class="btn sm brass" style="margin-top:8px" id="lShop">Browse the shop</button></div>
+     <div class="card"><h3>📖 Lesson book</h3><p class="muted">${PAGES.length} pages covering every puzzle. Ask a question and the book answers only from its pages.</p><button class="btn sm" style="margin-top:8px" id="lAsk">Ask a question</button></div>
+     <div class="card"><h3>📊 Your record</h3><div id="lRec" class="muted" style="font-size:.88rem"></div></div>
+   </div>`;
+  const tb = $('#tables', L);
+  for (const g of Object.values(GAMES)) {
+    const st = P.stats[g.id];
+    const b = el('button', { class: 'ptable', 'data-g': g.id });
+    b.innerHTML = `<div class="felt"><span class="tag">${esc(g.tag)}</span><div class="art">${g.art()}</div><h3>${esc(g.name)}</h3><div class="d">${esc(g.desc)}</div><div class="best">${st ? st.solves + ' solved' : 'Not played yet'}</div></div>`;
+    b.onclick = () => openGame(g.id); tb.appendChild(b);
+  }
+  $('#lCube', L).onclick = () => openGame('cube');
+  $('#lJig', L).onclick = () => openGame('jigsaw');
+  $('#lTour', L).onclick = tour; $('#lShop', L).onclick = showShop; $('#lAsk', L).onclick = () => showAsk();
+  const rec = Object.values(GAMES).map(g => { const s = P.stats[g.id]; if (!s) return ''; const bests = Object.entries(s.best).filter(([, v]) => v.time != null).map(([k, v]) => `${k} ${fmtTime(v.time)}`).slice(0, 3).join(', '); return `<div><b style="color:var(--ink)">${esc(g.name)}</b>: ${s.solves} solved${bests ? ' · best ' + esc(bests) : ''}</div>`; }).join('');
+  $('#lRec', L).innerHTML = rec || 'Solve something and your times show up here.';
+}
+
+/* ---------- shop ---------- */
+function showShop() {
+  const sec = (title, cat, key, swatch) => `<h3 style="margin:14px 0 8px;font-size:.95rem">${title}</h3><div class="shopgrid">${Object.entries(cat).map(([id, it]) => {
+    const own = S.owned.includes(id), on = S[key] === id;
+    return `<div class="item"><div class="sw8">${swatch(it)}</div><b>${esc(it.name)}</b><div class="p">${own ? (on ? 'In use' : 'Owned') : it.price + ' ★'}</div><button class="btn sm ${on ? '' : own ? '' : 'brass'}" data-buy="${id}" data-key="${key}" data-price="${it.price}" ${on ? 'disabled' : ''}>${own ? (on ? 'Using' : 'Use') : 'Buy'}</button></div>`;
+  }).join('')}</div>`;
+  modal('Puzzle shop', `<p class="muted">You have <b class="num" style="color:var(--brass)">${P.stars} ★</b>. Nothing here costs real money.</p>` +
+    sec('Cube colour schemes', CUBE_SCHEMES, 'cubeScheme', it => Object.values(it.c).map(c => `<i style="background:${c}"></i>`).join('')) +
+    sec('Table felts', FELTS, 'felt', it => `<i style="background:radial-gradient(circle at 50% 30%,${it.c},#000 140%)"></i>`) +
+    sec('Slide-puzzle tiles', TILE_STYLES, 'tileStyle', it => it.pal.slice(0, 5).map(c => `<i style="background:${c}"></i>`).join('')), mb => {
+    mb.addEventListener('click', e => {
+      const b = e.target.closest('[data-buy]'); if (!b) return; const id = b.dataset.buy, key = b.dataset.key, price = +b.dataset.price;
+      if (!S.owned.includes(id)) { if (P.stars < price) { toast('You need ' + (price - P.stars) + ' more stars. Solve a puzzle!'); beep('bad'); return; } P.stars -= price; S.owned.push(id); saveP(); paintStars(); beep('snap'); }
+      S[key] = id; save(); applySettings(); cur?.restyle?.(); showShop();
+    });
+  });
+}
+
+/* ---------- settings ---------- */
+function showSettings() {
+  const sw = (k, t, d) => `<div class="l"><b>${t}</b><span>${d}</span></div><button class="sw ${S[k] ? 'on' : ''}" data-sw="${k}" aria-pressed="${!!S[k]}" aria-label="${t}"></button>`;
+  const seg = (k, t, d, opts) => `<div class="l"><b>${t}</b><span>${d}</span></div><div class="seg" data-seg="${k}">${opts.map(([v, l]) => `<button data-v="${v}" class="${S[k] === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  modal('Settings', `<div class="set">
+    ${seg('theme', 'Theme', 'Light, dark, or follow your device.', [['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']])}
+    ${seg('teacher', 'Teacher', 'Live shows every next move. Ask waits for the Hint button.', [['off', 'Off'], ['hints', 'Ask'], ['live', 'Live']])}
+    ${seg('speed', 'Animation speed', 'How fast cube turns and auto-moves play.', [['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Fast']])}
+    ${sw('speak', 'Teacher speaks aloud', 'Uses your device voice to read the teacher’s tips.')}
+    ${sw('tutorials', 'Show how-to cards', 'A short how-to-play card the first time you open each puzzle.')}
+    ${sw('sound', 'Sounds', 'Clicks, snaps and a chime when you solve.')}
+    ${sw('haptics', 'Vibration', 'A small buzz on phones when pieces snap.')}
+    ${sw('colorblind', 'Colour-blind palette', 'Uses the Okabe–Ito colours for Flood, Ball Sort and Lights Out.')}
+    ${sw('autoHide', 'Hide teacher when off', 'Gives the puzzle the full width when the teacher is off.')}
+  </div><div class="row"><button class="btn sm" id="sTour">Replay the lounge tour</button><button class="btn sm" id="sHow">Reset how-to cards</button><button class="btn sm" id="sReset">Reset stats and stars</button></div>`, mb => {
+    mb.addEventListener('click', e => {
+      const s = e.target.closest('[data-sw]'); if (s) { S[s.dataset.sw] = !S[s.dataset.sw]; save(); s.classList.toggle('on', S[s.dataset.sw]); applySettings(); cur?.restyle?.(); return; }
+      const g = e.target.closest('[data-seg] button'); if (g) { const k = g.parentElement.dataset.seg; S[k] = g.dataset.v; save(); $$('button', g.parentElement).forEach(b => b.classList.toggle('on', b === g)); applySettings(); if (k === 'teacher') { T.paintMode(); cur?.coach?.('mode'); } }
+    });
+    $('#sTour', mb).onclick = () => { closeModal(); goLounge(); tour(); };
+    $('#sHow', mb).onclick = () => { S.seenHow = {}; save(); toast('How-to cards will show again'); };
+    $('#sReset', mb).onclick = () => { if (confirm('Reset all stats and stars? Shop items you own are kept.')) { P.stats = {}; P.stars = 25; saveP(); paintStars(); toast('Stats reset'); } };
+  });
+}
+const SPEED = () => ({ slow: 1.8, normal: 1, fast: .45 }[S.speed] || 1);
+
+/* ---------- lounge tour ---------- */
+function tour() {
+  const steps = [
+    ['#mq', 'Welcome to the Puzzle Parlour! Every table on the floor is a different puzzle, and every one has a live teacher.'],
+    ['#tables', 'Tap a table to sit down. The cube table teaches you to solve a Rubik-style cube one stage at a time.'],
+    ['.stars', 'Solving earns stars. You get a bonus when you solve without asking for hints.'],
+    ['#hShop', 'Spend stars in the shop on new cube colours, felts and tiles.'],
+    ['#hAsk', 'Stuck on a word or a method? Ask the lesson book. It only answers from its own pages, and says when it doesn’t know.'],
+    ['#hSet', 'Settings let you choose how the teacher helps: Live shows every move, Ask waits for you, Off lets you fly solo.']
+  ];
+  let i = 0; const root = $('#tourRoot');
+  const show = () => {
+    if (i >= steps.length) { root.innerHTML = ''; S.seenTour = true; save(); return; }
+    const [sel, txt] = steps[i]; const t = $(sel); if (!t) { i++; return show(); }
+    t.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    setTimeout(() => {
+      const r = t.getBoundingClientRect();
+      root.innerHTML = `<div class="tour"><div class="ring" style="left:${r.left - 6}px;top:${r.top - 6}px;width:${r.width + 12}px;height:${r.height + 12}px"></div><div class="tb"><div class="eyebrow">Tour · ${i + 1} of ${steps.length}</div><p style="margin:6px 0 10px">${txt}</p><div class="row"><button class="btn sm" id="tq">Skip tour</button><span class="grow"></span><button class="btn sm primary" id="tn">${i === steps.length - 1 ? 'Done' : 'Next'}</button></div></div></div>`;
+      $('#tn').onclick = () => { i++; show(); }; $('#tq').onclick = () => { i = steps.length; show(); };
+    }, 260);
+  };
+  show();
+}
+
+/* shared helper: pointer tap/drag recogniser */
+function ptr(target, { down, move, up, tap, multi } = {}) {
+  const pts = new Map(); let start = null, moved = false;
+  target.addEventListener('pointerdown', e => {
+    if (e.target.closest('button,input,select,a,.win,.noptr')) return;
+    target.setPointerCapture?.(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 1) { start = { x: e.clientX, y: e.clientY, t: performance.now(), target: e.target }; moved = false; down && down(e, start); }
+    else multi && multi('start', pts, e);
+  });
+  target.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return; const prev = pts.get(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size > 1) { multi && multi('move', pts, e, prev); moved = true; return; }
+    const dx = e.clientX - start.x, dy = e.clientY - start.y; if (Math.hypot(dx, dy) > 8) moved = true;
+    move && move(e, { dx, dy, start, prev, moved });
+  });
+  const end = e => {
+    if (!pts.has(e.pointerId)) return; pts.delete(e.pointerId);
+    if (pts.size >= 1) { multi && multi('end', pts, e); moved = true; return; }
+    if (!moved && tap) tap({ clientX: e.clientX, clientY: e.clientY, target: start.target }, start); else up && up(e, { start, moved });
+  };
+  target.addEventListener('pointerup', end); target.addEventListener('pointercancel', end);
+}
+</script>
+<script>
+/* =====================================================================
+   Cube model + teaching solver (pure JS, no DOM)
+   A 3×3 sticker model: 54 slots, each a (cubie position p, normal n).
+   The 2×2 is the same model with only corners shown, so the same solver
+   teaches both. Centres never move: slice turns are stored as the two
+   outer layers plus a turn of the camera.
+   ===================================================================== */
+const CubeModel = (() => {
+  const SL = [], IDX = new Map(), key = (p, n) => p.join() + '|' + n.join();
+  for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) {
+    const p = [x, y, z];
+    for (let k = 0; k < 3; k++) if (p[k] !== 0) { const n = [0, 0, 0]; n[k] = p[k]; IDX.set(key(p, n), SL.length); SL.push({ p, n }); }
+  }
+  const FV = { U: [0, 1, 0], D: [0, -1, 0], F: [0, 0, 1], B: [0, 0, -1], R: [1, 0, 0], L: [-1, 0, 0] };
+  const faceOf = n => n[1] === 1 ? 'U' : n[1] === -1 ? 'D' : n[2] === 1 ? 'F' : n[2] === -1 ? 'B' : n[0] === 1 ? 'R' : 'L';
+  const HOME = SL.map(s => faceOf(s.n));
+  const rotV = (v, k, q) => { q = ((q % 4) + 4) % 4; let [x, y, z] = v; for (let i = 0; i < q; i++) { if (k === 0) [y, z] = [-z, y]; else if (k === 1) [x, z] = [z, -x]; else [x, y] = [-y, x]; } return [x, y, z]; };
+  const PC = new Map();
+  function perm(k, L, q) {
+    q = ((q % 4) + 4) % 4; const id = k + ',' + L + ',' + q; if (PC.has(id)) return PC.get(id);
+    const d = SL.map((s, i) => s.p[k] === L ? IDX.get(key(rotV(s.p, k, q), rotV(s.n, k, q))) : i);
+    PC.set(id, d); return d;
+  }
+  // face letter -> [axis, layer, direction of a clockwise turn]
+  const FACES = { R: [0, 1, -1], L: [0, -1, 1], U: [1, 1, -1], D: [1, -1, 1], F: [2, 1, -1], B: [2, -1, 1], M: [0, 0, 1], E: [1, 0, 1], S: [2, 0, -1] };
+  function parse(alg) {
+    return alg.trim().split(/\s+/).filter(Boolean).map(t => {
+      const f = t[0], [k, L, dir] = FACES[f]; const suf = t.slice(1);
+      const q = suf === "'" ? -dir : suf === '2' ? 2 : dir; return { k, L, q, f };
+    });
+  }
+  function name(m) {
+    for (const f in FACES) { const [k, L, dir] = FACES[f]; if (k === m.k && L === m.L) { const q = ((m.q % 4) + 4) % 4; if (q === 2) return f + '2'; return (q === ((dir % 4) + 4) % 4) ? f : f + "'"; } }
+    return '?';
+  }
+  const quarters = alg => parse(alg).flatMap(m => m.q === 2 ? [{ ...m, q: FACES[m.f][2] }, { ...m, q: FACES[m.f][2] }] : [m]);
+  function apply(state, m) { const d = perm(m.k, m.L, m.q), ns = new Array(54); for (let i = 0; i < 54; i++) ns[d[i]] = state[i]; return ns; }
+  function applyOuter(state, m) { // a slice move becomes the two outer layers turned the other way
+    if (m.L !== 0) return apply(state, m);
+    return apply(apply(state, { k: m.k, L: 1, q: -m.q }), { k: m.k, L: -1, q: -m.q });
+  }
+  const applyAlg = (state, alg) => parse(alg).reduce((s, m) => apply(s, m), state);
+  function destOf(alg) { let d = SL.map((_, i) => i); for (const m of parse(alg)) { const p = perm(m.k, m.L, m.q); d = d.map(x => p[x]); } return d; }
+  const invert = alg => alg.trim().split(/\s+/).reverse().map(t => t.endsWith("'") ? t[0] : t.endsWith('2') ? t : t + "'").join(' ');
+  const ORDER = ['F', 'R', 'B', 'L'];
+  const turnAlg = (alg, i) => alg.split(' ').map(t => { const j = ORDER.indexOf(t[0]); return j < 0 ? t : ORDER[(j + i) % 4] + t.slice(1); }).join(' ');
+
+  // cubies (edges and corners) as slot groups
+  const CUB = new Map();
+  SL.forEach((s, i) => { const nz = s.p.filter(v => v).length; if (nz < 2) return; const k = s.p.join(); if (!CUB.has(k)) CUB.set(k, { p: s.p, slots: [] }); CUB.get(k).slots.push(i); });
+  const CUBIES = [...CUB.values()];
+  function piece(nm, ref) {
+    const p = [0, 0, 0]; for (const c of nm) FV[c].forEach((v, i) => p[i] += v);
+    return { nm, cols: nm.split('').sort().join(''), ref, home: IDX.get(key(p, FV[ref])) };
+  }
+  function locate(state, pc) {
+    for (const c of CUBIES) { if (c.slots.length !== pc.cols.length) continue; const cols = c.slots.map(i => state[i]); if (cols.slice().sort().join('') === pc.cols) return c.slots[cols.indexOf(pc.ref)]; }
+    return -1;
+  }
+  function bfs(start, goal, macros, maxDepth, cap = 600000) {
+    if (goal(start)) return [];
+    const seen = new Set([start.join()]); let frontier = [{ s: start, path: null }];
+    for (let d = 1; d <= maxDepth; d++) {
+      const next = [];
+      for (const node of frontier) for (let mi = 0; mi < macros.length; mi++) {
+        const M = macros[mi]; if (M.face && node.path && macros[node.path.m].face === M.face) continue;
+        const ns = node.s.map(x => M.dest[x]); const k = ns.join(); if (seen.has(k)) continue; seen.add(k);
+        const np = { m: mi, prev: node.path };
+        if (goal(ns)) { const out = []; for (let q = np; q; q = q.prev) out.unshift(macros[q.m]); return out; }
+        next.push({ s: ns, path: np });
+        if (seen.size > cap) return null;
+      }
+      frontier = next;
+    }
+    return null;
+  }
+  const mac = (alg, label, face) => ({ alg, label: label || alg, dest: destOf(alg), face: face || null });
+  const SINGLE = []; for (const f of 'UDFBRL') for (const s of ['', "'", '2']) SINGLE.push(mac(f + s, f + s, f));
+  const U3 = ['U', "U'", 'U2'].map(a => mac(a, a, 'U'));
+  const SEXY = [0, 1, 2, 3].map(i => mac(turnAlg("R U R' U'", i), 'corner trick'));
+  const INS = [0, 1, 2, 3].flatMap(i => [mac(turnAlg("U R U' R' U' F' U F", i), 'insert right'), mac(turnAlg("U' L' U L U F U' F'", i), 'insert left')]);
+  const FRU = [mac("F R U R' U' F'", 'yellow-cross alg')];
+  const SUNE = [mac("R U R' U R U2 R'", 'Sune')];
+  const APERM = [mac("R' F R' B2 R F' R' B2 R2", 'A-perm'), mac(invert("R' F R' B2 R F' R' B2 R2"), 'A-perm (other way)')];
+  const UPERM = [mac("R U' R U R U R U' R' U' R2", 'U-perm'), mac(invert("R U' R U R U R U' R' U' R2"), 'U-perm (other way)')];
+
+  const CROSS = ['DF', 'DR', 'DB', 'DL'].map(n => piece(n, 'D'));
+  const DCOR = ['DFR', 'DRB', 'DBL', 'DLF'].map(n => piece(n, 'D'));
+  const MIDS = ['FR', 'RB', 'BL', 'LF'].map(n => piece(n, n[0]));
+  const UED = ['UF', 'UR', 'UB', 'UL'].map(n => piece(n, 'U'));
+  const UCOR = ['UFR', 'URB', 'UBL', 'ULF'].map(n => piece(n, 'U'));
+
+  const STAGES3 = ['White cross', 'White corners', 'Middle layer', 'Yellow cross', 'Yellow face', 'Yellow corners', 'Last edges'];
+  const STAGES2 = ['Bottom corners', 'Yellow face', 'Top corners'];
+  const CN = { U: 'yellow', D: 'white', F: 'green', B: 'blue', R: 'orange', L: 'red' };
+  const pname = pc => pc.nm.split('').map(c => CN[c]).join('–');
+
+  // returns [{stage, label, why, alg, moves:[quarter moves]}]
+  function plan(state, size) {
+    let s = state.slice(); const out = [];
+    const run = (stage, tracked, macros, depth, label, why) => {
+      const start = tracked.map(t => locate(s, t.pc));
+      const goal = a => a.every((x, i) => tracked[i].up ? SL[x].n[1] === 1 : x === tracked[i].pc.home);
+      const r = bfs(start, goal, macros, depth);
+      if (!r) throw new Error('no solution for ' + label);
+      for (const M of r) { s = applyAlg(s, M.alg); out.push({ stage, label, why, alg: M.alg, mlabel: M.label, moves: quarters(M.alg) }); }
+    };
+    const H = pc => ({ pc }), UP = pc => ({ pc, up: true });
+    if (size === 3) {
+      CROSS.forEach((pc, j) => run(0, CROSS.slice(0, j + 1).map(H), SINGLE, 8, 'Cross: ' + pname(pc) + ' edge', 'Bring the ' + pname(pc) + ' edge to the white face, white side down, under its matching centre.'));
+      DCOR.forEach((pc, j) => run(1, [...CROSS, ...DCOR.slice(0, j + 1)].map(H), [...U3, ...SEXY], 12, 'Corner: ' + pname(pc), 'Turn the top until the ' + pname(pc) + ' corner sits above its home, then repeat the corner trick (R U R′ U′) until it drops in white-side down.'));
+      MIDS.forEach((pc, j) => run(2, [...CROSS, ...DCOR, ...MIDS.slice(0, j + 1)].map(H), [...U3, ...INS], 7, 'Middle edge: ' + pname(pc), 'Line the ' + pname(pc) + ' edge up with its centre on the top layer, then insert it to the right or left.'));
+      const F2L = [...CROSS, ...DCOR, ...MIDS].map(H);
+      run(3, [...F2L, ...UED.map(UP)], [...U3, ...FRU], 8, 'Yellow cross', 'Hold the yellow shape correctly (line across, L in the back-left), then do F R U R′ U′ F′.');
+      run(4, [...F2L, ...UED.map(UP), ...UCOR.map(UP)], [...U3, ...SUNE], 10, 'Yellow face', 'Use Sune (R U R′ U R U2 R′) with the right corner in front until all of the top is yellow.');
+      run(5, [...F2L, ...UED.map(UP), ...UCOR.map(H)], [...U3, ...APERM], 8, 'Yellow corners', 'Cycle the top corners into their homes with the A-perm.');
+      run(6, [...F2L, ...UED.map(H), ...UCOR.map(H)], [...U3, ...UPERM], 8, 'Last edges', 'Cycle the last three edges with the U-perm.');
+    } else {
+      DCOR.forEach((pc, j) => run(0, DCOR.slice(0, j + 1).map(H), [...U3, ...SEXY], 12, 'Corner: ' + pname(pc), 'Turn the top until the ' + pname(pc) + ' corner sits above its home, then repeat R U R′ U′ until it drops in white-side down.'));
+      run(1, [...DCOR.map(H), ...UCOR.map(UP)], [...U3, ...SUNE], 10, 'Yellow face', 'Use Sune (R U R′ U R U2 R′) until the top is all yellow.');
+      run(2, [...DCOR.map(H), ...UCOR.map(H)], [...U3, ...APERM], 8, 'Top corners', 'Cycle the top corners home with the A-perm, then turn the top to finish.');
+    }
+    return out;
+  }
+  const solved = (state, size) => {
+    if (size === 3) return state.every((c, i) => c === HOME[i]);
+    // 2x2: each face's corner stickers match
+    const faces = {}; SL.forEach((s, i) => { if (s.p.filter(v => v).length !== 3) return; const f = faceOf(s.n); (faces[f] = faces[f] || new Set()).add(state[i]); });
+    return Object.values(faces).every(x => x.size === 1);
+  };
+  function scramble(size) {
+    const n = size === 3 ? 22 : 11, out = []; let last = -1, lastK = -1, sameK = 0;
+    while (out.length < n) {
+      const f = 'UDFBRL'[rnd(6)], k = FACES[f][0]; if (f === 'UDFBRL'[last]) continue;
+      if (k === lastK && sameK >= 1) continue;
+      sameK = k === lastK ? sameK + 1 : 0; lastK = k; last = 'UDFBRL'.indexOf(f);
+      out.push(f + ['', "'", '2'][rnd(3)]);
+    }
+    return out.join(' ');
+  }
+  return { SL, HOME: HOME.slice(), FACES, FV, CN, faceOf, rotV, parse, name, quarters, apply, applyOuter, applyAlg, plan, solved, scramble, STAGES3, STAGES2, invert };
+})();
+</script>
+<script>
+/* =====================================================================
+   Cube table (2×2 and 3×3) — CSS 3D, swipe to turn, drag to look around
+   ===================================================================== */
+const M3 = {
+  mul: (A, B) => { const C = new Array(9); for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) C[r * 3 + c] = A[r * 3] * B[c] + A[r * 3 + 1] * B[3 + c] + A[r * 3 + 2] * B[6 + c]; return C; },
+  v: (A, v) => [A[0] * v[0] + A[1] * v[1] + A[2] * v[2], A[3] * v[0] + A[4] * v[1] + A[5] * v[2], A[6] * v[0] + A[7] * v[1] + A[8] * v[2]],
+  rot(k, a) { const c = Math.cos(a), s = Math.sin(a); return k === 0 ? [1, 0, 0, 0, c, -s, 0, s, c] : k === 1 ? [c, 0, s, 0, 1, 0, -s, 0, c] : [c, -s, 0, s, c, 0, 0, 0, 1]; },
+  ortho(A) { // keep the view a clean rotation after many small drags
+    let x = [A[0], A[3], A[6]], y = [A[1], A[4], A[7]]; const nx = Math.hypot(...x); x = x.map(v => v / nx);
+    const d = x[0] * y[0] + x[1] * y[1] + x[2] * y[2]; y = y.map((v, i) => v - d * x[i]); const ny = Math.hypot(...y); y = y.map(v => v / ny);
+    const z = [x[1] * y[2] - x[2] * y[1], x[2] * y[0] - x[0] * y[2], x[0] * y[1] - x[1] * y[0]];
+    return [x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2]];
+  }
+};
+const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+// in-face axes (ex = right, ey = down when you look straight at that face)
+function faceAxes(n) {
+  if (n[2] === 1) return [[1, 0, 0], [0, -1, 0]]; if (n[2] === -1) return [[-1, 0, 0], [0, -1, 0]];
+  if (n[0] === 1) return [[0, 0, -1], [0, -1, 0]]; if (n[0] === -1) return [[0, 0, 1], [0, -1, 0]];
+  if (n[1] === 1) return [[1, 0, 0], [0, 0, 1]]; return [[1, 0, 0], [0, 0, -1]];
+}
+const FACE_WORD = { U: 'top', D: 'bottom', F: 'front', B: 'back', R: 'right', L: 'left' };
+
+registerGame({
+  id: 'cube', name: 'Color Cube', tag: 'Learn to solve', desc: '2×2 and 3×3 twisty cubes. Swipe a row to turn it; the teacher takes you through the beginner method stage by stage.',
+  art: () => `<svg viewBox="0 0 100 100"><g stroke="#111" stroke-width="2.4" stroke-linejoin="round">${(() => { let s = ''; const C = cubeColors(); const top = [C.U, C.U, C.U, C.U, C.U, C.U, C.U, C.U, C.U], fr = [C.F, C.R, C.F, C.F, C.F, C.L, C.F, C.F, C.U], rt = [C.R, C.R, C.B, C.R, C.R, C.R, C.D, C.R, C.R]; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const x = 50 + (j - i) * 13, y = 14 + (j + i) * 7.5; s += `<path d="M${x} ${y} l13 7.5 l-13 7.5 l-13 -7.5z" fill="${top[i * 3 + j]}"/>`; const fx = 11 + j * 13, fy = 36.5 + j * 7.5 + i * 15; s += `<path d="M${fx} ${fy} l13 7.5 v15 l-13 -7.5z" fill="${fr[i * 3 + j]}"/>`; const rx = 50 + j * 13, ry = 59 - j * 7.5 + i * 15; s += `<path d="M${rx} ${ry} l13 -7.5 v15 l-13 7.5z" fill="${rt[i * 3 + j]}"/>`; } return s; })()}</g></svg>`,
+  how: `<p><b>Turn a layer:</b> put your finger on a sticker and swipe the way you want that row or column to go. Swipe on a middle sticker to turn the middle slice.</p><p><b>Look around:</b> drag on the felt (not the cube) to spin your view. Two fingers twist it. <b>Reset view</b> puts yellow on top and green in front.</p><p><b>Learn:</b> with the teacher on <b>Live</b>, the layer to turn glows and arrows show the direction. Do that move, or tap <b>Show me</b>. The teacher follows along and replans if you go your own way.</p><p>The notation pad under the cube uses standard letters: R = right face clockwise, R′ = counter-clockwise, and so on.</p>`,
+  create(host, opts, o) {
+    let size = o.size || store.get('cube.size', 3), state = CubeModel.HOME.slice();
+    let V = M3.mul(M3.rot(0, 0.44), M3.rot(1, -0.62)); const V0 = V.slice();
+    let s = 60, faces = [], anim = null, queue = [], hist = [], moves = 0, t0 = null, timerI = null, scrambled = false, hintsUsed = 0;
+    let plan = [], planStage = -1, planning = false, showHint = false, autoplay = false, padOn = store.get('cube.pad', false);
+    const wrap = el('div', { class: 'cubewrap' }); const C3 = el('div', { class: 'cube3d' }); wrap.appendChild(C3); host.appendChild(wrap);
+    const banner = el('div', { class: 'hint-banner' }); host.appendChild(banner);
+    const hud = el('div', { class: 'cubehud' }); host.appendChild(hud);
+    hud.innerHTML = `<button class="btn sm" data-a="scr">🎲 Scramble</button><button class="btn sm" data-a="view">⟲ Reset view</button><button class="btn sm" data-a="show">▶ Show me</button><button class="btn sm" data-a="step">⏭ Do this step</button>`;
+    hud.addEventListener('click', e => { const a = e.target.closest('[data-a]')?.dataset.a; if (a === 'scr') newGame(); if (a === 'view') { V = V0.slice(); render(); } if (a === 'show') showMe(); if (a === 'step') doStep(); });
+
+    opts.innerHTML = `<label>Size</label><div class="seg" id="cSize"><button data-n="2">2×2</button><button data-n="3">3×3</button></div><button class="btn sm" id="cPad">Notation pad</button><button class="btn sm" id="cSolve">Solve it for me</button><button class="btn sm" id="cReset">Solved cube</button>`;
+    const padEl = el('div', { class: 'pad' }); opts.after(padEl);
+    const paintOpts = () => { $$('#cSize button', opts).forEach(b => b.classList.toggle('on', +b.dataset.n === size)); $('#cPad', opts).classList.toggle('on', padOn); padEl.hidden = !padOn; padEl.innerHTML = (size === 3 ? ['U', 'D', 'F', 'B', 'R', 'L', 'M', 'E', 'S'] : ['U', 'D', 'F', 'B', 'R', 'L']).flatMap(f => [f, f + "'"]).map(m => `<button data-m="${m}">${m.replace("'", '′')}</button>`).join(''); };
+    $('#cSize', opts).onclick = e => { const b = e.target.closest('button'); if (!b) return; size = +b.dataset.n; store.set('cube.size', size); build(); newGame(); };
+    $('#cPad', opts).onclick = () => { padOn = !padOn; store.set('cube.pad', padOn); paintOpts(); };
+    $('#cSolve', opts).onclick = () => { hintsUsed++; autoplay = true; ensurePlan(() => { playAll(); }); };
+    $('#cReset', opts).onclick = () => { state = CubeModel.HOME.slice(); hist = []; moves = 0; scrambled = false; stopTimer(); recolor(); replan(); stats(); };
+    padEl.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; const m = CubeModel.parse(b.dataset.m)[0]; doMove({ k: m.k, L: m.L, q: m.q }, true); });
+
+    function build() {
+      C3.innerHTML = ''; faces = [];
+      const r = host.getBoundingClientRect(); s = Math.max(34, Math.min(r.width, r.height - 60) / (size * 2.05));
+      C3.style.setProperty('--s', s + 'px'); C3.style.marginTop = '-30px';
+      const ds = size === 2 ? 0.5 : 1;
+      for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) {
+        const p = [x, y, z], nz = p.filter(v => v).length;
+        if (size === 2 && nz < 3) continue; if (nz === 0) continue;
+        for (let k = 0; k < 3; k++) for (const sg of [1, -1]) {
+          const n = [0, 0, 0]; n[k] = sg; const ext = p[k] === sg;
+          const d = el('div', { class: 'cf' }); d.style.width = d.style.height = s + 'px'; d.style.left = d.style.top = (-s / 2) + 'px';
+          const f = { el: d, p, n, ext, ds, slot: -1, axes: faceAxes(n) };
+          if (ext) { f.slot = CubeModel.SL.findIndex(q => q.p.join() === p.join() && q.n.join() === n.join()); f.stk = el('div', { class: 'stk' }); d.appendChild(f.stk); }
+          d._f = f; faces.push(f); C3.appendChild(d);
+        }
+      }
+      paintOpts(); recolor(); render();
+    }
+    function mtx(W, f) {
+      const c = f.p.map(v => v * s * f.ds), t = c.map((v, i) => v + f.n[i] * s / 2);
+      const a = M3.v(W, f.axes[0]), b = M3.v(W, f.axes[1]), n = M3.v(W, f.n), T = M3.v(W, t);
+      return `matrix3d(${a[0]},${-a[1]},${a[2]},0,${b[0]},${-b[1]},${b[2]},0,${n[0]},${-n[1]},${n[2]},0,${T[0]},${-T[1]},${T[2]},1)`;
+    }
+    function render(turn) {
+      let W2 = null; if (turn) W2 = M3.mul(V, M3.rot(turn.k, turn.a));
+      for (const f of faces) f.el.style.transform = mtx(turn && f.p[turn.k] === turn.L ? W2 : V, f);
+    }
+    function recolor() { const C = cubeColors(); for (const f of faces) if (f.ext) f.stk.style.background = C[state[f.slot]]; }
+
+    // ----- moves -----
+    const dur = () => 240 * SPEED();
+    function doMove(m, user) { queue.push({ m, user }); if (!anim) next(); }
+    function next() {
+      const it = queue.shift(); if (!it) { anim = null; afterQueue(); return; }
+      const { m, user } = it; const t = performance.now(), D = it.fast ? 70 : dur(); beep('turn');
+      if (user && !t0 && scrambled) startTimer();
+      clearArrows();
+      anim = true;
+      const step = now => {
+        const u = Math.min(1, (now - t) / D), e = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+        render({ k: m.k, L: m.L, a: m.q * Math.PI / 2 * e });
+        if (u < 1) return requestAnimationFrame(step);
+        if (m.L === 0) { state = CubeModel.applyOuter(state, m); V = M3.mul(V, M3.rot(m.k, m.q * Math.PI / 2)); } else state = CubeModel.apply(state, m);
+        recolor(); render();
+        if (!it.undo) { hist.push(m); if (it.counts !== false) moves++; }
+        if (user !== 'scramble') teacherSaw(m, user);
+        stats();
+        if (scrambled && CubeModel.solved(state, size) && it.counts !== false) win();
+        next();
+      };
+      requestAnimationFrame(step);
+    }
+    function afterQueue() { if (autoplay && plan.length) { const st = plan[0]; queue.push({ m: st.m, user: false }); next(); return; } autoplay = false; coach(); }
+
+    // ----- input -----
+    let drag = null;
+    ptr(host, {
+      down(e) {
+        if (e.target.closest('.cubehud,.win')) { drag = null; return; }
+        const fe = e.target.closest('.cf'); const f = fe?._f;
+        drag = f && f.ext ? { kind: 'sticker', f, done: false } : { kind: 'view', last: { x: e.clientX, y: e.clientY } };
+      },
+      move(e, { dx, dy }) {
+        if (!drag) return;
+        if (drag.kind === 'view') { const ddx = e.clientX - drag.last.x, ddy = e.clientY - drag.last.y; drag.last = { x: e.clientX, y: e.clientY }; V = M3.ortho(M3.mul(M3.mul(M3.rot(1, ddx * 0.01), M3.rot(0, ddy * 0.01)), V)); if (!anim) render(); return; }
+        if (drag.done || Math.hypot(dx, dy) < 14) return; drag.done = true;
+        const f = drag.f; const dl = Math.hypot(dx, dy); let best = null;
+        for (const a of f.axes) { const pa = M3.v(V, a), px = pa[0], py = -pa[1], pl = Math.hypot(px, py) || 1; const d = (dx * px + dy * py) / (dl * pl); if (!best || Math.abs(d) > Math.abs(best.d)) best = { a, d }; }
+        const r = cross3(f.n, best.a).map(v => v * Math.sign(best.d)); const k = r.findIndex(v => v !== 0);
+        doMove({ k, L: f.p[k], q: r[k] }, true); buzz(8);
+      },
+      tap() { drag = null; },
+      up() { drag = null; },
+      multi(phase, pts, e, prev) {
+        if (phase !== 'move' || pts.size < 2) return; const [a, b] = [...pts.values()];
+        const ang = Math.atan2(b.y - a.y, b.x - a.x);
+        if (drag && drag.ang != null) { let dA = ang - drag.ang; if (dA > Math.PI) dA -= 2 * Math.PI; if (dA < -Math.PI) dA += 2 * Math.PI; V = M3.ortho(M3.mul(M3.rot(2, -dA), V)); if (!anim) render(); }
+        drag = { kind: 'twist', ang };
+      }
+    });
+    host.addEventListener('wheel', e => { e.preventDefault(); V = M3.ortho(M3.mul(M3.rot(1, -e.deltaX * 0.004), M3.mul(M3.rot(0, -e.deltaY * 0.004), V))); render(); }, { passive: false });
+    const keyH = e => { if (e.target.closest('input')) return; const k = e.key.toUpperCase(); if ('UDFBRLMES'.includes(k) && k.length === 1) { if (size === 2 && 'MES'.includes(k)) return; const m = CubeModel.parse(k + (e.shiftKey ? "'" : ''))[0]; doMove({ k: m.k, L: m.L, q: m.q }, true); } if (e.key === ' ') { e.preventDefault(); showMe(); } };
+    document.addEventListener('keydown', keyH);
+
+    // ----- game flow -----
+    function newGame() {
+      queue = []; hist = []; moves = 0; stopTimer(); hintsUsed = 0; autoplay = false;
+      state = CubeModel.applyAlg(CubeModel.HOME.slice(), CubeModel.scramble(size));
+      scrambled = true; recolor(); render(); stats(); replan();
+      // a little spin to show it's scrambled
+      const v0 = V.slice(), tt = performance.now(); const sp = n => { const u = Math.min(1, (n - tt) / 500); V = M3.mul(M3.rot(1, (1 - u) * 1.2), V0); render(); if (u < 1) requestAnimationFrame(sp); }; requestAnimationFrame(sp);
+      T.note('New scramble. ' + (size === 3 ? 'We solve it in seven stages, bottom layer first.' : 'A 2×2 is a 3×3 with only corners: three stages.'));
+    }
+    function startTimer() { t0 = performance.now(); clearInterval(timerI); timerI = setInterval(stats, 500); }
+    function stopTimer() { clearInterval(timerI); t0 = null; }
+    function stats() { $('#gStats').innerHTML = `<span>Moves <b>${moves}</b></span><span>Time <b>${t0 ? fmtTime(performance.now() - t0) : '0:00'}</b></span>`; }
+    function win() {
+      const time = t0 ? performance.now() - t0 : null; stopTimer(); scrambled = false; autoplay = false; queue = [];
+      const r = award('cube', size + 'x' + size, { time, moves, stars: size === 3 ? 8 : 4, hints: hintsUsed });
+      T.set({ stage: 'Solved', steps: size === 3 ? CubeModel.STAGES3 : CubeModel.STAGES2, cur: 99, prog: 1, msg: 'Solved! ' + (hintsUsed ? 'Next time try it with the teacher on Ask, and only peek when stuck.' : 'And without hints. You know the method now.'), next: null });
+      winOverlay(host, { lines: [`${size}×${size} in ${moves} moves${time ? ', ' + fmtTime(time) : ''}`, r.newBest && time ? 'New best time!' : ''], earned: r.earned, again: newGame });
+    }
+
+    // ----- teacher -----
+    function replan() { plan = []; planStage = -1; if (S.teacher !== 'off' || autoplay) ensurePlan(coach); else coach(); }
+    let waiters = [];
+    function ensurePlan(cb) {
+      if (plan.length || CubeModel.solved(state, size)) { cb && cb(); return; }
+      if (cb) waiters.push(cb); if (planning) return;
+      planning = true; T.set({ msg: 'Let me look at your cube…' });
+      setTimeout(() => {
+        try { const p = CubeModel.plan(state, size); plan = p.flatMap(it => it.moves.map((m, i) => ({ m, it, first: i === 0 }))); } catch (e) { plan = []; }
+        planning = false; const w = waiters; waiters = []; w.forEach(f => f());
+      }, 20);
+    }
+    function teacherSaw(m, user) {
+      if (!plan.length) return;
+      const e = plan[0].m;
+      if (e.k === m.k && e.L === m.L && e.q === m.q) {
+        const it = plan.shift().it;
+        if (user === true && S.teacher === 'live' && (!plan.length || plan[0].it !== it)) T.note('✔ ' + it.label + ' done.', '');
+        if (plan.length && plan[0].it.stage !== it.stage) { T.note('🎉 Stage complete: ' + (size === 3 ? CubeModel.STAGES3 : CubeModel.STAGES2)[it.stage] + '.'); beep('snap'); }
+      } else {
+        plan = []; if (user === true && S.teacher === 'live') T.note('You went a different way. No problem — I’ve worked out a new plan from here.', 'you');
+      }
+      showHint = false;
+    }
+    function moveHow(m) {
+      if (m.L === 0) return 'Turn the middle slice.';
+      const f = CubeModel.faceOf(m.k === 0 ? [m.L, 0, 0] : m.k === 1 ? [0, m.L, 0] : [0, 0, m.L]);
+      const cw = CubeModel.name(m).indexOf("'") < 0;
+      return `Turn the <b>${CubeModel.CN[f]}</b>-centre face (${FACE_WORD[f]}) ${cw ? 'clockwise ↻' : 'counter-clockwise ↺'} as you look straight at it. The glowing stickers show which layer.`;
+    }
+    function clearArrows() { for (const f of faces) { f.el.classList.remove('hl'); if (f.stk) f.stk.innerHTML = ''; } banner.innerHTML = ''; }
+    function arrows(m) {
+      clearArrows(); const sgn = m.q > 0 ? 1 : -1;
+      for (const f of faces) {
+        if (!f.ext || f.p[m.k] !== m.L) continue; f.el.classList.add('hl');
+        const pos = f.p.map((v, i) => v * f.ds + f.n[i] * 0.5 * (size === 2 ? 1 : 1)); const ax = [0, 0, 0]; ax[m.k] = 1;
+        let v = cross3(ax, pos).map(x => x * sgn); const a = dot3(v, f.axes[0]), b = dot3(v, f.axes[1]);
+        if (Math.hypot(a, b) < 0.2) { const ccw = sgn * f.n[m.k] > 0; f.stk.innerHTML = `<span class="ar">${ccw ? '↺' : '↻'}</span>`; }
+        else f.stk.innerHTML = `<span class="ar" style="transform:rotate(${Math.atan2(b, a)}rad)">➜</span>`;
+      }
+    }
+    function coach(why) {
+      if (why === 'mode') { $('#gameGrid').classList.toggle('noteacher', S.teacher === 'off' && S.autoHide); if (S.teacher !== 'off' && !plan.length) return ensurePlan(coach); }
+      clearArrows();
+      const stages = size === 3 ? CubeModel.STAGES3 : CubeModel.STAGES2;
+      const acts = [{ label: '▶ Show me', fn: showMe, primary: true }, { label: '⏭ Do this step', fn: doStep }, { label: '📖 Lessons', fn: () => showLessons('cube') }];
+      if (CubeModel.solved(state, size)) { T.set({ stage: scrambled ? '' : 'Solved cube', steps: stages, cur: scrambled ? 0 : 99, prog: scrambled ? 0 : 1, msg: 'The cube is solved. Tap <b>Scramble</b> to mix it up, then I’ll teach you how to bring it back.', next: null, acts: [{ label: '🎲 Scramble', fn: newGame, primary: true }, { label: '📖 Lessons', fn: () => showLessons('cube') }] }); return; }
+      if (S.teacher === 'off') { T.set({ stage: '', msg: 'The teacher is resting. Switch to Ask or Live any time.', next: null, acts: [] }); return; }
+      if (planning) return;
+      if (!plan.length) return ensurePlan(coach);
+      const { m, it } = plan[0];
+      const stageItems = plan.filter(x => x.it.stage === it.stage).length;
+      const total = plan.length;
+      const reveal = S.teacher === 'live' || showHint;
+      const restOfItem = plan.filter(x => x.it === it).map(x => x.m);
+      T.set({
+        stage: 'Stage ' + (it.stage + 1) + ' of ' + stages.length + ' · ' + stages[it.stage], steps: stages, cur: it.stage,
+        prog: it.stage / stages.length + (1 / stages.length) * (1 - Math.min(1, stageItems / 30)),
+        msg: `<b>${esc(it.label)}.</b> ${it.why}${/ /.test(it.alg) ? ` Using the <b>${esc(it.mlabel)}</b>: <span class="alg">${it.alg.replace(/'/g, '′')}</span>` : ''}` + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint to see the next turn.</span>'),
+        next: reveal ? { mv: CubeModel.name(m).replace("'", '′'), how: moveHow(m) + (restOfItem.length > 1 ? `<br><span class="muted">${restOfItem.length} turns left in this step · ${total} to solve</span>` : `<br><span class="muted">${total} turns to solve</span>`) } : null,
+        acts
+      });
+      if (reveal) { arrows(m); banner.innerHTML = `<span>${esc(stages[it.stage])}: ${CubeModel.name(m).replace("'", '′')}</span>`; }
+    }
+    function hint() { hintsUsed++; if (S.teacher === 'off') { S.teacher = 'hints'; save(); T.paintMode(); $('#gameGrid').classList.remove('noteacher'); } showHint = true; ensurePlan(coach); }
+    function showMe() { hintsUsed++; ensurePlan(() => { if (plan.length) { showHint = false; doMove(plan[0].m, 'auto'); } }); }
+    function doStep() { hintsUsed++; ensurePlan(() => { if (!plan.length) return; const it = plan[0].it; plan.filter(x => x.it === it).forEach(x => queue.push({ m: x.m, user: 'auto' })); if (!anim) next(); }); }
+    function playAll() { if (!plan.length) return; if (!anim) next(); }
+    function undo() { const m = hist.pop(); if (!m) return; queue.push({ m: { k: m.k, L: m.L, q: -m.q }, user: true, undo: true }); moves = Math.max(0, moves - 1); if (!anim) next(); }
+
+    // lessons: practice a stage = scramble, then let the teacher solve everything before it
+    GAMES.cube.practice = (stage, sz) => {
+      if (sz && sz !== size) { size = sz; store.set('cube.size', size); build(); }
+      newGame(); const p = CubeModel.plan(state, size); for (const it of p) { if (it.stage >= stage) break; for (const m of it.moves) state = CubeModel.apply(state, m); }
+      recolor(); render(); plan = []; replan(); T.note('Practice: everything before “' + (size === 3 ? CubeModel.STAGES3 : CubeModel.STAGES2)[stage] + '” is done for you.');
+    };
+
+    GAMES.cube._dbg = () => ({ state: state.slice(), V: V.slice(), plan: plan.length, hist: hist.slice(), faces });
+    build(); setTimeout(() => { build(); if (o.practice != null) GAMES.cube.practice(o.practice, o.size); else newGame(); }, 30);
+    return {
+      undo, hint, newGame, coach,
+      restyle() { recolor(); },
+      resize() { const sv = state; build(); state = sv; recolor(); render(); },
+      destroy() { document.removeEventListener('keydown', keyH); stopTimer(); padEl.remove(); queue = []; }
+    };
+  }
+});
+</script>
+<script>
+/* =====================================================================
+   Slide puzzle (8, 15, 24) — row-and-column method teacher
+   ===================================================================== */
+const Slide = (() => {
+  // binary heap
+  class Heap { constructor() { this.a = []; } push(x) { const a = this.a; a.push(x); let i = a.length - 1; while (i) { const p = (i - 1) >> 1; if (a[p].f <= a[i].f) break; [a[p], a[i]] = [a[i], a[p]]; i = p; } } pop() { const a = this.a, t = a[0], l = a.pop(); if (a.length) { a[0] = l; let i = 0; for (; ;) { const L = 2 * i + 1, R = L + 1; let m = i; if (L < a.length && a[L].f < a[m].f) m = L; if (R < a.length && a[R].f < a[m].f) m = R; if (m === i) break; [a[m], a[i]] = [a[i], a[m]]; i = m; } } return t; } get size() { return this.a.length; } }
+  // Move a set of tiles to their target cells (other tiles are interchangeable), never touching locked cells.
+  // returns list of cells the blank moves into, or null
+  function place(board, N, locked, targets, w = 1, cap = 250000) {
+    const pos0 = [board.indexOf(0), ...targets.map(t => board.indexOf(t.v))];
+    const tg = targets.map(t => t.cell);
+    const h = p => { let s = 0; for (let i = 1; i < p.length; i++) { const a = p[i], b = tg[i - 1]; s += Math.abs(a % N - b % N) + Math.abs((a / N | 0) - (b / N | 0)); } return s; };
+    const H = new Heap(), seen = new Map(); const k0 = pos0.join(); seen.set(k0, null);
+    H.push({ p: pos0, g: 0, f: h(pos0) * w, k: k0 });
+    let n = 0;
+    while (H.size) {
+      const cur = H.pop(); if (h(cur.p) === 0) { const out = []; let k = cur.k; while (seen.get(k)) { const [pk, mv] = seen.get(k); out.unshift(mv); k = pk; } return out; }
+      if (++n > cap) return null;
+      const b = cur.p[0], bx = b % N, by = b / N | 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const x = bx + dx, y = by + dy; if (x < 0 || y < 0 || x >= N || y >= N) continue; const c = y * N + x; if (locked.has(c)) continue;
+        const np = cur.p.slice(); np[0] = c; const ti = cur.p.indexOf(c, 1); if (ti > 0) np[ti] = b;
+        const k = np.join(); if (seen.has(k)) continue; seen.set(k, [cur.k, c]);
+        H.push({ p: np, g: cur.g + 1, f: cur.g + 1 + h(np) * w, k });
+      }
+    }
+    return null;
+  }
+  // the teaching order: top row, left column, repeat until a 3x3 is left
+  function segments(N) {
+    const segs = []; let r = 0, c = 0;
+    while (N - r > 3) {
+      const row = []; for (let x = c; x < N; x++) row.push(r * N + x);
+      segs.push({ name: 'Row ' + (r + 1), cells: row, lockAfter: row });
+      const col = []; for (let y = r + 1; y < N; y++) col.push(y * N + c);
+      segs.push({ name: 'Column ' + (c + 1), cells: col, lockAfter: col }); r++; c++;
+    }
+    const rest = []; for (let y = r; y < N; y++) for (let x = c; x < N; x++) if (y * N + x !== N * N - 1) rest.push(y * N + x);
+    segs.push({ name: 'Last 3×3', cells: rest, last: true });
+    return segs;
+  }
+  // next teaching chunk for the current board
+  function nextChunk(board, N) {
+    const segs = segments(N), locked = new Set();
+    for (let si = 0; si < segs.length; si++) {
+      const sg = segs[si]; const ok = sg.cells.every(c => board[c] === c + 1);
+      if (ok && !sg.last) { sg.cells.forEach(c => locked.add(c)); continue; }
+      if (ok && sg.last && board[N * N - 1] === 0) return null;
+      if (sg.last) {
+        const targets = sg.cells.map(c => ({ v: c + 1, cell: c }));
+        const mv = place(board, N, locked, targets, 1, 200000) || place(board, N, locked, targets, 2, 400000);
+        return { seg: si, segs, tile: null, moves: mv || [], label: 'Finish the last 3×3' };
+      }
+      // place tiles one at a time, keeping the ones already done in this segment
+      const done = [];
+      for (const c of sg.cells) {
+        if (board[c] === c + 1 && done.length === sg.cells.indexOf(c)) { done.push(c); continue; }
+        const targets = [...done, c].map(x => ({ v: x + 1, cell: x }));
+        const mv = place(board, N, locked, targets, 1, 150000) || place(board, N, locked, targets, 2.5, 400000);
+        return { seg: si, segs, tile: c + 1, moves: mv || [], label: 'Put tile ' + (c + 1) + ' in place' };
+      }
+    }
+    return null;
+  }
+  return { place, segments, nextChunk };
+})();
+
+function makeArt(w, h, seed = 1) { // a built-in multicolour picture, no upload needed
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+  let s = seed * 9301 + 49297; const R = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  const pals = [['#14111c', '#ff5c93', '#f2c14e', '#4fd6ff', '#5fd08f', '#a77bff'], ['#0d2b45', '#203c56', '#544e68', '#8d697a', '#d08159', '#ffaa5e', '#ffd4a3'], ['#1a1c2c', '#5d275d', '#b13e53', '#ef7d57', '#ffcd75', '#a7f070', '#38b764', '#257179']][seed % 3];
+  const bg = g.createLinearGradient(0, 0, w, h); bg.addColorStop(0, pals[0]); bg.addColorStop(1, pals[1]); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+  if (seed % 3 === 0) { for (let i = 0; i < 26; i++) { g.fillStyle = pals[1 + (i % (pals.length - 1))]; g.globalAlpha = .85; const x = R() * w, y = R() * h, r = 20 + R() * w * .16; g.beginPath(); if (i % 3 === 0) g.arc(x, y, r, 0, 7); else if (i % 3 === 1) g.rect(x - r / 2, y - r / 2, r, r); else { g.moveTo(x, y - r); g.lineTo(x + r, y + r); g.lineTo(x - r, y + r); } g.fill(); } }
+  else if (seed % 3 === 1) { for (let i = 0; i < 7; i++) { g.fillStyle = pals[i % pals.length]; g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += 20) g.lineTo(x, h * (.25 + i * .1) + Math.sin(x / (60 + i * 20) + i) * h * .07); g.lineTo(w, h); g.fill(); } g.fillStyle = '#ffd4a3'; g.beginPath(); g.arc(w * .7, h * .22, h * .1, 0, 7); g.fill(); }
+  else { const n = 9; for (let y = 0; y < n; y++) for (let x = 0; x < n * w / h; x++) { g.fillStyle = pals[(x * 3 + y * 5 + (R() * 3 | 0)) % pals.length]; g.beginPath(); const sz = h / n; g.arc(x * sz + sz / 2, y * sz + sz / 2, sz * (.25 + R() * .25), 0, 7); g.fill(); g.strokeStyle = pals[(x + y) % pals.length]; g.lineWidth = 3; g.strokeRect(x * sz + 4, y * sz + 4, sz - 8, sz - 8); } }
+  g.globalAlpha = 1; return c.toDataURL('image/jpeg', .9);
+}
+function pickImage(cb) { const f = $('#fileIn'); f.value = ''; f.onchange = () => { const file = f.files[0]; if (!file) return; const r = new FileReader(); r.onload = () => cb(r.result); r.readAsDataURL(file); }; f.click(); }
+
+registerGame({
+  id: 'slide', name: 'Slide Puzzle', tag: 'Classic', desc: 'The 8, 15 and 24 puzzles, with numbers or your own photo. Learn the row-and-column method.',
+  art: () => `<svg viewBox="0 0 100 100"><rect x="8" y="8" width="84" height="84" rx="8" fill="#2a1e14"/>${[...Array(15)].map((_, i) => { const x = 12 + (i % 4) * 19.5, y = 12 + (i / 4 | 0) * 19.5; const c = TILE_STYLES[S.tileStyle]?.pal || TILE_STYLES.candy.pal; return `<rect x="${x}" y="${y}" width="18" height="18" rx="3" fill="${c[(i / 4 | 0) % c.length]}"/><text x="${x + 9}" y="${y + 13}" font-family="Bungee,Impact" font-size="10" text-anchor="middle" fill="#fff">${i + 1}</text>`; }).join('')}</svg>`,
+  how: `<p><b>Tap</b> any tile in the same row or column as the gap to slide it (and everything between) into the gap. You can also <b>swipe</b> anywhere on the board to push a tile into the gap.</p><p><b>The method:</b> finish the top row, then the left column. What's left is a smaller puzzle — repeat until a 3×3 remains, then finish it. The teacher locks the parts you've finished and shows which tile to move next.</p><p>Tiles are coloured by the row they belong in, so you can see at a glance where they go.</p>`,
+  create(host, opts, o) {
+    let N = store.get('slide.n', 4), mode = store.get('slide.mode', 'numbers'), img = null, artSeed = 0;
+    let board, hist = [], moves = 0, t0 = null, timerI = null, hintsUsed = 0, chunk = null, computing = false, showHint = false, playing = false;
+    const B = el('div', { class: 'sboard' }); host.appendChild(B);
+    const under = el('div', { class: 'underbar' }, `<button class="btn sm" data-a="show">▶ Show me</button><button class="btn sm" data-a="chunk">⏭ Do this tile</button>`); host.appendChild(under);
+    under.onclick = e => { const a = e.target.closest('[data-a]')?.dataset.a; if (a === 'show') showMe(); if (a === 'chunk') doChunk(); };
+    opts.innerHTML = `<label>Size</label><div class="seg" id="sN"><button data-n="3">8 (3×3)</button><button data-n="4">15 (4×4)</button><button data-n="5">24 (5×5)</button></div><label>Tiles</label><div class="seg" id="sM"><button data-m="numbers">Numbers</button><button data-m="picture">Picture</button></div><button class="btn sm" id="sUp">📷 Use my photo</button><button class="btn sm" id="sArt">🎨 Next picture</button>`;
+    const paint = () => { $$('#sN button', opts).forEach(b => b.classList.toggle('on', +b.dataset.n === N)); $$('#sM button', opts).forEach(b => b.classList.toggle('on', b.dataset.m === mode)); };
+    $('#sN', opts).onclick = e => { const b = e.target.closest('button'); if (b) { N = +b.dataset.n; store.set('slide.n', N); newGame(); } };
+    $('#sM', opts).onclick = e => { const b = e.target.closest('button'); if (b) { mode = b.dataset.m; store.set('slide.mode', mode); if (mode === 'picture' && !img) img = makeArt(600, 600, artSeed); layout(); } };
+    $('#sUp', opts).onclick = () => pickImage(src => { cropSquare(src, d => { img = d; mode = 'picture'; paint(); layout(); }); });
+    $('#sArt', opts).onclick = () => { artSeed++; img = makeArt(600, 600, artSeed); mode = 'picture'; paint(); layout(); };
+    function cropSquare(src, cb) { const im = new Image(); im.onload = () => { const s = Math.min(im.width, im.height), c = document.createElement('canvas'); c.width = c.height = 600; c.getContext('2d').drawImage(im, (im.width - s) / 2, (im.height - s) / 2, s, s, 0, 0, 600, 600); cb(c.toDataURL('image/jpeg', .9)); }; im.src = src; }
+
+    let tiles = [], ts = 60;
+    function layout() {
+      paint(); const r = host.getBoundingClientRect(); const size = Math.min(r.width - 24, r.height - 80); ts = size / N;
+      B.style.width = B.style.height = size + 'px'; B.style.left = (r.width - size) / 2 + 'px'; B.style.top = Math.max(10, (r.height - 60 - size) / 2) + 'px';
+      B.innerHTML = ''; tiles = [];
+      const pal = (TILE_STYLES[S.tileStyle] || TILE_STYLES.candy).pal;
+      const lockedNow = lockedCells();
+      for (const c of lockedNow) { const d = el('div', { class: 'lockcell' }); d.style.width = d.style.height = ts + 'px'; d.style.left = (c % N) * ts + 'px'; d.style.top = (c / N | 0) * ts + 'px'; B.appendChild(d); }
+      for (let v = 1; v < N * N; v++) {
+        const t = el('div', { class: 'tile', 'data-v': v }); const g = Math.max(2, ts * .04);
+        t.style.width = t.style.height = (ts - g * 2) + 'px'; t.style.left = t.style.top = g + 'px'; t.style.fontSize = ts * .36 + 'px';
+        const tr = (v - 1) / N | 0, tc = (v - 1) % N;
+        if (mode === 'picture' && img) { t.style.backgroundImage = `url(${img})`; t.style.backgroundSize = `${N * ts}px ${N * ts}px`; t.style.backgroundPosition = `${-tc * ts - g}px ${-tr * ts - g}px`; t.innerHTML = `<span class="n" style="font-size:.45em;position:absolute;left:8%;top:4%;opacity:.85">${v}</span>`; }
+        else { t.style.background = pal[tr % pal.length]; t.innerHTML = `<span class="n">${v}</span>`; if (S.tileStyle === 'mono') t.style.color = '#3a3226'; }
+        B.appendChild(t); tiles[v] = t;
+      }
+      place();
+    }
+    function place() { board.forEach((v, i) => { if (!v) return; const t = tiles[v]; t.style.transform = `translate(${(i % N) * ts}px,${(i / N | 0) * ts}px)`; t.classList.toggle('ok', v === i + 1); }); }
+    function lockedCells() { const L = []; if (!board) return L; for (const sg of Slide.segments(N)) { if (sg.last) break; if (sg.cells.every(c => board[c] === c + 1)) L.push(...sg.cells); else break; } return L; }
+
+    function slideBlankTo(c, user) { // c adjacent to blank
+      const b = board.indexOf(0); board[b] = board[c]; board[c] = 0; hist.push(b); moves++; beep('tick');
+      if (user && !t0) startTimer();
+      teacherSaw(c, user);
+    }
+    function tapCell(c, user = true) {
+      const b = board.indexOf(0), bx = b % N, by = b / N | 0, x = c % N, y = c / N | 0;
+      if (c === b || (x !== bx && y !== by)) { beep('bad'); return; }
+      const step = x === bx ? (y > by ? N : -N) : (x > bx ? 1 : -1);
+      for (let p = b + step; ; p += step) { slideBlankTo(p, user); if (p === c) break; }
+      after();
+    }
+    function after() { place(); stats(); if (isSolved()) return win(); refreshLocks(); coach(); }
+    let lastLockCount = 0;
+    function refreshLocks() { const n = lockedCells().length; if (n !== lastLockCount) { if (n > lastLockCount && hist.length) { T.note('🔒 ' + (n - lastLockCount) + ' tiles locked in — that part is finished. Don’t move them again.'); beep('snap'); } lastLockCount = n; layout(); } }
+    const isSolved = () => board.every((v, i) => i === N * N - 1 ? v === 0 : v === i + 1);
+    ptr(B, {
+      tap(e) { const t = e.target.closest('.tile'); if (!t) return; tapCell(board.indexOf(+t.dataset.v)); },
+      up(e, { start }) {
+        const dx = e.clientX - start.x, dy = e.clientY - start.y; if (Math.hypot(dx, dy) < 20) { const t = start.target.closest?.('.tile'); if (t) tapCell(board.indexOf(+t.dataset.v)); return; }
+        const b = board.indexOf(0), bx = b % N, by = b / N | 0; let c;
+        if (Math.abs(dx) > Math.abs(dy)) c = dx > 0 ? (bx > 0 ? b - 1 : -1) : (bx < N - 1 ? b + 1 : -1); else c = dy > 0 ? (by > 0 ? b - N : -1) : (by < N - 1 ? b + N : -1);
+        if (c >= 0) tapCell(c);
+      }
+    });
+    const keyH = e => { const b = board.indexOf(0), bx = b % N, by = b / N | 0; const m = { ArrowLeft: bx < N - 1 ? b + 1 : -1, ArrowRight: bx > 0 ? b - 1 : -1, ArrowUp: by < N - 1 ? b + N : -1, ArrowDown: by > 0 ? b - N : -1 }[e.key]; if (m != null) { e.preventDefault(); if (m >= 0) tapCell(m); } };
+    document.addEventListener('keydown', keyH);
+
+    function newGame() {
+      board = [...Array(N * N - 1)].map((_, i) => i + 1).concat(0);
+      let b = N * N - 1, prev = -1;
+      for (let i = 0; i < 60 * N * N; i++) { const nb = [b - 1, b + 1, b - N, b + N].filter(c => c >= 0 && c < N * N && (c % N === b % N || (c / N | 0) === (b / N | 0)) && c !== prev); const c = nb[rnd(nb.length)]; board[b] = board[c]; board[c] = 0; prev = b; b = c; }
+      hist = []; moves = 0; stopTimer(); hintsUsed = 0; chunk = null; lastLockCount = 0; layout(); stats(); lastLockCount = lockedCells().length; coach();
+      T.note(`New ${N * N - 1} puzzle. ` + (N > 3 ? 'Plan: top row, then left column, then repeat on what’s left.' : 'A 3×3 is small enough to solve in one go — the teacher shows the shortest way.'));
+    }
+    function startTimer() { t0 = performance.now(); clearInterval(timerI); timerI = setInterval(stats, 500); }
+    function stopTimer() { clearInterval(timerI); t0 = null; }
+    function stats() { $('#gStats').innerHTML = `<span>Moves <b>${moves}</b></span><span>Time <b>${t0 ? fmtTime(performance.now() - t0) : '0:00'}</b></span>`; }
+    function win() {
+      const time = t0 ? performance.now() - t0 : null; stopTimer(); playing = false;
+      const r = award('slide', `${N * N - 1}`, { time, moves, stars: { 3: 2, 4: 5, 5: 9 }[N], hints: hintsUsed });
+      T.set({ stage: 'Solved', msg: 'Solved! Every tile is home.', next: null, prog: 1, steps: Slide.segments(N).map(s => s.name), cur: 99 });
+      winOverlay(host, { lines: [`${N * N - 1} puzzle in ${moves} moves${time ? ', ' + fmtTime(time) : ''}`, r.newBest && time ? 'New best time!' : ''], earned: r.earned, again: newGame });
+    }
+    function undo() { const c = hist.pop(); if (c == null) return; const b = board.indexOf(0); board[b] = board[c]; board[c] = 0; moves = Math.max(0, moves - 1); chunk = null; place(); stats(); refreshLocks(); coach(); }
+
+    // teacher
+    function teacherSaw(c, user) { if (chunk && chunk.moves[0] === c) { chunk.moves.shift(); if (!chunk.moves.length) chunk = null; } else chunk = null; showHint = false; }
+    function ensure(cb) {
+      if (chunk && chunk.moves.length) return cb();
+      if (computing) return; computing = true;
+      setTimeout(() => { chunk = Slide.nextChunk(board, N); computing = false; cb(); }, 10);
+    }
+    function clearHint() { tiles.forEach(t => { if (!t) return; t.classList.remove('hint'); const a = t.querySelector('.ha'); a && a.remove(); }); }
+    function coach(why) {
+      if (why === 'mode') $('#gameGrid').classList.toggle('noteacher', S.teacher === 'off' && S.autoHide);
+      clearHint();
+      const segs = Slide.segments(N);
+      if (S.teacher === 'off') { T.set({ msg: 'The teacher is resting.', next: null, acts: [] }); return; }
+      ensure(() => {
+        clearHint(); if (!chunk || !chunk.moves.length) return;
+        const c = chunk.moves[0], v = board[c], b = board.indexOf(0);
+        const dir = c === b - 1 ? '→' : c === b + 1 ? '←' : c === b - N ? '↓' : '↑';
+        const sg = segs[chunk.seg];
+        const reveal = S.teacher === 'live' || showHint;
+        const tips = sg.last ? 'Only a 3×3 is left. Cycle tiles around the gap to bring them home; the teacher picks the shortest route.' :
+          chunk.tile && sg.cells.indexOf(chunk.tile - 1) === sg.cells.length - 1 ? `The last tile of a ${sg.name.startsWith('Row') ? 'row' : 'column'} is the tricky one: you have to move a finished tile out of the way for a moment and loop it back. Watch how it's done.` :
+            `Walk the gap around tile ${chunk.tile} so you can push it toward its spot, without moving the locked tiles.`;
+        T.set({
+          stage: (sg.last ? 'Final stage' : 'Stage ' + (chunk.seg + 1) + ' of ' + segs.length) + ' · ' + sg.name, steps: segs.map(s => s.name), cur: chunk.seg, prog: chunk.seg / segs.length,
+          msg: `<b>${esc(chunk.label)}.</b> ${tips}` + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint to see which tile to move.</span>'),
+          next: reveal ? { mv: String(v), how: `Slide tile <b>${v}</b> ${dir} into the gap. <span class="muted">${chunk.moves.length} moves left for this ${chunk.tile ? 'tile' : 'stage'}.</span>` } : null,
+          acts: [{ label: '▶ Show me', fn: showMe, primary: true }, { label: '⏭ Do this ' + (chunk.tile ? 'tile' : 'stage'), fn: doChunk }, { label: '📖 Lessons', fn: () => showLessons('slide') }]
+        });
+        if (reveal && tiles[v]) { tiles[v].classList.add('hint'); tiles[v].appendChild(el('span', { class: 'ha' }, dir)); }
+      });
+    }
+    function hint() { hintsUsed++; if (S.teacher === 'off') { S.teacher = 'hints'; save(); T.paintMode(); $('#gameGrid').classList.remove('noteacher'); } showHint = true; coach(); }
+    function showMe() { hintsUsed++; ensure(() => { if (chunk && chunk.moves.length) { const c = chunk.moves[0]; tapCell(c, 'auto'); } }); }
+    function doChunk() {
+      hintsUsed++; if (playing) return;
+      ensure(() => { if (!chunk) return; playing = true; const ms = chunk.moves.slice(); const go = () => { if (!ms.length || !playing) { playing = false; refreshLocks(); coach(); return; } const c = ms.shift(); slideBlankTo(c, 'auto'); place(); stats(); if (isSolved()) return win(); setTimeout(go, 140 * SPEED()); }; go(); });
+    }
+    setTimeout(newGame, 30);
+    return { undo, hint, newGame, coach, restyle: layout, resize: layout, destroy() { playing = false; document.removeEventListener('keydown', keyH); stopTimer(); } };
+  }
+});
+</script>
+<script>
+/* =====================================================================
+   Jigsaw — your photo cut into 50, 100 or 500 interlocking pieces
+   ===================================================================== */
+registerGame({
+  id: 'jigsaw', name: 'Jigsaw Studio', tag: 'Your photos', desc: 'Upload any picture and it’s cut into 50, 100 or 500 real interlocking pieces. Drag to build, tap to rotate.',
+  art: () => `<svg viewBox="0 0 100 100"><g stroke="#14111c" stroke-width="2"><path d="M14 14h28v8a6 6 0 1 0 0 12v8H14z" fill="#ff5c93"/><path d="M48 14h36v28H64a6 6 0 1 1-12 0h-4v-8a6 6 0 1 0 0-12z" fill="#f2c14e"/><path d="M14 48h28v6a6 6 0 1 1 0 12v20H14z" fill="#4fd6ff"/><path d="M48 48h4a6 6 0 1 0 12 0h20v38H48V66a6 6 0 1 0 0-12z" fill="#5fd08f"/></g></svg>`,
+  how: `<p><b>Pick a picture</b> — one of yours, a fresh photo, or one of the built-in artworks — and how many pieces: 50, 100 or 500.</p><p><b>Drag</b> a piece to move it. When two pieces that belong together get close they snap and move as one. Pieces dropped near their spot in the frame lock in place.</p><p><b>Tap</b> a piece to turn it 90° (when rotation is on). <b>Pinch</b> or scroll to zoom, and drag the empty felt to pan.</p><p><b>Edges</b> sorts all the border pieces into the empty frame, which is how most people start.</p>`,
+  create(host, opts, o) {
+    let count = store.get('jig.count', 100), src = null, artSeed = rnd(30);
+    const cv = el('canvas', { class: 'gcanvas' }); host.appendChild(cv); const g = cv.getContext('2d');
+    const under = el('div', { class: 'underbar' }, `<button class="btn sm" data-a="edges">🧩 Edges</button><button class="btn sm" data-a="spread">✋ Spread out</button><button class="btn sm" data-a="fit">⤢ Fit</button><button class="btn sm" data-a="peek">👁 Peek</button><button class="btn sm" data-a="show">▶ Show me</button>`); host.appendChild(under);
+    let W = 0, H = 0, cols = 0, rows = 0, pw = 0, ph = 0, pad = 0, pieces = [], groups = [], img = null;
+    let cam = { z: 1, x: 0, y: 0 }, dpr = Math.min(2, window.devicePixelRatio || 1), t0 = null, timerI = null, hintsUsed = 0, hl = null, peek = false, idleT = null, done = false;
+    opts.innerHTML = `<label>Pieces</label><div class="seg" id="jN"><button data-n="50">50</button><button data-n="100">100</button><button data-n="500">500</button></div><button class="btn sm" id="jUp">📷 Use my photo</button><button class="btn sm" id="jArt">🎨 Built-in art</button><button class="btn sm" id="jRot">Rotation</button><button class="btn sm" id="jGhost">Ghost image</button>`;
+    const paintOpts = () => { $$('#jN button', opts).forEach(b => b.classList.toggle('on', +b.dataset.n === count)); $('#jRot', opts).classList.toggle('on', S.jigRotate); $('#jRot', opts).textContent = 'Rotation: ' + (S.jigRotate ? 'on' : 'off'); $('#jGhost', opts).classList.toggle('on', S.jigGhost); };
+    $('#jN', opts).onclick = e => { const b = e.target.closest('button'); if (b) { count = +b.dataset.n; store.set('jig.count', count); start(); } };
+    $('#jUp', opts).onclick = () => pickImage(d => { src = d; start(); });
+    $('#jArt', opts).onclick = () => { src = null; artSeed++; start(); };
+    $('#jRot', opts).onclick = () => { S.jigRotate = !S.jigRotate; save(); paintOpts(); start(); };
+    $('#jGhost', opts).onclick = () => { S.jigGhost = !S.jigGhost; save(); paintOpts(); draw(); };
+    under.onclick = e => { const a = e.target.closest('[data-a]')?.dataset.a; if (a === 'edges') edges(); if (a === 'spread') spread(); if (a === 'fit') fit(); if (a === 'peek') { peek = !peek; draw(); } if (a === 'show') showMe(); };
+
+    function sizeCanvas() { const r = host.getBoundingClientRect(); cv.width = r.width * dpr; cv.height = r.height * dpr; cv.style.width = r.width + 'px'; cv.style.height = r.height + 'px'; }
+    function start() {
+      paintOpts(); done = false; stopTimer(); hintsUsed = 0; T.set({ msg: 'Cutting the pieces…' });
+      const im = new Image(); im.onload = () => setTimeout(() => cut(im), 20);
+      im.src = src || makeArt(1600, 1200, artSeed);
+    }
+    function cut(im) {
+      if (dead) return;
+      const maxSide = count >= 500 ? 2000 : count >= 100 ? 1400 : 1100;
+      const k = Math.min(1, maxSide / Math.max(im.width, im.height)); W = Math.round(im.width * k); H = Math.round(im.height * k);
+      img = document.createElement('canvas'); img.width = W; img.height = H; img.getContext('2d').drawImage(im, 0, 0, W, H);
+      cols = Math.max(2, Math.round(Math.sqrt(count * W / H))); rows = Math.max(2, Math.round(count / cols)); pw = W / cols; ph = H / rows; pad = Math.ceil(Math.max(pw, ph) * 0.3);
+      const L = Math.min(pw, ph);
+      const hE = [...Array(rows + 1)].map((_, r) => [...Array(cols)].map(() => (r === 0 || r === rows) ? null : { b: Math.random() < .5 ? 1 : -1, j: (Math.random() - .5) * .08 }));
+      const vE = [...Array(rows)].map(() => [...Array(cols + 1)].map((_, c) => (c === 0 || c === cols) ? null : { b: Math.random() < .5 ? 1 : -1, j: (Math.random() - .5) * .08 }));
+      const TPL = [[.40, .02, .40, .07, .37, .12], [.32, .20, .40, .26, .50, .26], [.60, .26, .68, .20, .63, .12], [.60, .07, .60, .02, .66, 0]];
+      // canonical segments of an edge of length len (t along, n across in units of the shorter side)
+      const segs = (len, e) => { const s = []; if (!e) return [[0, 0, len, 0, len, 0]]; const j = e.j * len, c = len / 2 - .5 * L; s.push([0, 0, c + .34 * L + j, 0, c + .34 * L + j, 0]); for (const q of TPL) s.push([c + q[0] * L + j, q[1] * L * e.b, c + q[2] * L + j, q[3] * L * e.b, c + q[4] * L + j, q[5] * L * e.b]); s.push([c + .66 * L + j, 0, len, 0, len, 0]); return s; };
+      const trace = (ctx, sg, map, rev) => {
+        if (!rev) { for (const s of sg) { const a = map(s[0], s[1]), b = map(s[2], s[3]), c = map(s[4], s[5]); ctx.bezierCurveTo(a[0], a[1], b[0], b[1], c[0], c[1]); } }
+        else { for (let i = sg.length - 1; i >= 0; i--) { const s = sg[i], st = i ? [sg[i - 1][4], sg[i - 1][5]] : [0, 0]; const a = map(s[2], s[3]), b = map(s[0], s[1]), c = map(st[0], st[1]); ctx.bezierCurveTo(a[0], a[1], b[0], b[1], c[0], c[1]); } }
+      };
+      pieces = [];
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const cw = Math.ceil(pw + 2 * pad), ch = Math.ceil(ph + 2 * pad); const pc = document.createElement('canvas'); pc.width = cw; pc.height = ch; const x = pc.getContext('2d');
+        const path = new Path2D(); const ox = pad, oy = pad; path.moveTo(ox, oy);
+        trace(path, segs(pw, hE[r][c]), (t, n) => [ox + t, oy + n], false);
+        trace(path, segs(ph, vE[r][c + 1]), (t, n) => [ox + pw + n, oy + t], false);
+        trace(path, segs(pw, hE[r + 1][c]), (t, n) => [ox + t, oy + ph + n], true);
+        trace(path, segs(ph, vE[r][c]), (t, n) => [ox + n, oy + t], true);
+        path.closePath();
+        x.save(); x.clip(path); x.drawImage(img, -(c * pw) + pad, -(r * ph) + pad); x.restore();
+        x.lineWidth = 2.2; x.strokeStyle = 'rgba(255,255,255,.28)'; x.save(); x.translate(-.8, -.8); x.stroke(path); x.restore();
+        x.lineWidth = 1.4; x.strokeStyle = 'rgba(0,0,0,.55)'; x.stroke(path);
+        const border = r === 0 || c === 0 || r === rows - 1 || c === cols - 1;
+        pieces.push({ i: pieces.length, r, c, hx: c * pw, hy: r * ph, cv: pc, border, corner: (r === 0 || r === rows - 1) && (c === 0 || c === cols - 1), g: null });
+      }
+      groups = pieces.map(p => { const G = { pcs: [p], x: 0, y: 0, rot: S.jigRotate ? rnd(4) : 0, ref: [p.hx, p.hy], locked: false }; p.g = G; return G; });
+      spread(true); sizeCanvas(); fit(); stats();
+      T.note(`Cut into ${pieces.length} pieces (${cols} × ${rows}). ${pieces.filter(p => p.border).length} of them are edge pieces.`);
+      coach();
+    }
+    // world position of a piece's top-left (home corner) in group G
+    const R = (rot, x, y) => [[x, y], [-y, x], [-x, -y], [y, -x]][((rot % 4) + 4) % 4];
+    const pos = (G, p) => { const [dx, dy] = R(G.rot, p.hx - G.ref[0], p.hy - G.ref[1]); return [G.x + dx, G.y + dy]; };
+    function spread(initial) {
+      const loose = groups.filter(G => !G.locked); shuffle(loose);
+      const m = Math.max(pw, ph) * 1.45; const area = loose.reduce((a, G) => a + G.pcs.length, 0) * m * m * 1.15;
+      // ring around the frame: grow margin until it holds the area
+      let mg = m; while ((W + 2 * mg) * (H + 2 * mg) - W * H < area) mg += m * .5;
+      const slots = []; for (let y = -mg; y < H + mg - m * .3; y += m) for (let x = -mg; x < W + mg - m * .3; x += m) { if (x > -m * .9 && x < W - m * .1 && y > -m * .9 && y < H - m * .1) continue; slots.push([x + (Math.random() - .5) * m * .2, y + (Math.random() - .5) * m * .2]); }
+      shuffle(slots); let si = 0;
+      for (const G of loose) { const s = slots[si++ % slots.length]; const [px, py] = pos({ ...G, x: 0, y: 0 }, G.pcs[0]); G.x = s[0] - px + (G.rot === 1 || G.rot === 2 ? pw : 0); G.y = s[1] - py + (G.rot >= 2 ? ph : 0); }
+      groups = [...groups.filter(G => G.locked), ...loose]; if (!initial) { draw(); beep('pick'); }
+    }
+    function edges() {
+      const loose = groups.filter(G => !G.locked && G.pcs.length === 1 && G.pcs[0].border); if (!loose.length) { toast('No loose edge pieces left'); return; }
+      // sort them into the empty frame: top-edge pieces first, then right, bottom, left — corners lead
+      const side = p => p.r === 0 ? 0 : p.c === cols - 1 ? 1 : p.r === rows - 1 ? 2 : 3;
+      loose.sort((x, y) => side(x.pcs[0]) - side(y.pcs[0]) || (y.pcs[0].corner - x.pcs[0].corner) || Math.random() - .5);
+      let m = Math.max(pw, ph) * 1.3, gc = Math.floor(W / m), gr = Math.floor(H / m);
+      while (gc * gr < loose.length && m > Math.max(pw, ph) * .9) { m *= .93; gc = Math.floor(W / m); gr = Math.floor(H / m); }
+      const inFrame = gc * gr >= loose.length;
+      loose.forEach((G, i) => {
+        let pt; if (inFrame) pt = [(i % gc) * m + (m - pw) / 2, (i / gc | 0) * m + (m - ph) / 2];
+        else { const per = Math.ceil(loose.length / 2); pt = i < per ? [-m * 1.2 + (i % per) * (W + 2 * m) / per, -m * 1.4] : [-m * 1.2 + ((i - per) % per) * (W + 2 * m) / per, H + m * .4]; }
+        const [px, py] = pos({ ...G, x: 0, y: 0 }, G.pcs[0]); G.x = pt[0] - px + (G.rot === 1 || G.rot === 2 ? pw : 0); G.y = pt[1] - py + (G.rot >= 2 ? ph : 0);
+        groups.splice(groups.indexOf(G), 1); groups.push(G);
+      });
+      // nudge any other loose pieces out of the frame so the edges have room
+      if (inFrame) for (const G of groups) { if (G.locked || loose.includes(G)) continue; const [x, y] = pos(G, G.pcs[0]); if (x > -pw && x < W && y > -ph && y < H) { G.y += (y < H / 2 ? -1 : 1) * (H / 2 + ph); } }
+      draw(); beep('pick'); T.note('All loose edge pieces are sorted into the empty frame — top edge first, then right, bottom and left. Corners lead each group. Drag them out to their spots to build the border.');
+    }
+    function bounds() { let x0 = 0, y0 = 0, x1 = W, y1 = H; for (const G of groups) for (const p of G.pcs) { const [x, y] = pos(G, p); x0 = Math.min(x0, x - pw); y0 = Math.min(y0, y - ph); x1 = Math.max(x1, x + pw * 2); y1 = Math.max(y1, y + ph * 2); } return [x0, y0, x1, y1]; }
+    function fit() { const [x0, y0, x1, y1] = bounds(); const r = host.getBoundingClientRect(); const z = Math.min(r.width / (x1 - x0), (r.height - 56) / (y1 - y0)) * .98; cam = { z, x: (r.width - (x1 - x0) * z) / 2 - x0 * z, y: (r.height - 56 - (y1 - y0) * z) / 2 - y0 * z }; draw(); }
+    const toWorld = (sx, sy) => [(sx - cam.x) / cam.z, (sy - cam.y) / cam.z];
+
+    let raf = 0; function draw() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(); }); }
+    function paint() {
+      if (!img) return; const r = host.getBoundingClientRect();
+      g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, r.width, r.height);
+      g.setTransform(dpr * cam.z, 0, 0, dpr * cam.z, dpr * cam.x, dpr * cam.y);
+      g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(0, 0, W, H);
+      if (S.jigGhost || peek) { g.globalAlpha = peek ? .9 : .16; g.drawImage(img, 0, 0); g.globalAlpha = 1; }
+      g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 2 / cam.z; g.strokeRect(0, 0, W, H);
+      if (peek) return;
+      for (const G of groups) {
+        for (const p of G.pcs) {
+          const [x, y] = pos(G, p); g.save(); g.translate(x, y); g.rotate(G.rot * Math.PI / 2);
+          if (!G.locked && G === dragG) { g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 14; g.shadowOffsetY = 6; }
+          g.drawImage(p.cv, -pad, -pad); g.restore();
+        }
+      }
+      if (hl) {
+        const G = hl.p.g, [x, y] = pos(G, hl.p); const pulse = .5 + .5 * Math.sin(performance.now() / 180);
+        g.save(); g.translate(x, y); g.rotate(G.rot * Math.PI / 2); g.strokeStyle = `rgba(255,255,255,${.5 + pulse * .5})`; g.lineWidth = 5 / cam.z; g.strokeRect(-4, -4, pw + 8, ph + 8); g.restore();
+        g.setLineDash([10 / cam.z, 8 / cam.z]); g.strokeStyle = '#f2c14e'; g.lineWidth = 4 / cam.z; g.strokeRect(hl.p.hx, hl.p.hy, pw, ph); g.setLineDash([]);
+        draw();
+      }
+    }
+
+    // ----- input -----
+    let dragG = null, dragOff = null, panStart = null, pinch = null, downAt = null;
+    function hit(wx, wy) {
+      for (let i = groups.length - 1; i >= 0; i--) {
+        const G = groups[i]; const [lx, ly] = R(-G.rot, wx - G.x, wy - G.y); const hx = lx + G.ref[0], hy = ly + G.ref[1];
+        for (const p of G.pcs) if (hx >= p.hx - pw * .12 && hx <= p.hx + pw * 1.12 && hy >= p.hy - ph * .12 && hy <= p.hy + ph * 1.12) return G;
+      }
+      return null;
+    }
+    ptr(cv, {
+      down(e) {
+        const r = cv.getBoundingClientRect(); const [wx, wy] = toWorld(e.clientX - r.left, e.clientY - r.top); downAt = [wx, wy];
+        const G = hit(wx, wy); idle();
+        if (G && !G.locked) { dragG = G; dragOff = [wx - G.x, wy - G.y]; groups.splice(groups.indexOf(G), 1); groups.push(G); if (!t0) startTimer(); beep('pick'); draw(); }
+        else { dragG = null; panStart = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y }; }
+      },
+      move(e) {
+        if (pinch) return; const r = cv.getBoundingClientRect();
+        if (dragG) { const [wx, wy] = toWorld(e.clientX - r.left, e.clientY - r.top); dragG.x = wx - dragOff[0]; dragG.y = wy - dragOff[1]; draw(); }
+        else if (panStart) { cam.x = panStart.cx + e.clientX - panStart.x; cam.y = panStart.cy + e.clientY - panStart.y; draw(); }
+      },
+      up() { if (dragG) drop(dragG); dragG = null; panStart = null; draw(); },
+      tap(e) {
+        const G = dragG; dragG = null; panStart = null;
+        if (G && S.jigRotate && !G.locked) { const [cx, cy] = downAt; const nx = cx + -(G.y - cy), ny = cy + (G.x - cx); G.x = nx; G.y = ny; G.rot = (G.rot + 1) % 4; beep('tick'); drop(G); }
+        draw();
+      },
+      multi(phase, pts) {
+        const r = cv.getBoundingClientRect();
+        if (phase === 'start' || (phase === 'move' && !pinch)) { if (dragG) { drop(dragG); dragG = null; } panStart = null; const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), m: [(a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top], cam: { ...cam } }; return; }
+        if (phase === 'end') { pinch = null; return; }
+        const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y), m = [(a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top];
+        const z = clamp(pinch.cam.z * d / pinch.d, .05, 6); const wx = (pinch.m[0] - pinch.cam.x) / pinch.cam.z, wy = (pinch.m[1] - pinch.cam.y) / pinch.cam.z;
+        cam = { z, x: m[0] - wx * z, y: m[1] - wy * z }; draw();
+      }
+    });
+    cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); const sx = e.clientX - r.left, sy = e.clientY - r.top; const [wx, wy] = toWorld(sx, sy); const z = clamp(cam.z * Math.exp(-e.deltaY * .0015), .05, 6); cam = { z, x: sx - wx * z, y: sy - wy * z }; draw(); }, { passive: false });
+
+    function merge(A, B) { // move A's pieces into B (same rotation, already aligned)
+      for (const p of A.pcs) { p.g = B; B.pcs.push(p); } groups.splice(groups.indexOf(A), 1);
+    }
+    function drop(G) {
+      const tol = Math.max(pw, ph) * .22 + 10 / cam.z; let snapped = false;
+      // frame
+      if (G.rot === 0) { const p = G.pcs[0], [x, y] = pos(G, p); if (Math.hypot(x - p.hx, y - p.hy) < tol) { G.x += p.hx - x; G.y += p.hy - y; G = lock(G); snapped = true; } }
+      // neighbours
+      for (let again = true; again;) {
+        again = false;
+        outer: for (const p of G.pcs) for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const r2 = p.r + dr, c2 = p.c + dc; if (r2 < 0 || c2 < 0 || r2 >= rows || c2 >= cols) continue; const q = pieces[r2 * cols + c2]; const H2 = q.g; if (H2 === G || H2.rot !== G.rot) continue;
+          const want = pos(G, q), have = pos(H2, q); if (Math.hypot(want[0] - have[0], want[1] - have[1]) < tol) {
+            G.x += have[0] - want[0]; G.y += have[1] - want[1];
+            // re-express G in H2's frame and merge
+            if (H2.locked || G.locked) { const L = H2.locked ? H2 : G, O = L === H2 ? G : H2; merge(O, L); if (L === H2) G = H2; }
+            else { merge(G, H2); G = H2; }
+            snapped = true; again = true; break outer;
+          }
+        }
+      }
+      if (snapped) { beep('snap'); buzz(12); if (hl && hl.p.g.locked) hl = null; }
+      draw(); stats(); checkWin(); coachSoon();
+    }
+    function lock(G) {
+      G.locked = true; G.rot = 0; const p = G.pcs[0]; G.x = p.hx; G.y = p.hy; G.ref = [p.hx, p.hy];
+      const L = groups.find(x => x.locked && x !== G); if (L) { // put all locked pieces in one frame group
+        for (const q of G.pcs) { q.g = L; L.pcs.push(q); } groups.splice(groups.indexOf(G), 1); G = L;
+      }
+      groups.splice(groups.indexOf(G), 1); groups.unshift(G); return G;
+    }
+    function placedCount() { const L = groups.find(G => G.locked); return L ? L.pcs.length : 0; }
+    function checkWin() {
+      if (done) return;
+      if (groups.length === 1 && !groups[0].locked) { const G = groups[0]; G.rot = 0; lock(G); draw(); }
+      if (groups.length === 1 && groups[0].locked) {
+        done = true; const time = t0 ? performance.now() - t0 : null; stopTimer();
+        const r = award('jigsaw', pieces.length + ' pc', { time, stars: count >= 500 ? 25 : count >= 100 ? 10 : 5, hints: hintsUsed });
+        T.set({ stage: 'Complete', msg: 'Every piece is in. Beautiful!', next: null, prog: 1 });
+        winOverlay(host, { title: 'Complete!', lines: [`${pieces.length} pieces${time ? ' in ' + fmtTime(time) : ''}`], earned: r.earned, again: start });
+      }
+    }
+    function startTimer() { t0 = performance.now(); clearInterval(timerI); timerI = setInterval(stats, 1000); }
+    function stopTimer() { clearInterval(timerI); t0 = null; }
+    function stats() { $('#gStats').innerHTML = `<span>Placed <b>${placedCount()}/${pieces.length}</b></span><span>Time <b>${t0 ? fmtTime(performance.now() - t0) : '0:00'}</b></span>`; }
+
+    // ----- teacher -----
+    function suggest() {
+      const L = groups.find(G => G.locked); const loose = pieces.filter(p => !p.g.locked);
+      if (!loose.length) return null;
+      const bordersLeft = loose.filter(p => p.border);
+      // prefer pieces that touch something already placed; corners first; then border; then any
+      const touches = p => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => { const r = p.r + a, c = p.c + b; return r >= 0 && c >= 0 && r < rows && c < cols && pieces[r * cols + c].g.locked; });
+      const pool = bordersLeft.length ? bordersLeft : loose;
+      return pool.find(p => p.corner && !L) || pool.find(touches) || pool.find(p => p.corner) || pool[0];
+    }
+    let coachT = null, dead = false; const coachSoon = () => { clearTimeout(coachT); coachT = setTimeout(coach, 400); };
+    function idle() { clearTimeout(idleT); if (hl && !hl.sticky) { hl = null; draw(); } if (S.teacher === 'live') idleT = setTimeout(() => { const p = suggest(); if (p && !done) { hl = { p }; draw(); T.note('Here’s one to try: the glowing piece goes in the dashed gold spot.'); } }, 9000); }
+    function coach(why) {
+      if (dead) return;
+      if (why === 'mode') $('#gameGrid').classList.toggle('noteacher', S.teacher === 'off' && S.autoHide);
+      if (!pieces.length) return;
+      const placed = placedCount(), nb = pieces.filter(p => p.border).length, bPlaced = pieces.filter(p => p.border && p.g.locked).length;
+      const steps = ['Sort edges', 'Build the frame', 'Fill by colour', 'Last pieces'];
+      let st = bPlaced === 0 ? 0 : bPlaced < nb ? 1 : placed < pieces.length * .8 ? 2 : 3;
+      const msgs = [
+        'Start with the <b>edges</b>: they have one flat side, and corners have two. Tap <b>🧩 Edges</b> and I’ll line them up beside the frame for you. Find the four corners first.',
+        `Building the frame: <b>${bPlaced} of ${nb}</b> edge pieces are in. Match the colours along the flat sides and work your way round from a corner.`,
+        `The frame is done! Now sort what’s left into colour families — sky, shadows, bright spots — and build each patch, then join it to the frame. ${placed} of ${pieces.length} placed.`,
+        `Nearly there: ${pieces.length - placed} pieces left. Look at the shape of each gap — the tabs and blanks tell you which piece fits.`
+      ];
+      if (S.teacher === 'off') { T.set({ msg: 'The teacher is resting.', next: null, acts: [] }); return; }
+      T.set({ stage: 'Stage ' + (st + 1) + ' of 4 · ' + steps[st], steps, cur: st, prog: placed / pieces.length, msg: msgs[st] + (S.jigRotate ? ' <span class="muted">Rotation is on: tap a piece to turn it.</span>' : ''), next: null,
+        acts: [{ label: '💡 Find a piece', fn: hint, primary: true }, { label: '🧩 Line up edges', fn: edges }, { label: '▶ Place one for me', fn: showMe }] });
+    }
+    function hint() { hintsUsed++; const p = suggest(); if (!p) return; hl = { p, sticky: true }; const [x, y] = pos(p.g, p); T.note('Look for the glowing piece — it goes in the dashed gold spot.'); draw(); setTimeout(() => { if (hl && hl.p === p) { hl = null; draw(); } }, 6000); }
+    function showMe() {
+      hintsUsed++; const p = suggest(); if (!p) return; const G = p.g; if (G.locked) return;
+      const from = [G.x, G.y, G.rot]; const tt = performance.now(), D = 600 * SPEED();
+      // animate to its home in the frame
+      const targetRot = 0; G.rot = targetRot; const [hx, hy] = pos({ ...G, x: 0, y: 0 }, p); const to = [p.hx - hx, p.hy - hy];
+      const step = n => { const u = Math.min(1, (n - tt) / D), e = 1 - Math.pow(1 - u, 3); G.x = from[0] + (to[0] - from[0]) * e; G.y = from[1] + (to[1] - from[1]) * e; draw(); if (u < 1) requestAnimationFrame(step); else drop(G); };
+      groups.splice(groups.indexOf(G), 1); groups.push(G); requestAnimationFrame(step);
+    }
+    function newGame() { start(); }
+    const ro = new ResizeObserver(() => { sizeCanvas(); draw(); }); ro.observe(host);
+    setTimeout(() => { sizeCanvas(); start(); }, 30);
+    return { hint, newGame, coach, undo() { toast('Jigsaw moves can’t be undone — just drag the piece back.'); }, resize() { sizeCanvas(); draw(); }, restyle: draw, destroy() { dead = true; ro.disconnect(); stopTimer(); clearTimeout(idleT); clearTimeout(coachT); } };
+  }
+});
+</script>
+<script>
+/* =====================================================================
+   More tables: Lights Out, Tower of Hanoi, Flood, Ball Sort
+   ===================================================================== */
+function gridHost(host) { const b = el('div', { class: 'sboard' }); host.appendChild(b); return b; }
+function fitSquare(host, B, aspect = 1, reserve = 70) { const r = host.getBoundingClientRect(); let w = r.width - 24, h = (r.height - reserve); if (w / h > aspect) w = h * aspect; else h = w / aspect; B.style.width = w + 'px'; B.style.height = h + 'px'; B.style.left = (r.width - w) / 2 + 'px'; B.style.top = Math.max(8, (r.height - reserve - h) / 2) + 'px'; return [w, h]; }
+function teacherOffMsg(why) { if (why === 'mode') $('#gameGrid').classList.toggle('noteacher', S.teacher === 'off' && S.autoHide); if (S.teacher === 'off') { T.set({ msg: 'The teacher is resting. Switch to Ask or Live any time.', next: null, acts: [] }); return true; } return false; }
+function hintOn() { if (S.teacher === 'off') { S.teacher = 'hints'; save(); T.paintMode(); $('#gameGrid').classList.remove('noteacher'); } }
+
+/* ---------------- Lights Out ---------------- */
+const LO = {
+  solve(b, N, p) { // A x = -b (mod p) by Gaussian elimination
+    const n = N * N, A = [];
+    for (let i = 0; i < n; i++) { const row = new Array(n + 1).fill(0); const x = i % N, y = i / N | 0; for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < N && Y < N) row[Y * N + X] = 1; } row[n] = (p - b[i]) % p; A.push(row); }
+    // A is symmetric, so row i column j is fine as built
+    const inv = v => { for (let k = 1; k < p; k++) if ((v * k) % p === 1) return k; return 0; };
+    let r = 0; const piv = [];
+    for (let c = 0; c < n && r < n; c++) {
+      let s = -1; for (let i = r; i < n; i++) if (A[i][c] % p) { s = i; break; } if (s < 0) continue;
+      [A[r], A[s]] = [A[s], A[r]]; const iv = inv(A[r][c]); for (let j = c; j <= n; j++) A[r][j] = (A[r][j] * iv) % p;
+      for (let i = 0; i < n; i++) if (i !== r && A[i][c]) { const f = A[i][c]; for (let j = c; j <= n; j++) A[i][j] = ((A[i][j] - f * A[r][j]) % p + p) % p; }
+      piv.push(c); r++;
+    }
+    for (let i = r; i < n; i++) if (A[i][n]) return null;
+    const x = new Array(n).fill(0); piv.forEach((c, i) => x[c] = A[i][n]); return x;
+  }
+};
+registerGame({
+  id: 'lights', name: 'Lights Out', tag: 'Logic', desc: 'Press a light and it flips with its neighbours. Turn them all off. Learn “chase the lights”.',
+  art: () => `<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="8" fill="#14111c"/>${[...Array(25)].map((_, i) => `<rect x="${15 + (i % 5) * 14.5}" y="${15 + (i / 5 | 0) * 14.5}" width="12" height="12" rx="3" fill="${[1, 3, 6, 7, 8, 12, 16, 17, 18, 21, 23].includes(i) ? '#f2c14e' : '#2f2a3d'}"/>`).join('')}</svg>`,
+  how: `<p><b>Tap</b> a square: it and the squares above, below, left and right of it change. Turn every light off.</p><p>In <b>three-colour</b> mode each press steps the colours round (off → pink → gold → off), so some squares need two presses.</p><p><b>Chase the lights:</b> for each lit square, press the one directly below it, row by row. Everything ends up in the bottom row, and a short lookup tells you what to press on the top row to finish.</p>`,
+  create(host, opts) {
+    let N = store.get('lo.n', 5), p = store.get('lo.p', 2), b, moves = 0, hist = [], hintsUsed = 0, sol = null, showHint = false, t0 = null;
+    const B = gridHost(host);
+    opts.innerHTML = `<label>Size</label><div class="seg" id="lN">${[3, 4, 5, 6, 7].map(n => `<button data-n="${n}">${n}×${n}</button>`).join('')}</div><label>Colours</label><div class="seg" id="lP"><button data-p="2">Classic</button><button data-p="3">Three-colour</button></div>`;
+    const paint = () => { $$('#lN button', opts).forEach(x => x.classList.toggle('on', +x.dataset.n === N)); $$('#lP button', opts).forEach(x => x.classList.toggle('on', +x.dataset.p === p)); };
+    $('#lN', opts).onclick = e => { const x = e.target.closest('button'); if (x) { N = +x.dataset.n; store.set('lo.n', N); newGame(); } };
+    $('#lP', opts).onclick = e => { const x = e.target.closest('button'); if (x) { p = +x.dataset.p; store.set('lo.p', p); newGame(); } };
+    const press = (i, rec = true) => { const x = i % N, y = i / N | 0; for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < N && Y < N) b[Y * N + X] = (b[Y * N + X] + 1) % p; } if (rec) { hist.push(i); moves++; } };
+    function newGame() {
+      paint(); b = new Array(N * N).fill(0); do { for (let i = 0; i < N * N; i++) if (Math.random() < .45) press(i, false), p === 3 && Math.random() < .4 && press(i, false); } while (b.every(v => !v));
+      moves = 0; hist = []; hintsUsed = 0; t0 = null; sol = null; render(); coach(); T.note('New board. ' + (sol ? `It can be done in ${sol.reduce((a, v) => a + v, 0)} presses.` : ''));
+    }
+    function render() {
+      const [w] = fitSquare(host, B); const s = w / N, C = PIECE_COLORS(); const lit = [null, C[1], C[0]];
+      B.innerHTML = ''; sol = LO.solve(b, N, p);
+      const reveal = S.teacher === 'live' || showHint; const nxt = sol ? sol.findIndex(v => v) : -1;
+      b.forEach((v, i) => { const d = el('button', { class: 'tile' + (reveal && i === nxt && S.teacher !== 'off' ? ' hint' : ''), 'data-i': i, 'aria-label': 'square ' + (i + 1) }); d.style.cssText += `width:${s - 6}px;height:${s - 6}px;transform:translate(${(i % N) * s + 3}px,${(i / N | 0) * s + 3}px);background:${v ? lit[v] : 'rgba(0,0,0,.45)'};border:0;${v ? `box-shadow:0 0 ${s * .3}px ${lit[v]}88,inset 0 -4px 0 rgba(0,0,0,.2)` : ''}`; if (reveal && sol && sol[i] && S.teacher !== 'off') d.innerHTML = `<span class="n" style="font-size:${s * .28}px;opacity:${i === nxt ? 1 : .55}">${sol[i] > 1 ? '×' + sol[i] : '•'}</span>`; B.appendChild(d); });
+      $('#gStats').innerHTML = `<span>Presses <b>${moves}</b></span><span>Lit <b>${b.filter(v => v).length}</b></span>`;
+    }
+    B.addEventListener('click', e => { const d = e.target.closest('[data-i]'); if (!d) return; if (!t0) t0 = performance.now(); press(+d.dataset.i); beep('tick'); showHint = false; render(); if (b.every(v => !v)) win(); else coach(); });
+    function win() { const time = t0 ? performance.now() - t0 : null; const r = award('lights', `${N}×${N}${p === 3 ? ' tri' : ''}`, { time, moves, stars: N * (p === 3 ? 1.5 : 1) | 0, hints: hintsUsed }); T.set({ msg: 'All dark. Lights out!', next: null, prog: 1 }); winOverlay(host, { title: 'Lights out!', lines: [`${moves} presses${time ? ', ' + fmtTime(time) : ''}`], earned: r.earned, again: newGame }); }
+    function coach(why) {
+      if (teacherOffMsg(why)) { render(); return; }
+      const presses = sol ? sol.reduce((a, v) => a + v, 0) : 0; const nxt = sol ? sol.findIndex(v => v) : -1;
+      const reveal = S.teacher === 'live' || showHint;
+      // chase-the-lights stage: which row is the first with a light?
+      const firstLit = b.findIndex(v => v); const row = firstLit < 0 ? N : firstLit / N | 0;
+      const chase = row < N - 1 ? `Chasing method: the top lit square is in row ${row + 1}. Press the square <b>directly below</b> each lit square in that row to clear it.` : `All the lights are in the bottom row now. The trick: press a pattern on the <b>top row</b> and chase again — the dots show which.`;
+      T.set({ stage: 'Lights Out · ' + N + '×' + N, steps: ['Chase down', 'Fix the top', 'Chase again'], cur: row < N - 1 ? 0 : 1, prog: 1 - b.filter(v => v).length / (N * N),
+        msg: chase + (reveal ? ` <span class="muted">The dots mark the ${presses} presses that solve it from here (×2 means press twice). Order doesn’t matter.</span>` : '<br><span class="muted">Tap 💡 Hint to see a winning press.</span>'),
+        next: reveal && nxt >= 0 ? { mv: `${(nxt % N) + 1},${(nxt / N | 0) + 1}`, how: `Press column ${(nxt % N) + 1}, row ${(nxt / N | 0) + 1}.` } : null,
+        acts: [{ label: '▶ Show me', fn: showMe, primary: true }, { label: '📖 Lessons', fn: () => showLessons('lights') }] });
+      render();
+    }
+    function hint() { hintsUsed++; hintOn(); showHint = true; coach(); }
+    function showMe() { hintsUsed++; const nxt = sol ? sol.findIndex(v => v) : -1; if (nxt < 0) return; press(nxt); beep('tick'); render(); if (b.every(v => !v)) win(); else coach(); }
+    function undo() { const i = hist.pop(); if (i == null) return; for (let k = 0; k < p - 1; k++) press(i, false); moves--; render(); coach(); }
+    setTimeout(newGame, 30);
+    return { undo, hint, newGame, coach, resize: render, restyle: render, destroy() { } };
+  }
+});
+
+/* ---------------- Tower of Hanoi ---------------- */
+registerGame({
+  id: 'hanoi', name: 'Tower of Hanoi', tag: 'Recursion', desc: 'Move the whole tower to the right peg, one disk at a time, never a big disk on a small one.',
+  art: () => `<svg viewBox="0 0 100 100"><rect x="6" y="80" width="88" height="7" rx="3" fill="#8a5b2b"/>${[18, 50, 82].map(x => `<rect x="${x - 2}" y="28" width="4" height="54" rx="2" fill="#c48d4c"/>`).join('')}${[0, 1, 2, 3, 4].map(i => `<rect x="${18 - 15 + i * 2.6}" y="${74 - i * 8}" width="${30 - i * 5.2}" height="7" rx="3.5" fill="${PIECE_COLORS()[i]}"/>`).join('')}</svg>`,
+  how: `<p><b>Tap</b> a peg to pick up its top disk, then tap another peg to drop it. You can also <b>drag</b> a disk.</p><p>Only one disk moves at a time, and a disk can never sit on a smaller one. Move the whole tower to the right-hand peg.</p><p><b>The secret is recursion:</b> to move a tower of 5, move the top 4 out of the way, move the big one, then move the 4 back on top. The shortest solution takes 2ⁿ − 1 moves.</p>`,
+  create(host, opts) {
+    let n = store.get('hanoi.n', 5), pegs, held = null, moves = 0, hist = [], hintsUsed = 0, t0 = null, showHint = false;
+    const B = gridHost(host);
+    opts.innerHTML = `<label>Disks</label><div class="seg" id="hN">${[3, 4, 5, 6, 7, 8].map(k => `<button data-n="${k}">${k}</button>`).join('')}</div>`;
+    $('#hN', opts).onclick = e => { const x = e.target.closest('button'); if (x) { n = +x.dataset.n; store.set('hanoi.n', n); newGame(); } };
+    function next(pos = pegsPos(), k = n, target = 2) { // optimal next move from any legal position
+      if (k === 0) return null; if (pos[k] === target) return next(pos, k - 1, target);
+      const other = 3 - pos[k] - target; const smallerOnOther = [...Array(k - 1)].every((_, i) => pos[i + 1] === other);
+      if (smallerOnOther) return [pos[k], target]; return next(pos, k - 1, other);
+    }
+    function remaining(pos = pegsPos(), k = n, target = 2) { if (k === 0) return 0; if (pos[k] === target) return remaining(pos, k - 1, target); return remaining(pos, k - 1, 3 - pos[k] - target) + 1 + (2 ** (k - 1) - 1); }
+    const pegsPos = () => { const pos = []; pegs.forEach((pg, i) => pg.forEach(d => pos[d] = i)); return pos; };
+    function newGame() { $$('#hN button', opts).forEach(x => x.classList.toggle('on', +x.dataset.n === n)); pegs = [[...Array(n)].map((_, i) => n - i), [], []]; held = null; moves = 0; hist = []; hintsUsed = 0; t0 = null; render(); coach(); T.note(`${n} disks: the shortest solution is ${2 ** n - 1} moves.`); }
+    function render() {
+      const [w, h] = fitSquare(host, B, 1.6); B.innerHTML = ''; const C = PIECE_COLORS(); const pw = w / 3, dh = Math.min(h * .7 / (n + 1), 34);
+      const nx = (S.teacher === 'live' || showHint) && S.teacher !== 'off' ? next() : null;
+      B.appendChild(Object.assign(el('div'), { style: `position:absolute;left:0;right:0;bottom:0;height:${dh * .6}px;border-radius:8px;background:#5a3a1e` }));
+      pegs.forEach((pg, i) => {
+        const col = el('div', { 'data-p': i, style: `position:absolute;left:${i * pw}px;width:${pw}px;top:0;bottom:0;cursor:pointer;border-radius:12px;${nx && nx[1] === i ? 'background:rgba(255,255,255,.08);outline:2px dashed #f2c14e;outline-offset:-4px' : ''}` });
+        col.appendChild(el('div', { style: `position:absolute;left:50%;width:${Math.max(6, pw * .04)}px;transform:translateX(-50%);bottom:${dh * .6}px;height:${(n + 1.2) * dh}px;background:#c48d4c;border-radius:6px 6px 0 0` }));
+        pg.forEach((d, j) => { const dw = pw * (.25 + .7 * d / n); const lift = held === i && j === pg.length - 1; col.appendChild(el('div', { class: 'tile' + (nx && nx[0] === i && j === pg.length - 1 ? ' hint' : ''), style: `left:${(pw - dw) / 2}px;width:${dw}px;height:${dh - 3}px;bottom:${dh * .6 + j * dh + (lift ? dh * 1.4 : 0)}px;top:auto;border-radius:${dh}px;background:${C[(d - 1) % C.length]};font-size:${dh * .5}px` }, `<span class="n">${d}</span>`)); });
+        B.appendChild(col);
+      });
+      $('#gStats').innerHTML = `<span>Moves <b>${moves}</b></span><span>Best <b>${2 ** n - 1}</b></span>`;
+    }
+    function tryMove(a, b, user = true) {
+      if (a === b) { held = null; render(); return; }
+      const d = pegs[a][pegs[a].length - 1]; const top = pegs[b][pegs[b].length - 1];
+      if (d == null) return; if (top != null && top < d) { beep('bad'); buzz(30); toast('A bigger disk can’t go on a smaller one'); held = null; render(); return; }
+      if (!t0) t0 = performance.now(); const nx = next();
+      pegs[b].push(pegs[a].pop()); hist.push([a, b]); moves++; held = null; showHint = false; beep('tick');
+      if (user && nx && (nx[0] !== a || nx[1] !== b) && S.teacher === 'live') T.note(`That works, but it isn’t the shortest route. ${remaining()} moves to go from here.`, 'you');
+      render(); if (pegs[2].length === n) win(); else coach();
+    }
+    let dragFrom = null;
+    ptr(B, {
+      tap(e) { const c = e.target.closest('[data-p]'); if (!c) return; const i = +c.dataset.p; if (held == null) { if (pegs[i].length) { held = i; beep('pick'); render(); } } else tryMove(held, i); },
+      down(e) { const c = e.target.closest('[data-p]'); dragFrom = c ? +c.dataset.p : null; },
+      up(e) { if (dragFrom == null) return; const r = B.getBoundingClientRect(); const i = clamp(Math.floor((e.clientX - r.left) / (r.width / 3)), 0, 2); tryMove(dragFrom, i); dragFrom = null; }
+    });
+    function win() { const time = t0 ? performance.now() - t0 : null; const r = award('hanoi', n + ' disks', { time, moves, stars: Math.max(1, n - 2), hints: hintsUsed }); T.set({ msg: moves === 2 ** n - 1 ? 'Perfect — the shortest possible solution!' : 'Done! The shortest is ' + (2 ** n - 1) + ' moves.', next: null, prog: 1 }); winOverlay(host, { lines: [`${moves} moves (best possible ${2 ** n - 1})`], earned: r.earned, again: newGame }); }
+    function coach(why) {
+      if (teacherOffMsg(why)) { render(); return; }
+      const pos = pegsPos(); let k = n; while (k > 0 && pos[k] === 2) k--;
+      const nx = next(); const reveal = S.teacher === 'live' || showHint; const names = ['left', 'middle', 'right'];
+      const goal = !k ? '' : k > 1 ? `The biggest disk not yet home is <b>${k}</b>. To move it to the right peg, first stack disks 1–${k - 1} on the <b>${names[3 - pos[k] - 2]}</b> peg, out of its way.` : 'Only disk 1 is left: put it on the right peg.';
+      T.set({ stage: 'Tower of ' + n, steps: [...Array(n)].map((_, i) => 'Disk ' + (n - i)), cur: n - k, prog: 1 - remaining() / (2 ** n - 1),
+        msg: goal + ` <span class="muted">${remaining()} moves left on the shortest route.</span>` + (n % 2 ? '' : '') + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint for the next move.</span>'),
+        next: reveal && nx ? { mv: `${nx[0] + 1}→${nx[1] + 1}`, how: `Move the top disk from the <b>${names[nx[0]]}</b> peg to the <b>${names[nx[1]]}</b> peg.` } : null,
+        acts: [{ label: '▶ Show me', fn: showMe, primary: true }, { label: '📖 Lessons', fn: () => showLessons('hanoi') }] });
+      render();
+    }
+    function hint() { hintsUsed++; hintOn(); showHint = true; coach(); }
+    function showMe() { hintsUsed++; const nx = next(); if (nx) tryMove(nx[0], nx[1], false); }
+    function undo() { const m = hist.pop(); if (!m) return; pegs[m[0]].push(pegs[m[1]].pop()); moves--; render(); coach(); }
+    setTimeout(newGame, 30);
+    return { undo, hint, newGame, coach, resize: render, restyle: render, destroy() { } };
+  }
+});
+
+/* ---------------- Flood ---------------- */
+registerGame({
+  id: 'flood', name: 'Flood', tag: 'Colour', desc: 'Flood the board from the top-left corner in one colour before you run out of moves.',
+  art: () => { const C = PIECE_COLORS(); let s = ''; for (let i = 0; i < 64; i++) { const x = i % 8, y = i / 8 | 0; s += `<rect x="${10 + x * 10}" y="${10 + y * 10}" width="10" height="10" fill="${x + y < 6 ? C[2] : C[(x * 7 + y * 3 + x * y) % 6]}"/>`; } return `<svg viewBox="0 0 100 100">${s}</svg>`; },
+  how: `<p>The top-left square is yours. <b>Tap a colour</b> (or any square of that colour) and your area turns that colour, swallowing every touching square of the same colour.</p><p>Fill the whole board in one colour within the move limit.</p><p><b>Strategy:</b> head for the middle early — from there you can reach everywhere. Then pick the colour that grows your area most, and watch out for colours that are about to disappear completely.</p>`,
+  create(host, opts) {
+    let N = store.get('flood.n', 14), K = 6, cells, moves = 0, limit, hist = [], hintsUsed = 0, showHint = false, over = false;
+    const B = gridHost(host); const bar = el('div', { class: 'underbar colorbar' }); host.appendChild(bar);
+    opts.innerHTML = `<label>Board</label><div class="seg" id="fN">${[[10, 'Small'], [14, 'Classic'], [18, 'Large']].map(([v, l]) => `<button data-n="${v}">${l}</button>`).join('')}</div>`;
+    $('#fN', opts).onclick = e => { const x = e.target.closest('button'); if (x) { N = +x.dataset.n; store.set('flood.n', N); newGame(); } };
+    const region = (c, col) => { const seen = new Uint8Array(N * N), st = [0]; seen[0] = 1; const t = c[0]; while (st.length) { const i = st.pop(); const x = i % N, y = i / N | 0; for (const j of [x > 0 ? i - 1 : -1, x < N - 1 ? i + 1 : -1, y > 0 ? i - N : -1, y < N - 1 ? i + N : -1]) if (j >= 0 && !seen[j] && c[j] === t) { seen[j] = 1; st.push(j); } } return seen; };
+    const fill = (c, col) => { const r = region(c); const n = c.slice(); for (let i = 0; i < N * N; i++) if (r[i]) n[i] = col; return n; };
+    const size = c => region(c).reduce((a, v) => a + v, 0);
+    function best(cs = cells) { // two-move lookahead, prefer colours that wipe out a colour completely
+      let bestC = -1, bestS = -1; const s0 = size(cs);
+      for (let a = 0; a < K; a++) { if (a === cs[0]) continue; const c1 = fill(cs, a); const s1 = size(c1); if (s1 === s0) continue; let s2 = s1; for (let b = 0; b < K; b++) if (b !== a) s2 = Math.max(s2, size(fill(c1, b))); const r1 = region(c1); const gone = !c1.some((v, i) => v === a && !r1[i]); const score = s2 * 10 + s1 + (gone ? 40 : 0); if (score > bestS) { bestS = score; bestC = a; } }
+      return bestC;
+    }
+    function newGame() { $$('#fN button', opts).forEach(x => x.classList.toggle('on', +x.dataset.n === N)); T.note('New board. The teacher found a way in fewer moves than your limit — can you match it?'); cells = [...Array(N * N)].map(() => rnd(K)); let c = cells, L = 0; while (!c.every(v => v === c[0]) && L < 80) { c = fill(c, best(c)); L++; } limit = L + (N >= 18 ? 4 : 3); moves = 0; hist = []; hintsUsed = 0; over = false; render(); coach(); }
+    function render() {
+      const [w] = fitSquare(host, B, 1, 80); const s = w / N, C = PIECE_COLORS(); const r = region(cells);
+      if (!B.firstChild || B.childElementCount !== 1) { B.innerHTML = ''; B.appendChild(el('canvas', { class: 'gcanvas', style: 'border-radius:10px' })); }
+      const cv = B.firstChild; const d = Math.min(2, devicePixelRatio || 1); cv.width = w * d; cv.height = w * d; const g = cv.getContext('2d'); g.scale(d, d);
+      cells.forEach((v, i) => { g.fillStyle = C[v]; g.fillRect((i % N) * s, (i / N | 0) * s, s + .5, s + .5); });
+      g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2.5; for (let i = 0; i < N * N; i++) if (r[i]) { const x = i % N, y = i / N | 0; if (x === N - 1 || !r[i + 1]) line(g, (x + 1) * s, y * s, (x + 1) * s, (y + 1) * s); if (y === N - 1 || !r[i + N]) line(g, x * s, (y + 1) * s, (x + 1) * s, (y + 1) * s); }
+      const h = (S.teacher === 'live' || showHint) && S.teacher !== 'off' && !over ? best() : -1;
+      bar.innerHTML = [...Array(K)].map((_, k) => `<button data-c="${k}" class="${k === h ? 'hint' : ''}" style="background:${C[k]};${k === cells[0] ? 'opacity:.35' : ''}" aria-label="colour ${k + 1}" ${k === cells[0] ? 'disabled' : ''}></button>`).join('');
+      $('#gStats').innerHTML = `<span>Moves <b>${moves}/${limit}</b></span><span>Filled <b>${Math.round(size(cells) / (N * N) * 100)}%</b></span>`;
+    }
+    const line = (g, a, b, c, d) => { g.beginPath(); g.moveTo(a, b); g.lineTo(c, d); g.stroke(); };
+    function pick(k, user = true) {
+      if (over || k === cells[0]) return; hist.push(cells); cells = fill(cells, k); moves++; showHint = false; beep('tick');
+      if (cells.every(v => v === cells[0])) { over = true; render(); const r = award('flood', N + '×' + N, { moves, stars: N / 3 | 0, hints: hintsUsed }); T.set({ msg: `Flooded with ${limit - moves} moves to spare!`, next: null, prog: 1 }); winOverlay(host, { title: 'Flooded!', lines: [`${moves} of ${limit} moves`], earned: r.earned, again: newGame }); return; }
+      if (moves >= limit) { over = true; render(); beep('bad'); T.set({ msg: `Out of moves — ${Math.round(size(cells) / (N * N) * 100)}% filled. Tap ↻ New to try another board, or ↶ Undo to go back and try a different path.`, next: null }); return; }
+      render(); coach();
+    }
+    bar.addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) pick(+b.dataset.c); });
+    B.addEventListener('click', e => { const r = B.getBoundingClientRect(); const x = Math.floor((e.clientX - r.left) / (r.width / N)), y = Math.floor((e.clientY - r.top) / (r.height / N)); if (x >= 0 && y >= 0 && x < N && y < N) pick(cells[y * N + x]); });
+    function coach(why) {
+      if (teacherOffMsg(why)) { render(); return; }
+      const f = size(cells) / (N * N); const reachedCentre = region(cells)[(N >> 1) * N + (N >> 1)];
+      const st = !reachedCentre ? 0 : f < .7 ? 1 : 2; const reveal = S.teacher === 'live' || showHint; const h = best();
+      const msgs = ['Head for the <b>centre</b> first: pick colours that push your area diagonally toward the middle.', 'You’ve reached the middle. Now take the colour that swallows the <b>most squares</b> — and look for colours you can wipe out completely.', 'Mopping up: finish off the small pockets. Every colour you erase is one fewer move needed.'];
+      T.set({ stage: 'Flood · ' + (limit - moves) + ' moves left', steps: ['Reach the centre', 'Grow big', 'Mop up'], cur: st, prog: f, msg: msgs[st] + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint for the best colour.</span>'), next: reveal && h >= 0 ? { mv: '●', how: `Pick the glowing colour. Looking two moves ahead, it grows your area the most.` } : null, acts: [{ label: '▶ Show me', fn: showMe, primary: true }, { label: '📖 Lessons', fn: () => showLessons('flood') }] });
+      if (reveal && h >= 0) { const m = $('#tMv'); if (m) m.style.color = PIECE_COLORS()[h]; }
+      render();
+    }
+    function hint() { hintsUsed++; hintOn(); showHint = true; coach(); }
+    function showMe() { hintsUsed++; const h = best(); if (h >= 0) pick(h, false); }
+    function undo() { const c = hist.pop(); if (!c) return; cells = c; moves--; over = false; render(); coach(); }
+    setTimeout(newGame, 30);
+    return { undo, hint, newGame, coach, resize: render, restyle: render, destroy() { } };
+  }
+});
+
+/* ---------------- Ball Sort ---------------- */
+const BallSolver = {
+  solve(tubes, cap, limit = 60000) {
+    const key = t => t.map(x => x.join('')).sort().join('|');
+    const seen = new Set(); const path = []; let nodes = 0;
+    const done = t => t.every(x => !x.length || (x.length === cap && x.every(v => v === x[0])));
+    const dfs = t => {
+      if (done(t)) return true; if (++nodes > limit) return false;
+      const k = key(t); if (seen.has(k)) return false; seen.add(k);
+      const mv = [];
+      for (let a = 0; a < t.length; a++) {
+        const A = t[a]; if (!A.length) continue; const c = A[A.length - 1]; let run = 1; while (run < A.length && A[A.length - 1 - run] === c) run++;
+        if (run === A.length && A.length === cap) continue; // finished tube
+        let emptyTried = false;
+        for (let b = 0; b < t.length; b++) {
+          if (a === b) continue; const Bt = t[b]; if (Bt.length >= cap) continue; if (Bt.length && Bt[Bt.length - 1] !== c) continue;
+          if (!Bt.length) { if (run === A.length || emptyTried) continue; emptyTried = true; }
+          const n = Math.min(run, cap - Bt.length); const score = (Bt.length ? 10 + Bt.length : 0) + (n === run ? 5 : 0) + (A.length - run === 0 ? 3 : 0);
+          mv.push([score, a, b, n]);
+        }
+      }
+      mv.sort((x, y) => y[0] - x[0]);
+      for (const [, a, b, n] of mv) { const nt = t.map(x => x.slice()); for (let i = 0; i < n; i++) nt[b].push(nt[a].pop()); path.push([a, b]); if (dfs(nt)) return true; path.pop(); }
+      return false;
+    };
+    return dfs(tubes.map(x => x.slice())) ? path.slice() : null;
+  }
+};
+registerGame({
+  id: 'balls', name: 'Ball Sort', tag: 'Sorting', desc: 'Sort the coloured balls so each tube holds one colour. Plan ahead with the spare tubes.',
+  art: () => { const C = PIECE_COLORS(); const t = [[0, 1, 2, 0], [1, 2, 0, 1], [2, 0, 1, 2], []]; return `<svg viewBox="0 0 100 100">${t.map((tb, i) => `<rect x="${12 + i * 21}" y="22" width="15" height="62" rx="7" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.6)"/>${tb.map((c, j) => `<circle cx="${19.5 + i * 21}" cy="${76 - j * 14}" r="6" fill="${C[c]}"/>`).join('')}`).join('')}</svg>`; },
+  how: `<p><b>Tap</b> a tube to lift its top ball, then tap another tube to drop it there. A ball can only go onto the same colour or into an empty tube, and each tube holds four.</p><p>Sort every colour into its own tube.</p><p><b>Strategy:</b> keep a spare tube empty as long as you can, and build on colours that are already near the top.</p>`,
+  create(host, opts) {
+    let k = store.get('balls.k', 6), cap = 4, tubes, held = null, moves = 0, hist = [], hintsUsed = 0, plan = null, showHint = false, t0 = null;
+    const B = gridHost(host);
+    opts.innerHTML = `<label>Colours</label><div class="seg" id="bK">${[4, 5, 6, 7, 8, 9].map(v => `<button data-k="${v}">${v}</button>`).join('')}</div>`;
+    $('#bK', opts).onclick = e => { const x = e.target.closest('button'); if (x) { k = +x.dataset.k; store.set('balls.k', k); newGame(); } };
+    function newGame() {
+      $$('#bK button', opts).forEach(x => x.classList.toggle('on', +x.dataset.k === k));
+      for (let tries = 0; tries < 30; tries++) { const balls = shuffle([...Array(k * cap)].map((_, i) => i % k)); tubes = [...Array(k)].map((_, i) => balls.slice(i * cap, i * cap + cap)).concat([[], []]); if (tubes.some(t => t.length && t.every(v => v === t[0]))) continue; plan = BallSolver.solve(tubes, cap); if (plan) break; }
+      held = null; moves = 0; hist = []; hintsUsed = 0; t0 = null; render(); coach(); T.note(`New rack: ${k} colours, ${k + 2} tubes.`);
+    }
+    function render() {
+      const n = tubes.length; const [w, h] = fitSquare(host, B, Math.max(1, n * .55 / 1.6), 70); B.innerHTML = '';
+      const tw = w / n, bh = Math.min(h * .8 / cap, tw * .8), C = PIECE_COLORS();
+      const nx = (S.teacher === 'live' || showHint) && S.teacher !== 'off' && plan && plan.length ? plan[0] : null;
+      tubes.forEach((t, i) => {
+        const done = t.length === cap && t.every(v => v === t[0]);
+        const tb = el('div', { 'data-t': i, style: `position:absolute;left:${i * tw + tw * .12}px;width:${tw * .76}px;bottom:4px;height:${bh * (cap + .7)}px;border:2px solid rgba(255,255,255,${done ? .95 : .55});border-top:0;border-radius:0 0 ${tw}px ${tw}px;background:rgba(255,255,255,.08);cursor:pointer;${nx && nx[1] === i ? 'outline:3px dashed #f2c14e;outline-offset:4px;' : ''}${done ? 'box-shadow:0 0 18px rgba(255,255,255,.4)' : ''}` });
+        t.forEach((c, j) => { const lift = held === i && j === t.length - 1; const d = Math.min(bh, tw * .7) * .92; tb.appendChild(el('div', { class: nx && nx[0] === i && j === t.length - 1 ? 'hint' : '', style: `position:absolute;left:50%;width:${d}px;height:${d}px;margin-left:${-d / 2}px;bottom:${4 + j * bh + (lift ? bh * 1.3 + (cap - t.length) * bh : 0)}px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8,${C[c]} 45%,${C[c]});box-shadow:0 3px 6px rgba(0,0,0,.35);transition:bottom .15s` })); });
+        B.appendChild(tb);
+      });
+      $('#gStats').innerHTML = `<span>Moves <b>${moves}</b></span>`;
+    }
+    function move(a, b, user = true) {
+      const A = tubes[a], Bt = tubes[b]; if (a === b || !A.length) { held = null; render(); return; }
+      const c = A[A.length - 1]; if (Bt.length >= cap || (Bt.length && Bt[Bt.length - 1] !== c)) { beep('bad'); buzz(30); held = null; render(); return; }
+      if (!t0) t0 = performance.now(); hist.push(tubes.map(x => x.slice()));
+      let n = 0; while (A.length && A[A.length - 1] === c && Bt.length < cap) { Bt.push(A.pop()); n++; }
+      moves++; held = null; showHint = false; beep('tick');
+      if (plan && plan.length && plan[0][0] === a && plan[0][1] === b) plan.shift(); else { plan = null; if (user && S.teacher === 'live') T.note('Your own route — I’ll re-plan from here.', 'you'); }
+      render();
+      if (tubes.every(x => !x.length || (x.length === cap && x.every(v => v === x[0])))) { const time = t0 ? performance.now() - t0 : null; const r = award('balls', k + ' colours', { time, moves, stars: k - 2, hints: hintsUsed }); T.set({ msg: 'Sorted!', next: null, prog: 1 }); winOverlay(host, { title: 'Sorted!', lines: [`${moves} moves${time ? ', ' + fmtTime(time) : ''}`], earned: r.earned, again: newGame }); return; }
+      coach();
+    }
+    ptr(B, { tap(e) { const t = e.target.closest('[data-t]'); if (!t) { held = null; render(); return; } const i = +t.dataset.t; if (held == null) { if (tubes[i].length) { held = i; beep('pick'); render(); } } else move(held, i); } });
+    function ensure() { if (!plan) plan = BallSolver.solve(tubes, cap, 80000); return plan; }
+    function coach(why) {
+      if (teacherOffMsg(why)) { render(); return; }
+      ensure(); const reveal = S.teacher === 'live' || showHint; const nx = plan && plan[0];
+      const sorted = tubes.filter(x => x.length === cap && x.every(v => v === x[0])).length; const empties = tubes.filter(x => !x.length).length;
+      T.set({ stage: `Ball Sort · ${sorted} of ${k} sorted`, steps: null, prog: sorted / k,
+        msg: (plan ? '' : 'Hmm — I can’t find a way out from here. Try ↶ Undo a few moves. ') + (empties ? `You have <b>${empties}</b> empty tube${empties > 1 ? 's' : ''}. Use them to park balls while you dig out the colour you’re building.` : 'No empty tubes left: only move balls onto a matching colour now, and aim to free a tube.') + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint for a good move.</span>'),
+        next: reveal && nx ? { mv: `${nx[0] + 1}→${nx[1] + 1}`, how: `Move from tube ${nx[0] + 1} to tube ${nx[1] + 1}. <span class="muted">${plan.length} moves to finish this way.</span>` } : null,
+        acts: [{ label: '▶ Show me', fn: showMe, primary: true }, { label: '📖 Lessons', fn: () => showLessons('balls') }] });
+      render();
+    }
+    function hint() { hintsUsed++; hintOn(); showHint = true; coach(); }
+    function showMe() { hintsUsed++; ensure(); if (plan && plan.length) move(plan[0][0], plan[0][1], false); }
+    function undo() { const t = hist.pop(); if (!t) return; tubes = t; moves--; plan = null; held = null; render(); coach(); }
+    setTimeout(newGame, 30);
+    return { undo, hint, newGame, coach, resize: render, restyle: render, destroy() { } };
+  }
+});
+</script>
+<script>
+/* =====================================================================
+   The lesson book
+   ===================================================================== */
+const A = s => `<span class="alg">${s.replace(/'/g, '′')}</span>`;
+const practiceCube = (stage, size) => () => { if (curId === 'cube' && GAMES.cube.practice) GAMES.cube.practice(stage, size); else openGame('cube', { practice: stage, size }); };
+page('L-001', 'all', 'How the teacher works', 'teacher live ask off hint mode professor pip help', `<p>Professor Pip sits beside every table. Pick how much help you want with the switch at the top of his card (also in Settings):</p><ul><li><b>Live</b> — he watches every move, highlights the next one on the puzzle, and replans instantly if you go your own way.</li><li><b>Ask</b> — he explains the current stage but only shows a move when you tap <b>💡 Hint</b>.</li><li><b>Off</b> — you're on your own.</li></ul><p><b>▶ Show me</b> plays one move for you; <b>⏭ Do this step</b> plays the rest of the current step. Solving without hints earns bonus stars.</p>`);
+page('L-002', 'all', 'Stars and the shop', 'stars shop buy earn currency felt colours scheme bonus', `<p>Every solve earns stars — harder puzzles earn more, and solving without any hints adds a 50% bonus. Spend them in the 🛍 shop on cube colour schemes, table felts and slide-puzzle tiles. Nothing costs real money.</p>`);
+page('L-003', 'all', 'Touch controls', 'touch tap swipe drag pinch zoom rotate phone tablet gesture', `<p><b>Cube:</b> swipe a sticker to turn its row; drag the felt to look around; two fingers twist the view.<br><b>Slide puzzle:</b> tap a tile in line with the gap, or swipe.<br><b>Jigsaw:</b> drag pieces, tap to rotate (when on), pinch to zoom, drag the felt to pan.<br><b>Hanoi and Ball Sort:</b> tap to pick up, tap to drop.</p>`);
+
+page('C-000', 'cube', 'Cube notation', 'notation letters R U F L D B prime clockwise counter-clockwise move names M E S slice', `<p>Each letter is a face: <b>U</b>p, <b>D</b>own, <b>F</b>ront, <b>B</b>ack, <b>R</b>ight, <b>L</b>eft. A letter alone means turn that face a quarter <b>clockwise as you look straight at it</b>. A prime (${A("R'")}) means counter-clockwise; a 2 (${A('R2')}) means a half turn.</p><p>In the Parlour the faces are named by their centre colour: yellow top, white bottom, green front, blue back, orange right, red left. Centres never move, so a face is always its centre's colour.</p><p><b>M, E, S</b> are the middle slices (M follows L, E follows D, S follows F).</p>`);
+page('C-001', 'cube', 'Step 1: White cross', 'cross white edges daisy bottom plus first step stage 1', `<p>Make a white <b>plus</b> on the white face, with each edge's other colour matching the centre beside it (green next to green, and so on).</p><p>Find a white edge, turn the side it's on so it lines up over its matching centre, then turn that face twice to bring it down. If the white sticker is facing sideways, the teacher shows a short 3–4 move fix.</p><p>This step is intuitive — no algorithm. Watch how the teacher does it and you'll pick up the patterns.</p>`).practice = { label: 'Practise the cross', fn: practiceCube(0, 3) };
+page('C-002', 'cube', 'Step 2: White corners', 'corners white first layer R U R prime U prime sexy move trick insert corner stage 2', `<p>Turn the top until a white corner sits right above its home (between its three colours). Hold that spot at front-right and repeat ${A("R U R' U'")} until the corner drops in with white on the bottom. It takes 1, 3 or 5 goes.</p><p>If a corner is already in the bottom layer but wrong, do ${A("R U R' U'")} once to pop it out to the top.</p>`).practice = { label: 'Practise white corners', fn: practiceCube(1, 3) };
+page('C-003', 'cube', 'Step 3: Middle layer', 'middle layer second layer edges insert right left algorithm stage 3', `<p>Find a top-layer edge <b>without yellow</b>. Turn the top until its front colour matches the centre below it. If it needs to go right: ${A("U R U' R' U' F' U F")}. If left: ${A("U' L' U L U F U' F'")}.</p><p>If an edge is stuck in the middle layer the wrong way round, insert any top edge into its slot to pop it out.</p>`).practice = { label: 'Practise the middle layer', fn: practiceCube(2, 3) };
+page('C-004', 'cube', 'Step 4: Yellow cross', 'yellow cross dot line L shape F R U R prime U prime F prime stage 4 top', `<p>Look at the yellow top. You'll see a dot, an L, a line, or a cross. Do ${A("F R U R' U' F'")}:</p><ul><li><b>Dot:</b> do it once to get an L.</li><li><b>L:</b> hold it in the back-left (like 9 o'clock to 12 o'clock), then do it.</li><li><b>Line:</b> hold it horizontal, then do it.</li></ul>`).practice = { label: 'Practise the yellow cross', fn: practiceCube(3, 3) };
+page('C-005', 'cube', 'Step 5: Yellow face (Sune)', 'yellow face sune corners orient top R U R prime U R U2 R prime fish stage 5', `<p>Now make the whole top yellow with <b>Sune</b>: ${A("R U R' U R U2 R'")}.</p><p>If exactly one corner is yellow on top (a "fish"), hold it at front-left and do Sune. Otherwise, hold a yellow sticker facing left on the front-left corner and do Sune. Repeat until the top is all yellow.</p>`).practice = { label: 'Practise the yellow face', fn: practiceCube(4, 3) };
+page('C-006', 'cube', 'Step 6: Yellow corners (A-perm)', 'corners position headlights A perm permute stage 6', `<p>Look for <b>headlights</b>: two corners on one side with the same colour. Hold them at the back and do the A-perm: ${A("R' F R' B2 R F' R' B2 R2")}. If there are no headlights anywhere, do it once from any side and they appear.</p>`).practice = { label: 'Practise yellow corners', fn: practiceCube(5, 3) };
+page('C-007', 'cube', 'Step 7: Last edges (U-perm)', 'last edges U perm finish final step 7 solved bar', `<p>Find a side that's fully solved (a bar) and hold it at the back. Then do the U-perm: ${A("R U' R U R U R U' R' U' R2")}. If the edges go the wrong way, do it again. No solved side? Do it once from anywhere.</p><p>Turn the top to line everything up — solved!</p>`).practice = { label: 'Practise the last edges', fn: practiceCube(6, 3) };
+page('C-008', 'cube', 'The 2×2 cube', '2x2 pocket cube corners only three steps', `<p>A 2×2 is a 3×3 with only the corners. Use the same moves: build the white corners with ${A("R U R' U'")}, make the top yellow with Sune ${A("R U R' U R U2 R'")}, then cycle the top corners home with the A-perm. Three steps and you're done.</p>`).practice = { label: 'Practise a 2×2', fn: practiceCube(0, 2) };
+
+page('S-001', 'slide', 'The row-and-column method', 'slide method row column strategy reduce 15 puzzle how to solve', `<p>Never try to solve everything at once. Finish the <b>top row</b>, then the <b>left column</b>. You never touch those again, so what's left is a smaller puzzle. Repeat until a 3×3 is left, then solve that.</p><p>To move one tile, walk the gap around in front of it, then slide the tile into the gap. Repeat — the tile "rolls" toward its home.</p>`);
+page('S-002', 'slide', 'The last tile of a row', 'last tile row corner trick tricky two tiles', `<p>The last tile of a row is the hard one: there's no room to bring it in from the side. Put it <b>directly below</b> its spot, move the tile before it down one, slide the last tile up, then bring the other back. The teacher shows the exact loop — follow it a few times and it clicks.</p>`);
+page('S-003', 'slide', 'Picture mode', 'picture photo image slide upload', `<p>Switch Tiles to <b>Picture</b> and the tiles show a picture instead of numbers. Tap <b>📷 Use my photo</b> to use one of yours — it's cropped square. Small numbers stay in the corner so the teacher can still point at tiles.</p>`);
+
+page('J-001', 'jigsaw', 'Starting a jigsaw', 'jigsaw edges corners frame start strategy border', `<p>Do what puzzlers do: find the <b>four corners</b>, then all the <b>edge pieces</b> (one flat side). Tap 🧩 <b>Edges</b> and they're sorted into the empty frame, side by side, corners first. Build the frame, then fill it in by colour.</p>`);
+page('J-002', 'jigsaw', 'Using your own photo', 'photo upload picture image camera own 50 100 500 pieces count', `<p>Tap <b>📷 Use my photo</b> and pick any picture (on a phone you can take one there and then). Choose <b>50</b>, <b>100</b> or <b>500</b> pieces. The picture is cut into real interlocking pieces — every one is different. Your photo stays on your device.</p>`);
+page('J-003', 'jigsaw', 'Snapping, rotating and zooming', 'snap rotate rotation zoom pinch pan ghost peek', `<p>Pieces that belong together snap when you drop them close, and move as one. A piece dropped near its spot locks into the frame. Turn on <b>Rotation</b> for a harder puzzle — then tap a piece to turn it. Pinch or scroll to zoom. <b>Ghost image</b> shows a faint guide in the frame; <b>👁 Peek</b> shows the full picture.</p>`);
+
+page('O-001', 'lights', 'Chase the lights', 'lights out chase method rows press below', `<p>Work down the board: for every lit square in a row, press the square <b>directly below</b> it. That clears the row. When you reach the bottom, only the bottom row has lights.</p><p>Then press a few squares on the <b>top row</b> (the pattern depends on what's left) and chase down again. The teacher's dots show the exact presses. Order never matters, and pressing a square twice (in classic mode) cancels out.</p>`);
+page('H-001', 'hanoi', 'Hanoi by recursion', 'hanoi recursion tower disks shortest 2 n minus 1 strategy', `<p>To move a tower of <i>n</i> disks: move the top <i>n − 1</i> to the spare peg, move the biggest disk, then move the <i>n − 1</i> back on top. Each smaller tower is the same problem again.</p><p>Shortcut for doing it by hand: the smallest disk moves every other turn, always in the same direction round the pegs (right for an odd number of disks, left for even). On the other turns there's only one legal move.</p>`);
+page('F-001', 'flood', 'Flood strategy', 'flood colour strategy centre grow', `<p>Push toward the <b>centre</b> first — from there the board is closest. After that, take whichever colour grows you most. Look out for a colour you can <b>erase completely</b>: that's always a good move, because you'll never need it again.</p>`);
+page('B-001', 'balls', 'Ball Sort strategy', 'ball sort tubes strategy empty spare plan', `<p>Empty tubes are your most valuable resource. Fill one only when it starts a colour you can finish. Move whole runs of the same colour together, and work on the colour that's closest to the top of the most tubes.</p>`);
+</script>
+<script>
+/* ---------- boot ---------- */
+applySettings(); paintStars(); T.paintMode(); renderLounge();
+{ const h = location.hash.slice(1); if (GAMES[h]) openGame(h); else if (!S.seenTour && S.tutorials) setTimeout(tour, 600); }
+</script>
+</body>
+</html>

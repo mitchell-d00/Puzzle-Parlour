@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Puzzle Parlour logo">
+  <rect x="3" y="3" width="42" height="42" rx="10" fill="#14111c"/>
+  <rect x="9" y="9" width="9" height="9" rx="2" fill="#ff5c93"/><rect x="19.5" y="9" width="9" height="9" rx="2" fill="#f2c14e"/><rect x="30" y="9" width="9" height="9" rx="2" fill="#4fd6ff"/>
+  <rect x="9" y="19.5" width="9" height="9" rx="2" fill="#5fd08f"/><rect x="19.5" y="19.5" width="9" height="9" rx="2" fill="#ffffff"/><rect x="30" y="19.5" width="9" height="9" rx="2" fill="#ff5c93"/>
+  <rect x="9" y="30" width="9" height="9" rx="2" fill="#f2c14e"/><rect x="19.5" y="30" width="9" height="9" rx="2" fill="#4fd6ff"/><rect x="30" y="30" width="9" height="9" rx="2" fill="#ff8a3d"/>
+</svg>
