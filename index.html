@@ -74,6 +74,7 @@ header.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:
 .stars b{color:var(--brass)}
 .hdr-btns{display:flex;gap:6px;margin-left:auto}
 @media (max-width:560px){.hdr-btns .lbl{display:none}.brand .bt{font-size:1rem}}
+@media (max-width:430px){.brand .bt{display:none}.hdr-btns{gap:4px}}
 
 main{max-width:1240px;margin:0 auto;padding:14px 16px 40px}
 
@@ -175,6 +176,10 @@ select{background:var(--panel);border:1px solid var(--line);border-radius:9px;pa
 .item .sw8{height:46px;border-radius:8px;display:flex;overflow:hidden}
 .item .sw8 i{flex:1}
 .item .p{font-family:var(--mono);font-size:.85rem;color:var(--brass);font-weight:600}
+.dslot{width:64px;height:64px;border-radius:14px;border:2px solid var(--line);display:flex;align-items:flex-end;justify-content:center;padding:4px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.2)}.dslot span{font-size:.7rem;font-weight:700;background:rgba(0,0,0,.55);color:#fff;border-radius:6px;padding:0 4px}.dslot.on{outline:3px solid var(--accent);outline-offset:2px}.dpre{width:28px;height:28px;border-radius:8px;border:2px solid var(--line)}input[type=color]{width:52px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:2px}.shoptabs .btn{min-height:34px}
+.jbnow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px;border-radius:12px;background:radial-gradient(120% 140% at 0 0,#2b2140,#14111c);color:#fff}.jbnow .muted{color:#cfc6dd}.jbnow .eyebrow{color:#7fe3ff}
+.jblist{display:grid;gap:6px}.jbt{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 12px}.jbt.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}.jbt .num{color:var(--muted)}
+#hEq.on{display:inline-block;animation:eqb .5s ease-in-out infinite alternate;color:var(--accent)}@keyframes eqb{to{transform:translateY(-2px) scale(1.15)}}
 .lesson h3{font-size:1rem;margin:12px 0 4px}
 .lesson p,.lesson li{margin:4px 0}
 .lesson .alg{font-family:var(--mono);background:var(--well);border-radius:6px;padding:.05rem .35rem}
@@ -237,6 +242,7 @@ select{background:var(--panel);border:1px solid var(--line);border-radius:9px;pa
   </button>
   <span class="stars" title="Stars earned by solving puzzles. Spend them in the shop."><span aria-hidden="true">★</span><b class="num" id="hStars">0</b></span>
   <div class="hdr-btns">
+    <button class="btn sm" id="hMusic" title="Jukebox"><span class="ico eq" id="hEq">♪</span><span class="lbl">Music</span></button>
     <button class="btn sm" id="hAsk" title="Ask the lesson book"><span class="ico">?</span><span class="lbl">Ask</span></button>
     <button class="btn sm" id="hShop" title="Puzzle shop"><span class="ico">🛍</span><span class="lbl">Shop</span></button>
     <button class="btn sm" id="hSet" title="Settings"><span class="ico">⚙</span><span class="lbl">Settings</span></button>
@@ -307,41 +313,115 @@ const store = {
 
 const DEFAULTS = {
   theme: 'system', sound: true, haptics: true, speak: false, teacher: 'live', speed: 'normal',
-  tutorials: true, autoHide: true, cubeScheme: 'classic', felt: 'emerald', tileStyle: 'candy', colorblind: false,
-  jigRotate: false, jigGhost: true, owned: ['classic', 'emerald', 'candy'], seenTour: false, seenHow: {}
+  tutorials: true, autoHide: true, colorblind: false, kit: {}, feltBy: {}, dye: {}, dyeOn: {},
+  music: false, musicTrack: 0, musicVol: 0.6,
+  jigRotate: false, jigGhost: true, owned: [], seenTour: false, seenHow: {}
 };
 const S = Object.assign({}, DEFAULTS, store.get('settings', {}));
 const save = () => store.set('settings', S);
-const P = Object.assign({ stars: 25, stats: {} }, store.get('player', {}));
+const P = Object.assign({ stars: 25, stats: {}, dyes: 1 }, store.get('player', {}));
 const saveP = () => store.set('player', P);
 
-/* ---------- shop catalogue ---------- */
-const CUBE_SCHEMES = {
-  classic: { name: 'Classic', price: 0, c: { U: '#ffd500', D: '#ffffff', F: '#009e60', B: '#0051ba', R: '#ff5800', L: '#c41e3a' } },
-  neon: { name: 'Neon Lounge', price: 30, c: { U: '#fff95b', D: '#f4f4ff', F: '#39ff88', B: '#4f7dff', R: '#ff8a3d', L: '#ff3d8b' } },
-  pastel: { name: 'Pastel', price: 30, c: { U: '#fff1a8', D: '#fbfbfb', F: '#a8e6cf', B: '#a0c4ff', R: '#ffc9a3', L: '#ffadc6' } },
-  vivid: { name: 'High contrast', price: 20, c: { U: '#ffe100', D: '#ffffff', F: '#00a651', B: '#1e3fe0', R: '#ff7f00', L: '#d0021b' } },
-  jewel: { name: 'Jewel box', price: 45, c: { U: '#e9c46a', D: '#f1f1e6', F: '#2a9d8f', B: '#264abd', R: '#e76f51', L: '#9b2242' } }
-};
+/* ---------- shop catalogue ----------
+   Every game has its own store category and remembers its own look:
+   - colour kits: premade combos, bought once, switch on/off any time
+   - table felt: felts are bought once and can be used at any table; each table keeps its own choice
+   - dye: your own colours for the slots you choose, laid over the active kit; remembered until reset,
+     free to switch off/on, and changing them again takes a new dye */
 const FELTS = {
-  emerald: { name: 'Emerald felt', price: 0, c: '#0f5a4a' }, navy: { name: 'Midnight blue', price: 15, c: '#183a6b' },
-  wine: { name: 'Wine velvet', price: 15, c: '#6b1838' }, plum: { name: 'Plum', price: 15, c: '#45205f' },
-  slate: { name: 'Slate', price: 10, c: '#2f3b46' }, sand: { name: 'Desert sand', price: 20, c: '#8a6a3a' }
+  emerald: { name: 'Emerald felt', price: 0, v: '#0f5a4a' }, navy: { name: 'Midnight blue', price: 15, v: '#183a6b' },
+  wine: { name: 'Wine velvet', price: 15, v: '#6b1838' }, plum: { name: 'Plum', price: 15, v: '#45205f' },
+  slate: { name: 'Slate', price: 10, v: '#2f3b46' }, sand: { name: 'Desert sand', price: 20, v: '#8a6a3a' },
+  teal: { name: 'Lagoon', price: 20, v: '#0e6b78' }, ember: { name: 'Ember', price: 25, v: '#7a2e12' }, noir: { name: 'Noir', price: 20, v: '#1b1b22' }
 };
-const TILE_STYLES = {
-  candy: { name: 'Candy tiles', price: 0, pal: ['#ff5c93', '#f2a33a', '#3ab0f2', '#5fd08f', '#a77bff', '#ff7a5c', '#27c4b4'] },
-  wood: { name: 'Maple blocks', price: 25, pal: ['#b07a3b', '#9a6a33', '#c48d4c', '#8a5b2b', '#a8743f', '#bf8a4d', '#93622f'] },
-  ocean: { name: 'Deep sea', price: 25, pal: ['#1f6fb2', '#2389a8', '#2a5aa0', '#1c9aa0', '#3a4fa8', '#2177c4', '#16848f'] },
-  mono: { name: 'Ivory', price: 15, pal: ['#e9e4d8', '#ddd6c6', '#efe9dd', '#d6cfbd', '#e4dccb', '#ebe5d6', '#d9d1c0'] }
+const IDX = n => [...Array(n)].map((_, i) => i);
+const KITS = {
+  cube: { icon: '🧊', def: 'classic', slots: ['U', 'D', 'F', 'B', 'R', 'L'], slotName: { U: 'Top', D: 'Bottom', F: 'Front', B: 'Back', R: 'Right', L: 'Left' }, items: {
+    classic: { name: 'Classic', price: 0, v: { U: '#ffd500', D: '#ffffff', F: '#009e60', B: '#0051ba', R: '#ff5800', L: '#c41e3a' } },
+    pastel: { name: 'Pastel', price: 30, v: { U: '#fff1a8', D: '#fbfbfb', F: '#a8e6cf', B: '#a0c4ff', R: '#ffc9a3', L: '#ffadc6' } },
+    neon: { name: 'Neon Lounge', price: 30, v: { U: '#fff95b', D: '#f4f4ff', F: '#39ff88', B: '#4f7dff', R: '#ff8a3d', L: '#ff3d8b' } },
+    vivid: { name: 'High contrast', price: 20, v: { U: '#ffe100', D: '#ffffff', F: '#00a651', B: '#1e3fe0', R: '#ff7f00', L: '#d0021b' } },
+    jewel: { name: 'Jewel box', price: 45, v: { U: '#e9c46a', D: '#f1f1e6', F: '#2a9d8f', B: '#264abd', R: '#e76f51', L: '#9b2242' } },
+    sunset: { name: 'Sunset strip', price: 40, v: { U: '#ffd166', D: '#fff4e6', F: '#ef476f', B: '#3a0ca3', R: '#f78c6b', L: '#7209b7' } } } },
+  slide: { icon: '🔢', def: 'candy', slots: IDX(5), slotName: { 0: 'Row 1', 1: 'Row 2', 2: 'Row 3', 3: 'Row 4', 4: 'Row 5' }, items: {
+    candy: { name: 'Candy tiles', price: 0, v: ['#ff5c93', '#f2a33a', '#3ab0f2', '#5fd08f', '#a77bff'] },
+    wood: { name: 'Maple blocks', price: 25, v: ['#b07a3b', '#9a6a33', '#c48d4c', '#8a5b2b', '#a8743f'] },
+    ocean: { name: 'Deep sea', price: 25, v: ['#1f6fb2', '#2389a8', '#2a5aa0', '#1c9aa0', '#3a4fa8'] },
+    mono: { name: 'Ivory', price: 15, v: ['#e9e4d8', '#ddd6c6', '#efe9dd', '#d6cfbd', '#e4dccb'] },
+    retro: { name: 'Arcade retro', price: 30, v: ['#e63946', '#f4a261', '#2a9d8f', '#264653', '#e9c46a'] } } },
+  jigsaw: { icon: '🧩', def: 'classic', slots: ['frame', 'guide', 'hint'], slotName: { frame: 'Frame', guide: 'Frame shade', hint: 'Hint glow' }, items: {
+    classic: { name: 'Gallery', price: 0, v: { frame: '#ffffff', guide: '#000000', hint: '#f2c14e' } },
+    gold: { name: 'Gold leaf', price: 20, v: { frame: '#d4af37', guide: '#2b1d0e', hint: '#fff1a8' } },
+    neon: { name: 'Neon frame', price: 20, v: { frame: '#ff2079', guide: '#14111c', hint: '#00e5ff' } } } },
+  lights: { icon: '💡', def: 'classic', slots: ['on1', 'on2', 'off'], slotName: { on1: 'Lit', on2: 'Lit (2nd colour)', off: 'Off' }, items: {
+    classic: { name: 'Marquee bulbs', price: 0, v: { on1: '#ffb703', on2: '#ff4d6d', off: '#1a1424' } },
+    ice: { name: 'Ice lights', price: 20, v: { on1: '#7fe3ff', on2: '#b388ff', off: '#0d1b2a' } },
+    firefly: { name: 'Fireflies', price: 25, v: { on1: '#c6ff4a', on2: '#ffd60a', off: '#10241a' } } } },
+  hanoi: { icon: '🗼', def: 'rainbow', slots: [...IDX(8), 'peg'], slotName: { 0: 'Disk 1', 1: 'Disk 2', 2: 'Disk 3', 3: 'Disk 4', 4: 'Disk 5', 5: 'Disk 6', 6: 'Disk 7', 7: 'Disk 8', peg: 'Pegs' }, items: {
+    rainbow: { name: 'Rainbow', price: 0, v: { 0: '#ff4d6d', 1: '#ffb703', 2: '#3ab0f2', 3: '#5fd08f', 4: '#a77bff', 5: '#ff8a3d', 6: '#27c4b4', 7: '#e85dce', peg: '#c48d4c' } },
+    wood: { name: 'Toy-box wood', price: 20, v: { 0: '#e9c46a', 1: '#d4a373', 2: '#bc8a5f', 3: '#a47148', 4: '#8b5e34', 5: '#6f4518', 6: '#603808', 7: '#583101', peg: '#3d2b1f' } },
+    jade: { name: 'Jade temple', price: 30, v: { 0: '#d8f3dc', 1: '#b7e4c7', 2: '#95d5b2', 3: '#74c69d', 4: '#52b788', 5: '#40916c', 6: '#2d6a4f', 7: '#1b4332', peg: '#d4af37' } } } },
+  flood: { icon: '🌊', def: 'classic', slots: IDX(6), slotName: Object.fromEntries(IDX(6).map(i => [i, 'Colour ' + (i + 1)])), items: {
+    classic: { name: 'Paint box', price: 0, v: ['#ff4d6d', '#ffb703', '#3ab0f2', '#5fd08f', '#a77bff', '#ff8a3d'] },
+    ocean: { name: 'Reef', price: 20, v: ['#03045e', '#0077b6', '#00b4d8', '#90e0ef', '#ff7b54', '#ffd6a5'] },
+    earth: { name: 'Earth', price: 20, v: ['#6b4226', '#a0522d', '#d2b48c', '#556b2f', '#8fbc8f', '#f4e1c1'] } } },
+  balls: { icon: '🧪', def: 'classic', slots: IDX(9), slotName: Object.fromEntries(IDX(9).map(i => [i, 'Ball ' + (i + 1)])), items: {
+    classic: { name: 'Gumballs', price: 0, v: ['#ff4d6d', '#ffb703', '#3ab0f2', '#5fd08f', '#a77bff', '#ff8a3d', '#27c4b4', '#f4f1ea', '#e85dce'] },
+    pastel: { name: 'Macarons', price: 25, v: ['#ffadad', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff', '#fffffc'] },
+    jewel: { name: 'Marbles', price: 30, v: ['#9b1d20', '#d97706', '#d4af37', '#047857', '#1d4ed8', '#6d28d9', '#0e7490', '#e5e7eb', '#be185d'] } } },
+  maze: { icon: '🌀', def: 'hedge', slots: ['wall', 'floor', 'trail', 'player', 'exit'], slotName: { wall: 'Walls', floor: 'Floor', trail: 'Trail', player: 'You', exit: 'Exit' }, items: {
+    hedge: { name: 'Hedge garden', price: 0, v: { wall: '#2f6b34', floor: '#e8dfc8', trail: '#ff5c93', player: '#3a86ff', exit: '#f2c14e' } },
+    neon: { name: 'Neon grid', price: 25, v: { wall: '#ff2079', floor: '#14111c', trail: '#00e5ff', player: '#e8ff00', exit: '#00ff9f' } },
+    stone: { name: 'Old stone', price: 20, v: { wall: '#5b5552', floor: '#cbbfa8', trail: '#b23a48', player: '#264653', exit: '#e9c46a' } },
+    ice: { name: 'Ice palace', price: 30, v: { wall: '#7fb7e6', floor: '#f2fbff', trail: '#6a4cff', player: '#ff5c93', exit: '#2ec4b6' } } } },
+  arcade: { icon: '💎', def: 'bright', slots: IDX(6), slotName: { 0: 'Circle', 1: 'Square', 2: 'Triangle', 3: 'Hexagon', 4: 'Diamond', 5: 'Star' }, items: {
+    bright: { name: 'Bright gems', price: 0, v: ['#ff4d6d', '#ff9f1c', '#ffd60a', '#38d17a', '#3a86ff', '#b15cff'] },
+    candy: { name: 'Sugar candy', price: 30, v: ['#ff70a6', '#ff9770', '#ffd670', '#70d6ff', '#a0e7a0', '#c792ea'] },
+    jewel: { name: 'Crown jewels', price: 40, v: ['#9b1d20', '#d97706', '#d4af37', '#047857', '#1d4ed8', '#6d28d9'] },
+    neon: { name: 'Neon arcade', price: 35, v: ['#ff2079', '#ff8d00', '#e8ff00', '#00ff9f', '#00b8ff', '#bd00ff'] } } },
+  stack: { icon: '🧱', def: 'classic', slots: IDX(7), slotName: { 0: 'I', 1: 'O', 2: 'T', 3: 'S', 4: 'Z', 5: 'J', 6: 'L' }, items: {
+    classic: { name: 'Lounge blocks', price: 0, v: ['#4fd6ff', '#f2c14e', '#b15cff', '#5fd08f', '#ff4d6d', '#3a86ff', '#ff8a3d'] },
+    pastel: { name: 'Pastel stack', price: 25, v: ['#a0e7e5', '#fbe7c6', '#d5aaff', '#b4f8c8', '#ffaebc', '#a0c4ff', '#ffd6a5'] },
+    metal: { name: 'Chrome & brass', price: 35, v: ['#c0c7d0', '#d4af37', '#8e9aaf', '#b8b8b8', '#cd7f32', '#9aa5b1', '#e5c07b'] },
+    lava: { name: 'Lava lamp', price: 30, v: ['#ff4500', '#ff8c00', '#ffd700', '#dc143c', '#ff1493', '#ff6347', '#ffa07a'] } } }
 };
-const cubeColors = () => (CUBE_SCHEMES[S.cubeScheme] || CUBE_SCHEMES.classic).c;
-const PIECE_COLORS = () => S.colorblind ? ['#e69f00', '#56b4e9', '#009e73', '#f0e442', '#0072b2', '#d55e00', '#cc79a7', '#ffffff', '#555555'] : ['#ff4d6d', '#ffb703', '#3ab0f2', '#5fd08f', '#a77bff', '#ff8a3d', '#27c4b4', '#f4f1ea', '#e85dce'];
+const DYE = 10;
+const inkFor = hex => { const n = parseInt(hex.slice(1), 16), r = n >> 16, g = n >> 8 & 255, b = n & 255; return (r * .299 + g * .587 + b * .114) > 170 ? '#2a2420' : '#fff'; };
+const clone = v => JSON.parse(JSON.stringify(v));
+const getSlot = (v, s) => v[s];
+const setSlot = (v, s, c) => (v[s] = c, v);
+const swatchList = v => typeof v === 'string' ? [v] : Array.isArray(v) ? v : Object.values(v);
+const owns = (cat, id) => S.owned.includes(cat + ':' + id) || (cat === 'felt' ? FELTS[id]?.price === 0 : KITS[cat]?.items[id]?.price === 0);
+const kitId = game => S.kit[game] || KITS[game].def;
+const dyeOf = game => S.dye[game] || {};
+const hasDye = game => Object.keys(dyeOf(game)).length > 0;
+const dyeOn = game => S.dyeOn[game] !== false && hasDye(game);
+// a game's look = its kit (or the free default) + its dyed colours when switched on; slot "felt" is its table
+function lookOf(game) {
+  const K = KITS[game]; const v = clone((K.items[kitId(game)] || K.items[K.def]).v); v.felt = (FELTS[S.feltBy[game]] || FELTS.emerald).v;
+  if (dyeOn(game)) for (const [k, c] of Object.entries(dyeOf(game))) v[k] = c; return v;
+}
+function kitVal(game) { const v = lookOf(game); if (Array.isArray(v)) return v; const o = Object.assign({}, v); delete o.felt; return Array.isArray(KITS[game].items[KITS[game].def].v) ? KITS[game].slots.map(i => v[i]) : o; }
+const feltOf = game => game && KITS[game] ? lookOf(game).felt : FELTS.emerald.v;
+const OKABE = ['#e69f00', '#56b4e9', '#009e73', '#f0e442', '#0072b2', '#d55e00', '#cc79a7', '#ffffff', '#555555'];
+const cbDefault = game => S.colorblind && kitId(game) === KITS[game].def && !dyeOn(game);
+const cubeColors = () => kitVal('cube');
+const tilePal = () => kitVal('slide');
+const gemPal = () => cbDefault('arcade') ? OKABE.slice(0, 6) : kitVal('arcade');
+const blockPal = () => kitVal('stack');
+const mazeSkin = () => kitVal('maze');
+const floodPal = () => cbDefault('flood') ? OKABE.slice(0, 6) : kitVal('flood');
+const ballPal = () => cbDefault('balls') ? OKABE : kitVal('balls');
+const hanoiPal = () => kitVal('hanoi');
+const lightsPal = () => cbDefault('lights') ? { on1: '#e69f00', on2: '#56b4e9', off: '#1a1424' } : kitVal('lights');
+const jigPal = () => kitVal('jigsaw');
+const PIECE_COLORS = () => S.colorblind ? OKABE : ['#ff4d6d', '#ffb703', '#3ab0f2', '#5fd08f', '#a77bff', '#ff8a3d', '#27c4b4', '#f4f1ea', '#e85dce'];
 
 /* ---------- theme ---------- */
 function applySettings() {
   const r = document.documentElement;
   if (S.theme === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', S.theme);
-  r.style.setProperty('--felt', (FELTS[S.felt] || FELTS.emerald).c);
+  r.style.setProperty('--felt', feltOf(curId));
 }
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', applySettings);
 
@@ -484,6 +564,7 @@ function openGame(id, opts) {
   $('#lounge').hidden = true; $('#gameView').hidden = false; $('#main').classList.add('ingame');
   $('#gTitle').textContent = g.name; $('#stage').innerHTML = ''; $('#gOpts').innerHTML = ''; $('#gStats').innerHTML = '';
   T.clear(); T.paintMode(); $('#gameGrid').classList.toggle('noteacher', S.teacher === 'off' && S.autoHide);
+  applySettings();
   cur = g.create($('#stage'), $('#gOpts'), opts || {});
   history.replaceState(null, '', '#' + id);
   window.scrollTo(0, 0);
@@ -496,7 +577,7 @@ function howTo(id) {
 function goLounge() {
   if (cur && cur.destroy) cur.destroy(); cur = null; curId = null;
   $('#lounge').hidden = false; $('#gameView').hidden = true; $('#main').classList.remove('ingame');
-  history.replaceState(null, '', location.pathname); renderLounge();
+  history.replaceState(null, '', location.pathname); applySettings(); renderLounge();
 }
 $('#gBack').onclick = goLounge; $('#hHome').onclick = goLounge;
 $('#gUndo').onclick = () => cur?.undo?.();
@@ -512,21 +593,21 @@ window.addEventListener('resize', () => cur?.resize?.());
 function renderLounge() {
   const L = $('#lounge');
   const total = Object.values(P.stats).reduce((a, s) => a + s.solves, 0);
-  L.innerHTML = `<div class="marquee" id="mq"><h1>PUZZLE PARLOUR</h1><div class="sub">CUBES · SLIDERS · JIGSAWS · AND A TEACHER ON EVERY TABLE</div>
+  L.innerHTML = `<div class="marquee" id="mq"><h1>PUZZLE PARLOUR</h1><div class="sub">CUBES · MAZES · JIGSAWS · ARCADE · AND A TEACHER ON EVERY TABLE</div>
    <p>Walk up to any table. Every puzzle comes with Professor Pip, a live teacher who watches your moves and shows the next one, plus lessons that teach you the method so you can solve it alone.</p>
    <div class="row"><button class="btn primary" id="lCube">Learn the cube</button><button class="btn" id="lJig">Make a jigsaw from a photo</button><button class="btn" id="lTour">Tour the lounge</button></div></div>
    <div class="floor-h"><h2>The floor</h2><span class="muted">${total ? total + ' puzzles solved so far' : 'Tap a table to sit down'}</span></div>
    <div class="tables" id="tables"></div>
    <div class="floor-h"><h2>The counter</h2></div>
    <div class="counter">
-     <div class="card"><h3>🛍 Puzzle shop</h3><p class="muted">Spend stars on cube colour schemes, table felts and tile styles. You earn stars every time you solve, with a bonus when you solve without hints.</p><button class="btn sm brass" style="margin-top:8px" id="lShop">Browse the shop</button></div>
+     <div class="card"><h3>🛍 Puzzle shop</h3><p class="muted">Every game has its own counter: colour kits you keep, table felts, and dyes for your own colours. Earn stars by solving, with a bonus for no hints.</p><button class="btn sm brass" style="margin-top:8px" id="lShop">Browse the shop</button></div>
      <div class="card"><h3>📖 Lesson book</h3><p class="muted">${PAGES.length} pages covering every puzzle. Ask a question and the book answers only from its pages.</p><button class="btn sm" style="margin-top:8px" id="lAsk">Ask a question</button></div>
      <div class="card"><h3>📊 Your record</h3><div id="lRec" class="muted" style="font-size:.88rem"></div></div>
    </div>`;
   const tb = $('#tables', L);
   for (const g of Object.values(GAMES)) {
     const st = P.stats[g.id];
-    const b = el('button', { class: 'ptable', 'data-g': g.id });
+    const b = el('button', { class: 'ptable', 'data-g': g.id, style: '--felt:' + (KITS[g.id] ? feltOf(g.id) : FELTS.emerald.v) });
     b.innerHTML = `<div class="felt"><span class="tag">${esc(g.tag)}</span><div class="art">${g.art()}</div><h3>${esc(g.name)}</h3><div class="d">${esc(g.desc)}</div><div class="best">${st ? st.solves + ' solved' : 'Not played yet'}</div></div>`;
     b.onclick = () => openGame(g.id); tb.appendChild(b);
   }
@@ -538,22 +619,97 @@ function renderLounge() {
 }
 
 /* ---------- shop ---------- */
-function showShop() {
-  const sec = (title, cat, key, swatch) => `<h3 style="margin:14px 0 8px;font-size:.95rem">${title}</h3><div class="shopgrid">${Object.entries(cat).map(([id, it]) => {
-    const own = S.owned.includes(id), on = S[key] === id;
-    return `<div class="item"><div class="sw8">${swatch(it)}</div><b>${esc(it.name)}</b><div class="p">${own ? (on ? 'In use' : 'Owned') : it.price + ' ★'}</div><button class="btn sm ${on ? '' : own ? '' : 'brass'}" data-buy="${id}" data-key="${key}" data-price="${it.price}" ${on ? 'disabled' : ''}>${own ? (on ? 'Using' : 'Use') : 'Buy'}</button></div>`;
-  }).join('')}</div>`;
-  modal('Puzzle shop', `<p class="muted">You have <b class="num" style="color:var(--brass)">${P.stars} ★</b>. Nothing here costs real money.</p>` +
-    sec('Cube colour schemes', CUBE_SCHEMES, 'cubeScheme', it => Object.values(it.c).map(c => `<i style="background:${c}"></i>`).join('')) +
-    sec('Table felts', FELTS, 'felt', it => `<i style="background:radial-gradient(circle at 50% 30%,${it.c},#000 140%)"></i>`) +
-    sec('Slide-puzzle tiles', TILE_STYLES, 'tileStyle', it => it.pal.slice(0, 5).map(c => `<i style="background:${c}"></i>`).join('')), mb => {
+function todayKey() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+function dailyDeal() {
+  const pool = []; for (const g in KITS) for (const id in KITS[g].items) if (!owns(g, id)) pool.push([g, id]); for (const id in FELTS) if (!owns('felt', id)) pool.push(['felt', id]);
+  if (!pool.length) return null; let h = 0; for (const c of todayKey()) h = (h * 31 + c.charCodeAt(0)) >>> 0; const [cat, id] = pool[h % pool.length];
+  const it = cat === 'felt' ? FELTS[id] : KITS[cat].items[id]; return { cat, id, it, price: Math.ceil(it.price * 0.6) };
+}
+let shopTab = 'featured', dyeGame = 'cube', dyeDraft = null, dyeSlot = 0;
+const HARMONIES = {
+  'Sunset': ['#ff6b6b', '#ffa94d', '#ffd43b', '#f783ac', '#9775fa', '#ff8787', '#ffc078', '#e64980', '#fab005'],
+  'Ocean': ['#0b7285', '#1098ad', '#3bc9db', '#99e9f2', '#1864ab', '#4dabf7', '#a5d8ff', '#15aabf', '#d0ebff'],
+  'Forest': ['#2b8a3e', '#5c940d', '#a9e34b', '#e9fac8', '#8f5e15', '#d9480f', '#ffe066', '#37b24d', '#74b816'],
+  'Candy': ['#ff8fab', '#ffc2d1', '#a2d2ff', '#cdb4db', '#bde0fe', '#ffafcc', '#fdffb6', '#caffbf', '#ffd6a5'],
+  'Mono night': ['#f8f9fa', '#ced4da', '#868e96', '#495057', '#212529', '#adb5bd', '#e9ecef', '#343a40', '#dee2e6']
+};
+function hsl(h, s, l) { s /= 100; l /= 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)); const x = v => Math.round(v * 255).toString(16).padStart(2, '0'); return '#' + x(f(0)) + x(f(8)) + x(f(4)); }
+function randomHarmony(n) { const h0 = Math.random() * 360, step = 360 / n * (Math.random() < .5 ? 1 : .35); return [...Array(n)].map((_, i) => hsl(h0 + i * step, 55 + Math.random() * 30, 45 + Math.random() * 20)); }
+const dyeSlots = game => [...KITS[game].slots, 'felt'];
+const dyeSlotName = (game, s) => s === 'felt' ? 'Table felt' : KITS[game].slotName[s];
+function refreshLooks() { save(); applySettings(); cur?.restyle?.(); renderLoungeIfOpen(); }
+function showShop(tab) {
+  if (tab) shopTab = tab;
+  const gname = g => GAMES[g]?.name || g;
+  const tabs = [['featured', '⭐ Featured'], ...Object.keys(KITS).filter(g => GAMES[g]).map(g => [g, KITS[g].icon + ' ' + gname(g)]), ['dye', '🎨 Dye Workshop']];
+  const kitCard = (g, id, it, price, extra = '') => {
+    const own = owns(g, id), on = kitId(g) === id, isDef = id === KITS[g].def; const sw = swatchList(it.v).map(c => `<i style="background:${c}"></i>`).join('');
+    const btn = !own ? `<button class="btn sm brass" data-buy="${id}" data-cat="${g}" data-price="${price}">Buy kit</button>` : on && !isDef ? `<button class="btn sm on" data-off="${g}">Turn off</button>` : on ? `<button class="btn sm" disabled>Default</button>` : `<button class="btn sm" data-use="${id}" data-cat="${g}">Turn on</button>`;
+    return `<div class="item"><div class="sw8">${sw}</div><b>${esc(it.name)}</b><div class="p">${own ? (on ? 'On' : 'Owned · reusable') : price + ' ★'}${extra}</div>${btn}</div>`;
+  };
+  const feltCard = (g, id, it, price, extra = '') => {
+    const own = owns('felt', id), on = (S.feltBy[g] || 'emerald') === id;
+    const btn = !own ? `<button class="btn sm brass" data-buy="${id}" data-cat="felt" data-game="${g}" data-price="${price}">Buy felt</button>` : on ? `<button class="btn sm" disabled>On this table</button>` : `<button class="btn sm" data-felt="${id}" data-game="${g}">Use here</button>`;
+    return `<div class="item"><div class="sw8"><i style="background:radial-gradient(circle at 50% 30%,${it.v},#000 140%)"></i></div><b>${esc(it.name)}</b><div class="p">${own ? 'Owned · any table' : price + ' ★'}${extra}</div>${btn}</div>`;
+  };
+  let body = '';
+  if (shopTab === 'featured') {
+    const deal = dailyDeal(); const claimed = P.daily === todayKey();
+    body = `<div class="counter" style="margin-top:4px">
+      <div class="card"><h3>🎁 Daily stars</h3><p class="muted">Free stars once a day.</p><button class="btn sm brass" style="margin-top:8px" id="shDaily" ${claimed ? 'disabled' : ''}>${claimed ? 'Collected today' : 'Collect 10 ★'}</button></div>
+      <div class="card"><h3>🎨 Your dyes</h3><p class="muted">You have <b class="num">${P.dyes || 0}</b> dye${P.dyes === 1 ? '' : 's'}. One dye = one saved set of your own colours for a game.</p><button class="btn sm" style="margin-top:8px" data-tab="dye">Open the workshop</button></div>
+      <div class="card"><h3>🏷 Deal of the day</h3>${deal ? `<p class="muted">${esc(deal.it.name)} (${deal.cat === 'felt' ? 'table felt' : esc(gname(deal.cat))}) — <s>${deal.it.price}</s> <b style="color:var(--brass)">${deal.price} ★</b></p>` : '<p class="muted">You own everything. Impressive!</p>'}</div></div>
+      ${deal ? `<h3 style="margin:14px 0 8px;font-size:.95rem">Today only</h3><div class="shopgrid">${deal.cat === 'felt' ? feltCard(curId && KITS[curId] ? curId : 'cube', deal.id, deal.it, deal.price, ' (40% off)') : kitCard(deal.cat, deal.id, deal.it, deal.price, ' (40% off)')}</div>` : ''}
+      <p class="muted" style="margin-top:12px;font-size:.88rem">Every game has its own tab and remembers its own look. <b>Kits</b> are premade colour combos: buy once, then turn them on or off whenever you like. <b>Felts</b> are bought once and can go on any table. A <b>dye</b> lets you pick your own colours for one game — only the ones you choose change. They’re remembered until you reset them, and you can switch them off and on for free. To change your dyed colours again, buy another dye.</p>`;
+  } else if (shopTab === 'dye') {
+    const slots = dyeSlots(dyeGame);
+    if (!dyeDraft || dyeDraft.game !== dyeGame) { const v = lookOf(dyeGame); dyeDraft = { game: dyeGame, v: clone(v), base: clone(v) }; dyeSlot = 0; }
+    const changed = slots.filter(s => dyeDraft.v[s] !== dyeDraft.base[s]).length;
+    body = `<p class="muted">Choose a game, tap a colour, pick anything you like — previewing is free. <b>Save with a dye</b> and only the colours you changed are dyed; the rest follow that game's kit. Your colours are remembered until you reset them. Changing them again takes another dye.</p>
+      <div class="row" style="margin:10px 0"><span class="stars">Dyes <b class="num">${P.dyes || 0}</b></span><button class="btn sm brass" data-dye="1">Buy a dye · ${DYE} ★</button></div>
+      <div class="row" style="gap:6px">${Object.keys(KITS).filter(g => GAMES[g]).map(g => `<button class="btn sm ${g === dyeGame ? 'on' : ''}" data-dg="${g}">${KITS[g].icon} ${esc(gname(g))}</button>`).join('')}</div>
+      <div class="row" style="margin:12px 0;gap:10px">${slots.map((s, i) => `<button class="dslot ${i === dyeSlot ? 'on' : ''}" data-slot="${i}" style="background:${dyeDraft.v[s]}"><span>${esc(dyeSlotName(dyeGame, s))}${dyeOf(dyeGame)[s] ? ' 🎨' : ''}</span></button>`).join('')}</div>
+      <div class="row"><label class="eyebrow" for="dyeCol">${esc(dyeSlotName(dyeGame, slots[dyeSlot]))}</label><input type="color" id="dyeCol" value="${dyeDraft.v[slots[dyeSlot]]}"><div class="row">${['#ff4d6d', '#ff9f1c', '#ffd60a', '#38d17a', '#3a86ff', '#b15cff', '#ff70a6', '#00e5ff', '#ffffff', '#1d1a24', '#8a6a3a', '#d4af37'].map(c => `<button class="dpre" data-c="${c}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div></div>
+      <div class="row" style="margin-top:10px"><span class="eyebrow">Combos</span>${Object.keys(HARMONIES).map(h => `<button class="btn sm" data-harm="${h}">${h}</button>`).join('')}<button class="btn sm" data-harm="*">🎲 Random</button><button class="btn sm" id="dyeReset">Undo changes</button></div>
+      <div class="ans" style="margin-top:12px"><b>Preview:</b> ${changed ? `${changed} colour${changed > 1 ? 's' : ''} changed. Saving uses <b>1 dye</b>.` : 'No changes yet.'}<div class="row" style="margin-top:8px"><button class="btn primary" id="dyeApply" ${changed ? '' : 'disabled'}>Save with a dye</button>${hasDye(dyeGame) ? `<button class="btn sm" data-dyetog="${dyeGame}">${dyeOn(dyeGame) ? 'Turn my dye off' : 'Turn my dye on'}</button><button class="btn sm" data-dyereset="${dyeGame}">Reset dye</button>` : ''}</div></div>`;
+  } else {
+    const g = shopTab, K = KITS[g];
+    const d = dyeOf(g);
+    body = `<h3 style="margin:6px 0 8px;font-size:.95rem">Colour kits</h3><div class="shopgrid">${Object.entries(K.items).map(([id, it]) => kitCard(g, id, it, it.price)).join('')}</div>
+      <h3 style="margin:14px 0 8px;font-size:.95rem">Table felt</h3><div class="shopgrid">${Object.entries(FELTS).map(([id, it]) => feltCard(g, id, it, it.price)).join('')}</div>
+      <h3 style="margin:14px 0 8px;font-size:.95rem">Your dye</h3>${hasDye(g) ? `<div class="item" style="max-width:340px"><div class="sw8">${Object.values(d).map(c => `<i style="background:${c}"></i>`).join('')}</div><b>${Object.keys(d).length} dyed colour${Object.keys(d).length > 1 ? 's' : ''}</b><div class="p">${dyeOn(g) ? 'On' : 'Off'} · remembered until reset</div><div class="row"><button class="btn sm ${dyeOn(g) ? 'on' : ''}" data-dyetog="${g}">${dyeOn(g) ? 'Turn off' : 'Turn on'}</button><button class="btn sm" data-dyetab="${g}">Change colours (new dye)</button><button class="btn sm" data-dyereset="${g}">Reset</button></div></div>` : `<p class="muted">No dye on ${esc(gname(g))} yet.</p><button class="btn sm" style="margin-top:6px" data-dyetab="${g}">🎨 Dye ${esc(gname(g))}</button>`}`;
+  }
+  modal('Puzzle shop', `<p class="muted">You have <b class="num" style="color:var(--brass)">${P.stars} ★</b> and <b class="num">${P.dyes || 0}</b> dye${P.dyes === 1 ? '' : 's'}. Nothing here costs real money.</p><div class="row shoptabs" style="margin:10px 0">${tabs.map(([k, l]) => `<button class="btn sm ${k === shopTab ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}</div>${body}`, mb => {
+    const pay = n => { if (P.stars < n) { toast('You need ' + (n - P.stars) + ' more stars. Solve a puzzle!'); beep('bad'); return false; } P.stars -= n; saveP(); paintStars(); beep('snap'); return true; };
     mb.addEventListener('click', e => {
-      const b = e.target.closest('[data-buy]'); if (!b) return; const id = b.dataset.buy, key = b.dataset.key, price = +b.dataset.price;
-      if (!S.owned.includes(id)) { if (P.stars < price) { toast('You need ' + (price - P.stars) + ' more stars. Solve a puzzle!'); beep('bad'); return; } P.stars -= price; S.owned.push(id); saveP(); paintStars(); beep('snap'); }
-      S[key] = id; save(); applySettings(); cur?.restyle?.(); showShop();
+      const q = sel => e.target.closest(sel);
+      let b;
+      if (b = q('[data-tab]')) { shopTab = b.dataset.tab; showShop(); return; }
+      if (b = q('[data-dyetab]')) { dyeGame = b.dataset.dyetab; dyeDraft = null; shopTab = 'dye'; showShop(); return; }
+      if (b = q('[data-buy]')) { const { buy: id, cat, price } = b.dataset; if (!owns(cat, id)) { if (!pay(+price)) return; S.owned.push(cat + ':' + id); toast(cat === 'felt' ? 'Felt bought — use it on any table' : 'Kit bought — yours to keep'); } if (cat === 'felt') S.feltBy[b.dataset.game] = id; else S.kit[cat] = id; refreshLooks(); showShop(); return; }
+      if (b = q('[data-use]')) { S.kit[b.dataset.cat] = b.dataset.use; refreshLooks(); showShop(); return; }
+      if (b = q('[data-off]')) { S.kit[b.dataset.off] = KITS[b.dataset.off].def; refreshLooks(); showShop(); return; }
+      if (b = q('[data-felt]')) { S.feltBy[b.dataset.game] = b.dataset.felt; refreshLooks(); showShop(); return; }
+      if (b = q('[data-dyetog]')) { const g = b.dataset.dyetog; S.dyeOn[g] = !dyeOn(g); dyeDraft = null; refreshLooks(); showShop(); return; }
+      if (b = q('[data-dyereset]')) { const g = b.dataset.dyereset; if (confirm('Reset your dyed colours for this game? Dyeing it again will take a new dye.')) { delete S.dye[g]; delete S.dyeOn[g]; dyeDraft = null; refreshLooks(); } showShop(); return; }
+      if (b = q('[data-dye]')) { if (pay(DYE)) { P.dyes = (P.dyes || 0) + 1; saveP(); toast('Dye bought'); } showShop(); return; }
+      if (b = q('[data-dg]')) { dyeGame = b.dataset.dg; dyeDraft = null; showShop(); return; }
+      if (b = q('[data-slot]')) { dyeSlot = +b.dataset.slot; showShop(); return; }
+      if ((b = q('[data-c]')) && dyeDraft) { dyeDraft.v[dyeSlots(dyeGame)[dyeSlot]] = b.dataset.c; showShop(); return; }
+      if ((b = q('[data-harm]')) && dyeDraft) { const sl = KITS[dyeGame].slots; const pal = b.dataset.harm === '*' ? randomHarmony(sl.length) : HARMONIES[b.dataset.harm]; sl.forEach((s, i) => dyeDraft.v[s] = pal[i % pal.length]); showShop(); return; }
+      if (q('#dyeReset')) { dyeDraft = null; showShop(); return; }
+      if (q('#shDaily')) { P.daily = todayKey(); P.stars += 10; saveP(); paintStars(); beep('win'); toast('+10 ★ — see you tomorrow!'); showShop(); return; }
+      if (q('#dyeApply') && dyeDraft) {
+        if ((P.dyes || 0) < 1) { toast('You need a dye. Buy one above for ' + DYE + ' ★.'); beep('bad'); return; }
+        const d = Object.assign({}, dyeOf(dyeGame)); dyeSlots(dyeGame).forEach(s => { if (dyeDraft.v[s] !== dyeDraft.base[s]) d[s] = dyeDraft.v[s]; });
+        P.dyes--; S.dye[dyeGame] = d; S.dyeOn[dyeGame] = true; saveP(); refreshLooks(); dyeDraft = null; beep('win');
+        toast('Saved! Your colours stay until you reset or change them — changing them again takes a new dye.'); showShop(); return;
+      }
     });
+    const ci = $('#dyeCol', mb); if (ci) { ci.addEventListener('input', () => { dyeDraft.v[dyeSlots(dyeGame)[dyeSlot]] = ci.value; const sl = $(`[data-slot="${dyeSlot}"]`, mb); if (sl) sl.style.background = ci.value; }); ci.addEventListener('change', () => showShop()); }
   });
 }
+const renderLoungeIfOpen = () => { if (!$('#lounge').hidden) renderLounge(); };
 
 /* ---------- settings ---------- */
 function showSettings() {
@@ -587,7 +743,8 @@ function tour() {
     ['#mq', 'Welcome to the Puzzle Parlour! Every table on the floor is a different puzzle, and every one has a live teacher.'],
     ['#tables', 'Tap a table to sit down. The cube table teaches you to solve a Rubik-style cube one stage at a time.'],
     ['.stars', 'Solving earns stars. You get a bonus when you solve without asking for hints.'],
-    ['#hShop', 'Spend stars in the shop on new cube colours, felts and tiles.'],
+    ['#hShop', 'Spend stars in the shop. Every game has its own tab: colour kits you keep and can switch on or off, table felts, and dyes for picking your own colours.'],
+    ['#hMusic', 'The jukebox has ten original tracks. Tap it to pick one.'],
     ['#hAsk', 'Stuck on a word or a method? Ask the lesson book. It only answers from its own pages, and says when it doesn’t know.'],
     ['#hSet', 'Settings let you choose how the teacher helps: Live shows every move, Ask waits for you, Off lets you fly solo.']
   ];
@@ -1094,7 +1251,7 @@ function pickImage(cb) { const f = $('#fileIn'); f.value = ''; f.onchange = () =
 
 registerGame({
   id: 'slide', name: 'Slide Puzzle', tag: 'Classic', desc: 'The 8, 15 and 24 puzzles, with numbers or your own photo. Learn the row-and-column method.',
-  art: () => `<svg viewBox="0 0 100 100"><rect x="8" y="8" width="84" height="84" rx="8" fill="#2a1e14"/>${[...Array(15)].map((_, i) => { const x = 12 + (i % 4) * 19.5, y = 12 + (i / 4 | 0) * 19.5; const c = TILE_STYLES[S.tileStyle]?.pal || TILE_STYLES.candy.pal; return `<rect x="${x}" y="${y}" width="18" height="18" rx="3" fill="${c[(i / 4 | 0) % c.length]}"/><text x="${x + 9}" y="${y + 13}" font-family="Bungee,Impact" font-size="10" text-anchor="middle" fill="#fff">${i + 1}</text>`; }).join('')}</svg>`,
+  art: () => `<svg viewBox="0 0 100 100"><rect x="8" y="8" width="84" height="84" rx="8" fill="#2a1e14"/>${[...Array(15)].map((_, i) => { const x = 12 + (i % 4) * 19.5, y = 12 + (i / 4 | 0) * 19.5; const c = tilePal(); return `<rect x="${x}" y="${y}" width="18" height="18" rx="3" fill="${c[(i / 4 | 0) % c.length]}"/><text x="${x + 9}" y="${y + 13}" font-family="Bungee,Impact" font-size="10" text-anchor="middle" fill="#fff">${i + 1}</text>`; }).join('')}</svg>`,
   how: `<p><b>Tap</b> any tile in the same row or column as the gap to slide it (and everything between) into the gap. You can also <b>swipe</b> anywhere on the board to push a tile into the gap.</p><p><b>The method:</b> finish the top row, then the left column. What's left is a smaller puzzle — repeat until a 3×3 remains, then finish it. The teacher locks the parts you've finished and shows which tile to move next.</p><p>Tiles are coloured by the row they belong in, so you can see at a glance where they go.</p>`,
   create(host, opts, o) {
     let N = store.get('slide.n', 4), mode = store.get('slide.mode', 'numbers'), img = null, artSeed = 0;
@@ -1115,7 +1272,7 @@ registerGame({
       paint(); const r = host.getBoundingClientRect(); const size = Math.min(r.width - 24, r.height - 80); ts = size / N;
       B.style.width = B.style.height = size + 'px'; B.style.left = (r.width - size) / 2 + 'px'; B.style.top = Math.max(10, (r.height - 60 - size) / 2) + 'px';
       B.innerHTML = ''; tiles = [];
-      const pal = (TILE_STYLES[S.tileStyle] || TILE_STYLES.candy).pal;
+      const pal = tilePal();
       const lockedNow = lockedCells();
       for (const c of lockedNow) { const d = el('div', { class: 'lockcell' }); d.style.width = d.style.height = ts + 'px'; d.style.left = (c % N) * ts + 'px'; d.style.top = (c / N | 0) * ts + 'px'; B.appendChild(d); }
       for (let v = 1; v < N * N; v++) {
@@ -1123,7 +1280,7 @@ registerGame({
         t.style.width = t.style.height = (ts - g * 2) + 'px'; t.style.left = t.style.top = g + 'px'; t.style.fontSize = ts * .36 + 'px';
         const tr = (v - 1) / N | 0, tc = (v - 1) % N;
         if (mode === 'picture' && img) { t.style.backgroundImage = `url(${img})`; t.style.backgroundSize = `${N * ts}px ${N * ts}px`; t.style.backgroundPosition = `${-tc * ts - g}px ${-tr * ts - g}px`; t.innerHTML = `<span class="n" style="font-size:.45em;position:absolute;left:8%;top:4%;opacity:.85">${v}</span>`; }
-        else { t.style.background = pal[tr % pal.length]; t.innerHTML = `<span class="n">${v}</span>`; if (S.tileStyle === 'mono') t.style.color = '#3a3226'; }
+        else { t.style.background = pal[tr % pal.length]; t.innerHTML = `<span class="n">${v}</span>`; t.style.color = inkFor(pal[tr % pal.length]); }
         B.appendChild(t); tiles[v] = t;
       }
       place();
@@ -1324,9 +1481,9 @@ registerGame({
       if (!img) return; const r = host.getBoundingClientRect();
       g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, r.width, r.height);
       g.setTransform(dpr * cam.z, 0, 0, dpr * cam.z, dpr * cam.x, dpr * cam.y);
-      g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(0, 0, W, H);
+      const JP = jigPal(); g.fillStyle = JP.guide; g.globalAlpha = .3; g.fillRect(0, 0, W, H); g.globalAlpha = 1;
       if (S.jigGhost || peek) { g.globalAlpha = peek ? .9 : .16; g.drawImage(img, 0, 0); g.globalAlpha = 1; }
-      g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 2 / cam.z; g.strokeRect(0, 0, W, H);
+      g.strokeStyle = JP.frame; g.globalAlpha = .7; g.lineWidth = 2.5 / cam.z; g.strokeRect(0, 0, W, H); g.globalAlpha = 1;
       if (peek) return;
       for (const G of groups) {
         for (const p of G.pcs) {
@@ -1338,7 +1495,7 @@ registerGame({
       if (hl) {
         const G = hl.p.g, [x, y] = pos(G, hl.p); const pulse = .5 + .5 * Math.sin(performance.now() / 180);
         g.save(); g.translate(x, y); g.rotate(G.rot * Math.PI / 2); g.strokeStyle = `rgba(255,255,255,${.5 + pulse * .5})`; g.lineWidth = 5 / cam.z; g.strokeRect(-4, -4, pw + 8, ph + 8); g.restore();
-        g.setLineDash([10 / cam.z, 8 / cam.z]); g.strokeStyle = '#f2c14e'; g.lineWidth = 4 / cam.z; g.strokeRect(hl.p.hx, hl.p.hy, pw, ph); g.setLineDash([]);
+        g.setLineDash([10 / cam.z, 8 / cam.z]); g.strokeStyle = JP.hint; g.lineWidth = 4 / cam.z; g.strokeRect(hl.p.hx, hl.p.hy, pw, ph); g.setLineDash([]);
         draw();
       }
     }
@@ -1501,7 +1658,7 @@ const LO = {
 };
 registerGame({
   id: 'lights', name: 'Lights Out', tag: 'Logic', desc: 'Press a light and it flips with its neighbours. Turn them all off. Learn “chase the lights”.',
-  art: () => `<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="8" fill="#14111c"/>${[...Array(25)].map((_, i) => `<rect x="${15 + (i % 5) * 14.5}" y="${15 + (i / 5 | 0) * 14.5}" width="12" height="12" rx="3" fill="${[1, 3, 6, 7, 8, 12, 16, 17, 18, 21, 23].includes(i) ? '#f2c14e' : '#2f2a3d'}"/>`).join('')}</svg>`,
+  art: () => `<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="8" fill="#14111c"/>${[...Array(25)].map((_, i) => `<rect x="${15 + (i % 5) * 14.5}" y="${15 + (i / 5 | 0) * 14.5}" width="12" height="12" rx="3" fill="${[1, 3, 6, 7, 8, 12, 16, 17, 18, 21, 23].includes(i) ? lightsPal().on1 : lightsPal().off}"/>`).join('')}</svg>`,
   how: `<p><b>Tap</b> a square: it and the squares above, below, left and right of it change. Turn every light off.</p><p>In <b>three-colour</b> mode each press steps the colours round (off → pink → gold → off), so some squares need two presses.</p><p><b>Chase the lights:</b> for each lit square, press the one directly below it, row by row. Everything ends up in the bottom row, and a short lookup tells you what to press on the top row to finish.</p>`,
   create(host, opts) {
     let N = store.get('lo.n', 5), p = store.get('lo.p', 2), b, moves = 0, hist = [], hintsUsed = 0, sol = null, showHint = false, t0 = null;
@@ -1516,10 +1673,10 @@ registerGame({
       moves = 0; hist = []; hintsUsed = 0; t0 = null; sol = null; render(); coach(); T.note('New board. ' + (sol ? `It can be done in ${sol.reduce((a, v) => a + v, 0)} presses.` : ''));
     }
     function render() {
-      const [w] = fitSquare(host, B); const s = w / N, C = PIECE_COLORS(); const lit = [null, C[1], C[0]];
+      const [w] = fitSquare(host, B); const s = w / N, LP = lightsPal(); const lit = [null, LP.on1, LP.on2];
       B.innerHTML = ''; sol = LO.solve(b, N, p);
       const reveal = S.teacher === 'live' || showHint; const nxt = sol ? sol.findIndex(v => v) : -1;
-      b.forEach((v, i) => { const d = el('button', { class: 'tile' + (reveal && i === nxt && S.teacher !== 'off' ? ' hint' : ''), 'data-i': i, 'aria-label': 'square ' + (i + 1) }); d.style.cssText += `width:${s - 6}px;height:${s - 6}px;transform:translate(${(i % N) * s + 3}px,${(i / N | 0) * s + 3}px);background:${v ? lit[v] : 'rgba(0,0,0,.45)'};border:0;${v ? `box-shadow:0 0 ${s * .3}px ${lit[v]}88,inset 0 -4px 0 rgba(0,0,0,.2)` : ''}`; if (reveal && sol && sol[i] && S.teacher !== 'off') d.innerHTML = `<span class="n" style="font-size:${s * .28}px;opacity:${i === nxt ? 1 : .55}">${sol[i] > 1 ? '×' + sol[i] : '•'}</span>`; B.appendChild(d); });
+      b.forEach((v, i) => { const d = el('button', { class: 'tile' + (reveal && i === nxt && S.teacher !== 'off' ? ' hint' : ''), 'data-i': i, 'aria-label': 'square ' + (i + 1) }); d.style.cssText += `width:${s - 6}px;height:${s - 6}px;transform:translate(${(i % N) * s + 3}px,${(i / N | 0) * s + 3}px);background:${v ? lit[v] : LP.off};border:0;${v ? `box-shadow:0 0 ${s * .3}px ${lit[v]}88,inset 0 -4px 0 rgba(0,0,0,.2)` : ''}`; if (reveal && sol && sol[i] && S.teacher !== 'off') d.innerHTML = `<span class="n" style="font-size:${s * .28}px;opacity:${i === nxt ? 1 : .55}">${sol[i] > 1 ? '×' + sol[i] : '•'}</span>`; B.appendChild(d); });
       $('#gStats').innerHTML = `<span>Presses <b>${moves}</b></span><span>Lit <b>${b.filter(v => v).length}</b></span>`;
     }
     B.addEventListener('click', e => { const d = e.target.closest('[data-i]'); if (!d) return; if (!t0) t0 = performance.now(); press(+d.dataset.i); beep('tick'); showHint = false; render(); if (b.every(v => !v)) win(); else coach(); });
@@ -1548,7 +1705,7 @@ registerGame({
 /* ---------------- Tower of Hanoi ---------------- */
 registerGame({
   id: 'hanoi', name: 'Tower of Hanoi', tag: 'Recursion', desc: 'Move the whole tower to the right peg, one disk at a time, never a big disk on a small one.',
-  art: () => `<svg viewBox="0 0 100 100"><rect x="6" y="80" width="88" height="7" rx="3" fill="#8a5b2b"/>${[18, 50, 82].map(x => `<rect x="${x - 2}" y="28" width="4" height="54" rx="2" fill="#c48d4c"/>`).join('')}${[0, 1, 2, 3, 4].map(i => `<rect x="${18 - 15 + i * 2.6}" y="${74 - i * 8}" width="${30 - i * 5.2}" height="7" rx="3.5" fill="${PIECE_COLORS()[i]}"/>`).join('')}</svg>`,
+  art: () => `<svg viewBox="0 0 100 100"><rect x="6" y="80" width="88" height="7" rx="3" fill="#8a5b2b"/>${[18, 50, 82].map(x => `<rect x="${x - 2}" y="28" width="4" height="54" rx="2" fill="${hanoiPal().peg}"/>`).join('')}${[0, 1, 2, 3, 4].map(i => `<rect x="${18 - 15 + i * 2.6}" y="${74 - i * 8}" width="${30 - i * 5.2}" height="7" rx="3.5" fill="${hanoiPal()[i]}"/>`).join('')}</svg>`,
   how: `<p><b>Tap</b> a peg to pick up its top disk, then tap another peg to drop it. You can also <b>drag</b> a disk.</p><p>Only one disk moves at a time, and a disk can never sit on a smaller one. Move the whole tower to the right-hand peg.</p><p><b>The secret is recursion:</b> to move a tower of 5, move the top 4 out of the way, move the big one, then move the 4 back on top. The shortest solution takes 2ⁿ − 1 moves.</p>`,
   create(host, opts) {
     let n = store.get('hanoi.n', 5), pegs, held = null, moves = 0, hist = [], hintsUsed = 0, t0 = null, showHint = false;
@@ -1564,13 +1721,13 @@ registerGame({
     const pegsPos = () => { const pos = []; pegs.forEach((pg, i) => pg.forEach(d => pos[d] = i)); return pos; };
     function newGame() { $$('#hN button', opts).forEach(x => x.classList.toggle('on', +x.dataset.n === n)); pegs = [[...Array(n)].map((_, i) => n - i), [], []]; held = null; moves = 0; hist = []; hintsUsed = 0; t0 = null; render(); coach(); T.note(`${n} disks: the shortest solution is ${2 ** n - 1} moves.`); }
     function render() {
-      const [w, h] = fitSquare(host, B, 1.6); B.innerHTML = ''; const C = PIECE_COLORS(); const pw = w / 3, dh = Math.min(h * .7 / (n + 1), 34);
+      const [w, h] = fitSquare(host, B, 1.6); B.innerHTML = ''; const C = hanoiPal(); const pw = w / 3, dh = Math.min(h * .7 / (n + 1), 34);
       const nx = (S.teacher === 'live' || showHint) && S.teacher !== 'off' ? next() : null;
       B.appendChild(Object.assign(el('div'), { style: `position:absolute;left:0;right:0;bottom:0;height:${dh * .6}px;border-radius:8px;background:#5a3a1e` }));
       pegs.forEach((pg, i) => {
         const col = el('div', { 'data-p': i, style: `position:absolute;left:${i * pw}px;width:${pw}px;top:0;bottom:0;cursor:pointer;border-radius:12px;${nx && nx[1] === i ? 'background:rgba(255,255,255,.08);outline:2px dashed #f2c14e;outline-offset:-4px' : ''}` });
-        col.appendChild(el('div', { style: `position:absolute;left:50%;width:${Math.max(6, pw * .04)}px;transform:translateX(-50%);bottom:${dh * .6}px;height:${(n + 1.2) * dh}px;background:#c48d4c;border-radius:6px 6px 0 0` }));
-        pg.forEach((d, j) => { const dw = pw * (.25 + .7 * d / n); const lift = held === i && j === pg.length - 1; col.appendChild(el('div', { class: 'tile' + (nx && nx[0] === i && j === pg.length - 1 ? ' hint' : ''), style: `left:${(pw - dw) / 2}px;width:${dw}px;height:${dh - 3}px;bottom:${dh * .6 + j * dh + (lift ? dh * 1.4 : 0)}px;top:auto;border-radius:${dh}px;background:${C[(d - 1) % C.length]};font-size:${dh * .5}px` }, `<span class="n">${d}</span>`)); });
+        col.appendChild(el('div', { style: `position:absolute;left:50%;width:${Math.max(6, pw * .04)}px;transform:translateX(-50%);bottom:${dh * .6}px;height:${(n + 1.2) * dh}px;background:${C.peg};border-radius:6px 6px 0 0` }));
+        pg.forEach((d, j) => { const dw = pw * (.25 + .7 * d / n); const lift = held === i && j === pg.length - 1; col.appendChild(el('div', { class: 'tile' + (nx && nx[0] === i && j === pg.length - 1 ? ' hint' : ''), style: `left:${(pw - dw) / 2}px;width:${dw}px;height:${dh - 3}px;bottom:${dh * .6 + j * dh + (lift ? dh * 1.4 : 0)}px;top:auto;border-radius:${dh}px;background:${C[(d - 1) % 8]};color:${inkFor(C[(d - 1) % 8])};font-size:${dh * .5}px` }, `<span class="n">${d}</span>`)); });
         B.appendChild(col);
       });
       $('#gStats').innerHTML = `<span>Moves <b>${moves}</b></span><span>Best <b>${2 ** n - 1}</b></span>`;
@@ -1613,7 +1770,7 @@ registerGame({
 /* ---------------- Flood ---------------- */
 registerGame({
   id: 'flood', name: 'Flood', tag: 'Colour', desc: 'Flood the board from the top-left corner in one colour before you run out of moves.',
-  art: () => { const C = PIECE_COLORS(); let s = ''; for (let i = 0; i < 64; i++) { const x = i % 8, y = i / 8 | 0; s += `<rect x="${10 + x * 10}" y="${10 + y * 10}" width="10" height="10" fill="${x + y < 6 ? C[2] : C[(x * 7 + y * 3 + x * y) % 6]}"/>`; } return `<svg viewBox="0 0 100 100">${s}</svg>`; },
+  art: () => { const C = floodPal(); let s = ''; for (let i = 0; i < 64; i++) { const x = i % 8, y = i / 8 | 0; s += `<rect x="${10 + x * 10}" y="${10 + y * 10}" width="10" height="10" fill="${x + y < 6 ? C[2] : C[(x * 7 + y * 3 + x * y) % 6]}"/>`; } return `<svg viewBox="0 0 100 100">${s}</svg>`; },
   how: `<p>The top-left square is yours. <b>Tap a colour</b> (or any square of that colour) and your area turns that colour, swallowing every touching square of the same colour.</p><p>Fill the whole board in one colour within the move limit.</p><p><b>Strategy:</b> head for the middle early — from there you can reach everywhere. Then pick the colour that grows your area most, and watch out for colours that are about to disappear completely.</p>`,
   create(host, opts) {
     let N = store.get('flood.n', 14), K = 6, cells, moves = 0, limit, hist = [], hintsUsed = 0, showHint = false, over = false;
@@ -1630,7 +1787,7 @@ registerGame({
     }
     function newGame() { $$('#fN button', opts).forEach(x => x.classList.toggle('on', +x.dataset.n === N)); T.note('New board. The teacher found a way in fewer moves than your limit — can you match it?'); cells = [...Array(N * N)].map(() => rnd(K)); let c = cells, L = 0; while (!c.every(v => v === c[0]) && L < 80) { c = fill(c, best(c)); L++; } limit = L + (N >= 18 ? 4 : 3); moves = 0; hist = []; hintsUsed = 0; over = false; render(); coach(); }
     function render() {
-      const [w] = fitSquare(host, B, 1, 80); const s = w / N, C = PIECE_COLORS(); const r = region(cells);
+      const [w] = fitSquare(host, B, 1, 80); const s = w / N, C = floodPal(); const r = region(cells);
       if (!B.firstChild || B.childElementCount !== 1) { B.innerHTML = ''; B.appendChild(el('canvas', { class: 'gcanvas', style: 'border-radius:10px' })); }
       const cv = B.firstChild; const d = Math.min(2, devicePixelRatio || 1); cv.width = w * d; cv.height = w * d; const g = cv.getContext('2d'); g.scale(d, d);
       cells.forEach((v, i) => { g.fillStyle = C[v]; g.fillRect((i % N) * s, (i / N | 0) * s, s + .5, s + .5); });
@@ -1654,7 +1811,7 @@ registerGame({
       const st = !reachedCentre ? 0 : f < .7 ? 1 : 2; const reveal = S.teacher === 'live' || showHint; const h = best();
       const msgs = ['Head for the <b>centre</b> first: pick colours that push your area diagonally toward the middle.', 'You’ve reached the middle. Now take the colour that swallows the <b>most squares</b> — and look for colours you can wipe out completely.', 'Mopping up: finish off the small pockets. Every colour you erase is one fewer move needed.'];
       T.set({ stage: 'Flood · ' + (limit - moves) + ' moves left', steps: ['Reach the centre', 'Grow big', 'Mop up'], cur: st, prog: f, msg: msgs[st] + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint for the best colour.</span>'), next: reveal && h >= 0 ? { mv: '●', how: `Pick the glowing colour. Looking two moves ahead, it grows your area the most.` } : null, acts: [{ label: '▶ Show me', fn: showMe, primary: true }, { label: '📖 Lessons', fn: () => showLessons('flood') }] });
-      if (reveal && h >= 0) { const m = $('#tMv'); if (m) m.style.color = PIECE_COLORS()[h]; }
+      if (reveal && h >= 0) { const m = $('#tMv'); if (m) m.style.color = floodPal()[h]; }
       render();
     }
     function hint() { hintsUsed++; hintOn(); showHint = true; coach(); }
@@ -1695,7 +1852,7 @@ const BallSolver = {
 };
 registerGame({
   id: 'balls', name: 'Ball Sort', tag: 'Sorting', desc: 'Sort the coloured balls so each tube holds one colour. Plan ahead with the spare tubes.',
-  art: () => { const C = PIECE_COLORS(); const t = [[0, 1, 2, 0], [1, 2, 0, 1], [2, 0, 1, 2], []]; return `<svg viewBox="0 0 100 100">${t.map((tb, i) => `<rect x="${12 + i * 21}" y="22" width="15" height="62" rx="7" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.6)"/>${tb.map((c, j) => `<circle cx="${19.5 + i * 21}" cy="${76 - j * 14}" r="6" fill="${C[c]}"/>`).join('')}`).join('')}</svg>`; },
+  art: () => { const C = ballPal(); const t = [[0, 1, 2, 0], [1, 2, 0, 1], [2, 0, 1, 2], []]; return `<svg viewBox="0 0 100 100">${t.map((tb, i) => `<rect x="${12 + i * 21}" y="22" width="15" height="62" rx="7" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.6)"/>${tb.map((c, j) => `<circle cx="${19.5 + i * 21}" cy="${76 - j * 14}" r="6" fill="${C[c]}"/>`).join('')}`).join('')}</svg>`; },
   how: `<p><b>Tap</b> a tube to lift its top ball, then tap another tube to drop it there. A ball can only go onto the same colour or into an empty tube, and each tube holds four.</p><p>Sort every colour into its own tube.</p><p><b>Strategy:</b> keep a spare tube empty as long as you can, and build on colours that are already near the top.</p>`,
   create(host, opts) {
     let k = store.get('balls.k', 6), cap = 4, tubes, held = null, moves = 0, hist = [], hintsUsed = 0, plan = null, showHint = false, t0 = null;
@@ -1709,7 +1866,7 @@ registerGame({
     }
     function render() {
       const n = tubes.length; const [w, h] = fitSquare(host, B, Math.max(1, n * .55 / 1.6), 70); B.innerHTML = '';
-      const tw = w / n, bh = Math.min(h * .8 / cap, tw * .8), C = PIECE_COLORS();
+      const tw = w / n, bh = Math.min(h * .8 / cap, tw * .8), C = ballPal();
       const nx = (S.teacher === 'live' || showHint) && S.teacher !== 'off' && plan && plan.length ? plan[0] : null;
       tubes.forEach((t, i) => {
         const done = t.length === cap && t.every(v => v === t[0]);
@@ -1752,6 +1909,684 @@ registerGame({
 </script>
 <script>
 /* =====================================================================
+   Maze — a new random maze every time, five skill levels
+   ===================================================================== */
+const MazeGen = {
+  // cells: bitmask of open sides  N=1 E=2 S=4 W=8
+  make(w, h, style = 'backtrack', loops = 0) {
+    const c = new Uint8Array(w * h), seen = new Uint8Array(w * h), D = [[0, -1, 1, 4], [1, 0, 2, 8], [0, 1, 4, 1], [-1, 0, 8, 2]];
+    const active = [rnd(w * h)]; seen[active[0]] = 1;
+    while (active.length) {
+      const k = style === 'backtrack' ? active.length - 1 : (Math.random() < .5 ? active.length - 1 : rnd(active.length));
+      const i = active[k], x = i % w, y = i / w | 0;
+      const opts = shuffle(D.slice()).filter(([dx, dy]) => { const X = x + dx, Y = y + dy; return X >= 0 && Y >= 0 && X < w && Y < h && !seen[Y * w + X]; });
+      if (!opts.length) { active.splice(k, 1); continue; }
+      const [dx, dy, a, b] = opts[0], j = (y + dy) * w + x + dx; c[i] |= a; c[j] |= b; seen[j] = 1; active.push(j);
+    }
+    for (let n = 0; n < loops; n++) { const i = rnd(w * h), x = i % w, y = i / w | 0; const [dx, dy, a, b] = D[rnd(4)]; const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < w && Y < h) { c[i] |= a; c[Y * w + X] |= b; } }
+    return c;
+  },
+  path(c, w, h, from, to) { // BFS shortest path
+    const prev = new Int32Array(w * h).fill(-1), q = [from]; prev[from] = from;
+    const D = [[1, -w], [2, 1], [4, w], [8, -1]];
+    while (q.length) { const i = q.shift(); if (i === to) break; for (const [m, d] of D) if (c[i] & m) { const j = i + d; if (prev[j] < 0) { prev[j] = i; q.push(j); } } }
+    const out = []; for (let i = to; i !== from; i = prev[i]) { if (i < 0) return null; out.unshift(i); } return out;
+  }
+};
+const MAZE_LEVELS = [
+  { name: 'Stroll', n: 8, style: 'backtrack', loops: 0, stars: 2 },
+  { name: 'Easy', n: 12, style: 'backtrack', loops: 0, stars: 3 },
+  { name: 'Medium', n: 18, style: 'tree', loops: 4, stars: 5 },
+  { name: 'Hard', n: 26, style: 'tree', loops: 10, stars: 8 },
+  { name: 'Expert', n: 34, style: 'tree', loops: 16, fog: 3.2, stars: 12 }
+];
+registerGame({
+  id: 'maze', name: 'Maze Runner', tag: '5 levels', desc: 'A brand-new random maze every game, from a gentle stroll to a foggy expert labyrinth.',
+  art: () => { const K = mazeSkin(); return `<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="6" fill="${K.floor}"/><path d="M10 10h80v80H10zM30 10v40h20M70 30v40H30M50 30h20M10 70h20v20M50 70v20M70 90V70h20" fill="none" stroke="${K.wall}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20h20v40h20v-20h20v40" fill="none" stroke="${K.trail}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 7"/><circle cx="20" cy="20" r="6" fill="${K.player}"/><path d="M80 75l3 6 6 1-4.5 4 1 6-5.5-3-5.5 3 1-6-4.5-4 6-1z" fill="${K.exit}"/></svg>`; },
+  how: `<p>Get from the top-left corner to the ★ at the bottom-right.</p><p><b>Swipe</b> to run along a corridor — you keep going until the next turn or junction. <b>Tap</b> a square next to you to take one step, or use the arrow buttons or keys.</p><p>Five levels: Stroll, Easy, Medium, Hard, and Expert, where fog hides everything you haven't been near. Every maze is new.</p>`,
+  create(host, opts, o) {
+    let lv = store.get('maze.lv', 1), L, w, h, cells, me, trail, seen, moves = 0, t0 = null, timerI = null, hintsUsed = 0, showHint = false, done = false;
+    const cv = el('canvas', { class: 'gcanvas' }); host.appendChild(cv); const g = cv.getContext('2d');
+    const pad = el('div', { class: 'underbar' }, `<button class="btn sm" data-d="3" aria-label="Left">◀</button><button class="btn sm" data-d="0" aria-label="Up">▲</button><button class="btn sm" data-d="2" aria-label="Down">▼</button><button class="btn sm" data-d="1" aria-label="Right">▶</button><button class="btn sm" data-a="show">▶ Show me</button>`); host.appendChild(pad);
+    opts.innerHTML = `<label>Level</label><div class="seg" id="mL">${MAZE_LEVELS.map((x, i) => `<button data-l="${i}">${i + 1} · ${x.name}</button>`).join('')}</div>`;
+    $('#mL', opts).onclick = e => { const b = e.target.closest('button'); if (b) { lv = +b.dataset.l; store.set('maze.lv', lv); newGame(); } };
+    const DIRS = [[0, -1, 1], [1, 0, 2], [0, 1, 4], [-1, 0, 8]];
+    let s = 20, ox = 0, oy = 0, dpr = Math.min(2, devicePixelRatio || 1);
+    function newGame() {
+      $$('#mL button', opts).forEach(b => b.classList.toggle('on', +b.dataset.l === lv));
+      L = MAZE_LEVELS[lv]; const r = host.getBoundingClientRect(); const asp = clamp((r.width) / Math.max(200, r.height - 60), .6, 1.7);
+      w = Math.max(6, Math.round(L.n * Math.sqrt(asp))); h = Math.max(6, Math.round(L.n / Math.sqrt(asp)));
+      cells = MazeGen.make(w, h, L.style, L.loops); me = 0; trail = [0]; seen = new Uint8Array(w * h); moves = 0; done = false; hintsUsed = 0; showHint = false; stopTimer();
+      reveal(); size(); draw(); stats(); coach();
+      const best = MazeGen.path(cells, w, h, 0, w * h - 1).length; T.note(`New ${L.name} maze, ${w}×${h}. The shortest way out is ${best} steps.`);
+    }
+    function size() { const r = host.getBoundingClientRect(); cv.width = r.width * dpr; cv.height = r.height * dpr; cv.style.width = r.width + 'px'; cv.style.height = r.height + 'px'; s = Math.min((r.width - 20) / w, (r.height - 70) / h); ox = (r.width - s * w) / 2; oy = Math.max(8, (r.height - 60 - s * h) / 2); }
+    function reveal() { if (!L.fog) return; const x0 = me % w, y0 = me / w | 0, R = L.fog; for (let y = Math.max(0, y0 - 4); y <= Math.min(h - 1, y0 + 4); y++) for (let x = Math.max(0, x0 - 4); x <= Math.min(w - 1, x0 + 4); x++) if (Math.hypot(x - x0, y - y0) <= R) seen[y * w + x] = 1; }
+    function draw() {
+      const K = mazeSkin(), r = host.getBoundingClientRect(); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, r.width, r.height);
+      g.fillStyle = K.floor; g.fillRect(ox - 3, oy - 3, w * s + 6, h * s + 6);
+      const nx = (S.teacher === 'live' || showHint) && S.teacher !== 'off' && !done ? MazeGen.path(cells, w, h, me, w * h - 1) : null;
+      // trail
+      g.strokeStyle = K.trail; g.lineWidth = Math.max(2, s * .22); g.lineCap = g.lineJoin = 'round'; g.globalAlpha = .55; g.beginPath(); trail.forEach((i, k) => { const x = ox + (i % w + .5) * s, y = oy + ((i / w | 0) + .5) * s; k ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke(); g.globalAlpha = 1;
+      // teacher path
+      if (nx) { const n = showHint ? 14 : 5; g.fillStyle = '#f2c14e'; nx.slice(0, n).forEach((i, k) => { g.globalAlpha = 1 - k / (n + 2); g.beginPath(); g.arc(ox + (i % w + .5) * s, oy + ((i / w | 0) + .5) * s, Math.max(2, s * .16), 0, 7); g.fill(); }); g.globalAlpha = 1; }
+      // walls
+      g.strokeStyle = K.wall; g.lineWidth = Math.max(2, s * .16); g.lineCap = 'round'; g.beginPath();
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const c = cells[y * w + x], X = ox + x * s, Y = oy + y * s; if (!(c & 1)) { g.moveTo(X, Y); g.lineTo(X + s, Y); } if (!(c & 8)) { g.moveTo(X, Y); g.lineTo(X, Y + s); } if (x === w - 1 && !(c & 2)) { g.moveTo(X + s, Y); g.lineTo(X + s, Y + s); } if (y === h - 1 && !(c & 4)) { g.moveTo(X, Y + s); g.lineTo(X + s, Y + s); } }
+      g.stroke();
+      // exit and you
+      const ex = ox + (w - .5) * s, ey = oy + (h - .5) * s; g.fillStyle = K.exit; star(ex, ey, s * .38);
+      g.fillStyle = K.player; g.beginPath(); g.arc(ox + (me % w + .5) * s, oy + ((me / w | 0) + .5) * s, s * .32, 0, 7); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke();
+      // fog
+      if (L.fog) { g.fillStyle = 'rgba(10,8,14,.94)'; for (let i = 0; i < w * h; i++) if (!seen[i]) g.fillRect(ox + (i % w) * s - .5, oy + (i / w | 0) * s - .5, s + 1, s + 1); const x0 = ox + (me % w + .5) * s, y0 = oy + ((me / w | 0) + .5) * s; const gr = g.createRadialGradient(x0, y0, s * 2, x0, y0, s * (L.fog + 1.5)); gr.addColorStop(0, 'rgba(10,8,14,0)'); gr.addColorStop(1, 'rgba(10,8,14,.45)'); g.fillStyle = gr; g.fillRect(ox, oy, w * s, h * s); }
+    }
+    function star(x, y, r) { g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } g.fill(); }
+    const open = (i, d) => cells[i] & DIRS[d][2];
+    const nb = (i, d) => i + DIRS[d][0] + DIRS[d][1] * w;
+    function step(d, user = true) {
+      if (done || !open(me, d)) { if (user) { beep('bad'); buzz(15); } return false; }
+      if (!t0) startTimer(); me = nb(me, d); moves++;
+      if (trail.length > 1 && trail[trail.length - 2] === me) trail.pop(); else trail.push(me);
+      reveal(); showHint = false; return true;
+    }
+    function run(d) { // keep going until a junction or a turn
+      if (!step(d)) return; beep('tick'); let guard = 0;
+      while (guard++ < 200 && me !== w * h - 1) { const ways = [0, 1, 2, 3].filter(k => open(me, k) && k !== (d + 2) % 4); if (ways.length !== 1) break; d = ways[0]; step(d); }
+      after();
+    }
+    function after() { draw(); stats(); if (me === w * h - 1) return win(); coach(); }
+    ptr(cv, {
+      up(e, { start }) { const dx = e.clientX - start.x, dy = e.clientY - start.y; if (Math.hypot(dx, dy) < 18) return; run(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0)); },
+      tap(e) { const r = cv.getBoundingClientRect(); const x = Math.floor((e.clientX - r.left - ox) / s), y = Math.floor((e.clientY - r.top - oy) / s); const mx = me % w, my = me / w | 0; const d = DIRS.findIndex(([a, b]) => mx + a === x && my + b === y); if (d >= 0) { if (step(d)) beep('tick'); after(); } }
+    });
+    pad.addEventListener('click', e => { const b = e.target.closest('[data-d]'); if (b) { if (step(+b.dataset.d)) beep('tick'); after(); } if (e.target.closest('[data-a=show]')) showMe(); });
+    const keyH = e => { const d = { ArrowUp: 0, KeyW: 0, ArrowRight: 1, KeyD: 1, ArrowDown: 2, KeyS: 2, ArrowLeft: 3, KeyA: 3 }[e.code]; if (d != null) { e.preventDefault(); e.shiftKey ? run(d) : (step(d) && beep('tick'), after()); } };
+    document.addEventListener('keydown', keyH);
+    function startTimer() { t0 = performance.now(); clearInterval(timerI); timerI = setInterval(stats, 500); }
+    function stopTimer() { clearInterval(timerI); t0 = null; }
+    function stats() { $('#gStats').innerHTML = `<span>Steps <b>${moves}</b></span><span>Time <b>${t0 ? fmtTime(performance.now() - t0) : '0:00'}</b></span>`; }
+    function win() { done = true; const time = t0 ? performance.now() - t0 : null; stopTimer(); const r = award('maze', L.name, { time, moves, stars: L.stars, hints: hintsUsed }); T.set({ msg: 'You found the way out!', next: null, prog: 1 }); winOverlay(host, { title: 'Escaped!', lines: [`${L.name} maze in ${moves} steps${time ? ', ' + fmtTime(time) : ''}`, r.newBest && time ? 'New best time!' : ''], earned: r.earned, again: newGame }); }
+    function coach(why) {
+      if (teacherOffMsg(why)) { draw(); return; }
+      const p = MazeGen.path(cells, w, h, me, w * h - 1) || [], total = MazeGen.path(cells, w, h, 0, w * h - 1).length;
+      const ways = [0, 1, 2, 3].filter(k => open(me, k)).length; const reveal = S.teacher === 'live' || showHint;
+      const dirN = ['up', 'right', 'down', 'left']; const d = p.length ? DIRS.findIndex((_, k) => open(me, k) && nb(me, k) === p[0]) : -1;
+      const tip = ways === 1 && me !== 0 ? 'This is a <b>dead end</b> — turn back to the last junction you passed.' : ways >= 3 ? 'You’re at a <b>junction</b>. If you’re lost, use the <b>right-hand rule</b>: keep your right hand on the wall and always take the right-most way. It always finds the exit of a maze like this.' : 'Corridor: swipe to run to the next junction.';
+      const st = p.length > total * .66 ? 0 : p.length > total * .25 ? 1 : 2;
+      T.set({ stage: `${L.name} · ${p.length} steps to the exit`, steps: ['Start', 'Halfway', 'Home stretch'], cur: st, prog: 1 - p.length / Math.max(1, total), msg: tip + (L.fog ? ' <span class="muted">Fog: you only see what you’ve been near.</span>' : '') + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint to light up the way.</span>'), next: reveal && d >= 0 ? { mv: ['▲', '▶', '▼', '◀'][d], how: `Go <b>${dirN[d]}</b>. The gold dots show the shortest way.` } : null, acts: [{ label: '▶ Show me', fn: showMe, primary: true }, { label: '📖 Lessons', fn: () => showLessons('maze') }] });
+      draw();
+    }
+    function hint() { hintsUsed++; hintOn(); showHint = true; coach(); }
+    function showMe() { hintsUsed++; const p = MazeGen.path(cells, w, h, me, w * h - 1); if (!p || !p.length) return; const d = DIRS.findIndex((_, k) => open(me, k) && nb(me, k) === p[0]); if (step(d, false)) beep('tick'); after(); }
+    function undo() { if (trail.length < 2) return; trail.pop(); me = trail[trail.length - 1]; moves++; draw(); coach(); }
+    const ro = new ResizeObserver(() => { if (cells) { size(); draw(); } }); ro.observe(host);
+    setTimeout(newGame, 30);
+    return { undo, hint, newGame, coach, resize() { size(); draw(); }, restyle: draw, destroy() { ro.disconnect(); stopTimer(); document.removeEventListener('keydown', keyH); } };
+  }
+});
+</script>
+<script>
+/* =====================================================================
+   Arcade Puzzle — match lines of colour; shapes of matches make
+   special gems, number gems multiply, cascades build combos
+   ===================================================================== */
+registerGame({
+  id: 'arcade', name: 'Arcade Puzzle', tag: 'Match & combo', desc: 'Swap gems to line up three or more. Lines of 4, L and T shapes and lines of 5 make blasters, bombs and prisms; number gems multiply your score.',
+  art: () => { const C = gemPal(); const sh = ['<circle cx="0" cy="0" r="7"/>', '<rect x="-6.5" y="-6.5" width="13" height="13" rx="3"/>', '<path d="M0-8L7.5 6H-7.5z"/>', '<path d="M-7 0l3.5-6h7L7 0l-3.5 6h-7z"/>', '<path d="M0-8L7 0 0 8-7 0z"/>', '<path d="M0-8l2.4 5 5.4.6-4 3.7 1.1 5.4L0 9.9l-4.9 2.8 1.1-5.4-4-3.7 5.4-.6z"/>']; let s = ''; const g = [[0, 1, 2, 3, 4], [1, 0, 0, 0, 5], [2, 3, 4, 1, 2], [4, 5, 1, 2, 0], [3, 2, 5, 4, 1]]; g.forEach((r, y) => r.forEach((c, x) => s += `<g transform="translate(${18 + x * 16} ${18 + y * 16})" fill="${C[c]}">${sh[c]}</g>`)); return `<svg viewBox="0 0 100 100"><rect x="8" y="8" width="84" height="84" rx="10" fill="rgba(0,0,0,.3)"/>${s}<g transform="translate(50 34)"><circle r="9" fill="none" stroke="#fff" stroke-width="2"/></g><text x="66" y="38" font-family="Bungee,Impact" font-size="9" fill="#fff">×3</text></svg>`; },
+  how: `<p><b>Swipe</b> a gem toward a neighbour to swap them (or tap one, then the other). Line up <b>three or more</b> of the same colour and shape to clear them.</p>
+   <p><b>Match shapes make specials:</b></p><ul><li><b>4 in a line</b> → a <b>Blaster</b> (striped). When cleared it wipes its whole row or column.</li><li><b>L or T shape</b> → a <b>Bomb</b>. Clears everything around it.</li><li><b>5 in a line</b> → a <b>Prism</b>. Swap it with any gem to clear every gem of that colour.</li></ul>
+   <p><b>Number gems</b> (×2, ×3, ×5) multiply the points for their match. Two or more numbers in the same match set off a <b>Number Storm</b> that zaps extra gems. Gems that fall and match again make <b>combos</b> — each one is worth more.</p><p>Swap two specials together for a mega effect!</p>`,
+  create(host, opts, o) {
+    const N = 8, K = 6; let mode = store.get('arc.mode', 'moves'), level = store.get('arc.level', 1);
+    let grid, score = 0, movesLeft = 25, target = 0, timeLeft = 90, busy = false, over = false, comboMax = 0, hintsUsed = 0, hintMv = null, idleT = null, sel = null, tickI = null, alive = true, uid = 0, shake = 0;
+    const cv = el('canvas', { class: 'gcanvas' }); host.appendChild(cv); const g = cv.getContext('2d');
+    const fx = [], floats = []; let dpr = Math.min(2, devicePixelRatio || 1), cs = 40, ox = 0, oy = 0;
+    opts.innerHTML = `<label>Mode</label><div class="seg" id="aM"><button data-m="moves">Levels</button><button data-m="timed">90 seconds</button><button data-m="zen">Zen</button></div>`;
+    $('#aM', opts).onclick = e => { const b = e.target.closest('button'); if (b) { mode = b.dataset.m; store.set('arc.mode', mode); newGame(); } };
+    const gem = (c, sp = null, num = 0) => ({ c, sp, num, id: uid++, x: 0, y: 0, s: 1, a: 1 });
+    const rndGem = () => gem(rnd(K), null, Math.random() < .08 ? (Math.random() < .15 ? 5 : Math.random() < .5 ? 3 : 2) : 0);
+    const at = (x, y) => (x >= 0 && y >= 0 && x < N && y < N) ? grid[y][x] : null;
+    const col = (x, y) => { const q = at(x, y); return q && q.sp !== 'prism' ? q.c : -1; };
+    function fill() { grid = [...Array(N)].map(() => Array(N).fill(null)); for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { let q; do q = rndGem(); while ((x > 1 && grid[y][x - 1].c === q.c && grid[y][x - 2].c === q.c) || (y > 1 && grid[y - 1][x].c === q.c && grid[y - 2][x].c === q.c)); q.x = x; q.y = y; grid[y][x] = q; } if (!bestMove()) fill(); }
+    function runs() {
+      const out = [];
+      for (let y = 0; y < N; y++) for (let x = 0; x < N;) { const c = col(x, y); let e = x + 1; while (c >= 0 && col(e, y) === c) e++; if (c >= 0 && e - x >= 3) out.push({ c, dir: 'h', cells: [...Array(e - x)].map((_, i) => [x + i, y]) }); x = e; }
+      for (let x = 0; x < N; x++) for (let y = 0; y < N;) { const c = col(x, y); let e = y + 1; while (c >= 0 && col(x, e) === c) e++; if (c >= 0 && e - y >= 3) out.push({ c, dir: 'v', cells: [...Array(e - y)].map((_, i) => [x, y + i]) }); y = e; }
+      return out;
+    }
+    function groupsOf(rs) { const gs = []; for (const r of rs) { const k = new Set(r.cells.map(([x, y]) => y * N + x)); const hit = gs.filter(G => G.c === r.c && [...k].some(v => G.set.has(v))); const G = hit[0] || { c: r.c, set: new Set(), runs: [] }; if (!hit[0]) gs.push(G); for (const h of hit.slice(1)) { h.set.forEach(v => G.set.add(v)); G.runs.push(...h.runs); gs.splice(gs.indexOf(h), 1); } k.forEach(v => G.set.add(v)); G.runs.push(r); } return gs; }
+    const tween = (d, f) => new Promise(res => { const t0 = performance.now(), D = d * SPEED(); const st = n => { const u = Math.min(1, (n - t0) / D); f(u); u < 1 ? requestAnimationFrame(st) : res(); }; requestAnimationFrame(st); });
+    const wait = ms => new Promise(r => setTimeout(r, ms * SPEED()));
+
+    // ---------- clearing ----------
+    function expand(clear, src) { // specials inside the clear set go off, possibly chaining
+      const q = [...clear];
+      while (q.length) {
+        const k = q.pop(), x = k % N, y = k / N | 0, gm = grid[y][x]; if (!gm || !gm.sp || gm.fired) continue; gm.fired = true;
+        let add = [];
+        if (gm.sp === 'h') { for (let i = 0; i < N; i++) add.push(y * N + i); fx.push({ t: 'beam', x, y, h: true, life: 1 }); }
+        if (gm.sp === 'v') { for (let i = 0; i < N; i++) add.push(i * N + x); fx.push({ t: 'beam', x, y, h: false, life: 1 }); }
+        if (gm.sp === 'bomb') { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (at(x + dx, y + dy)) add.push((y + dy) * N + x + dx); fx.push({ t: 'ring', x, y, r: 1.6, life: 1 }); shake = 8; }
+        if (gm.sp === 'prism') { const cnt = Array(K).fill(0); grid.flat().forEach(q2 => q2 && q2.sp !== 'prism' && cnt[q2.c]++); const c = cnt.indexOf(Math.max(...cnt)); grid.flat().forEach(q2 => { if (q2 && q2.c === c) { add.push(q2.y * N + q2.x); fx.push({ t: 'zap', x1: x, y1: y, x2: q2.x, y2: q2.y, life: 1 }); } }); }
+        for (const a of add) if (!clear.has(a)) { clear.add(a); q.push(a); }
+      }
+    }
+    async function blast(clear, create, mult, combo, label) {
+      expand(clear);
+      // score
+      let pts = 0; for (const k of clear) pts += 60; pts = Math.round(pts * combo * mult);
+      score += pts; const c0 = [...clear][0];
+      const cx = [...clear].reduce((a, k) => a + k % N, 0) / clear.size, cy = [...clear].reduce((a, k) => a + (k / N | 0), 0) / clear.size;
+      floats.push({ x: cx, y: cy, text: '+' + pts, life: 1, big: pts > 1500 });
+      if (label) floats.push({ x: N / 2 - .5, y: N / 2 - 1, text: label, life: 1.4, big: true, gold: true });
+      beep(combo > 1 ? 'snap' : 'tick'); if (clear.size > 8) buzz(25);
+      // pop
+      const popping = [...clear].map(k => grid[k / N | 0][k % N]).filter(Boolean);
+      for (const p of popping) for (let i = 0; i < 5; i++) fx.push({ t: 'p', x: p.x, y: p.y, vx: (Math.random() - .5) * .12, vy: (Math.random() - .8) * .12, c: p.sp === 'prism' ? '#fff' : gemPal()[p.c], life: 1 });
+      await tween(200, u => popping.forEach(p => { p.s = 1 - u; }));
+      for (const k of clear) grid[k / N | 0][k % N] = null;
+      for (const cr of create) { const q2 = gem(cr.c, cr.sp, 0); q2.x = cr.x; q2.y = cr.y; q2.s = 0; grid[cr.y][cr.x] = q2; tween(220, u => q2.s = u); fx.push({ t: 'ring', x: cr.x, y: cr.y, r: .9, life: 1 }); }
+      stats();
+      await gravity();
+    }
+    async function gravity() {
+      const moving = [];
+      for (let x = 0; x < N; x++) { let w = N - 1; for (let y = N - 1; y >= 0; y--) if (grid[y][x]) { const q = grid[y][x]; grid[y][x] = null; grid[w][x] = q; if (w !== y) moving.push([q, q.y, w]); w--; } let spawn = -1; for (let y = w; y >= 0; y--) { const q = rndGem(); q.x = x; q.y = spawn--; grid[y][x] = q; moving.push([q, q.y, y]); } }
+      await tween(260, u => { const e = u * u; moving.forEach(([q, a, b]) => q.y = a + (b - a) * e); });
+      moving.forEach(([q, , b]) => q.y = b);
+    }
+    async function cascade(swapA, swapB, combo = 0) {
+      for (; ;) {
+        const rs = runs(); if (!rs.length) break; combo++; comboMax = Math.max(comboMax, combo);
+        const clear = new Set(), create = []; let mult = 1, storm = 0, label = combo > 1 ? `Combo ×${combo}!` : '';
+        for (const G of groupsOf(rs)) {
+          const maxLen = Math.max(...G.runs.map(r => r.cells.length)), hasH = G.runs.some(r => r.dir === 'h'), hasV = G.runs.some(r => r.dir === 'v');
+          const sp = maxLen >= 5 ? 'prism' : hasH && hasV ? 'bomb' : maxLen === 4 ? (G.runs[0].dir === 'h' ? 'v' : 'h') : null;
+          const cells = [...G.set];
+          if (sp) {
+            let pos = [swapB, swapA].find(p => p && G.set.has(p[1] * N + p[0]));
+            if (!pos && sp === 'bomb') { const h = G.runs.find(r => r.dir === 'h'), v = G.runs.find(r => r.dir === 'v'); const k = h.cells.map(([x, y]) => y * N + x).find(k2 => v.cells.some(([x, y]) => y * N + x === k2)); if (k != null) pos = [k % N, k / N | 0]; }
+            if (!pos) { const k = cells[cells.length >> 1]; pos = [k % N, k / N | 0]; }
+            create.push({ x: pos[0], y: pos[1], sp, c: sp === 'prism' ? -1 : G.c });
+            label = { prism: 'Prism!', bomb: 'Bomb!', h: 'Blaster!', v: 'Blaster!' }[sp] + (combo > 1 ? `  Combo ×${combo}` : '');
+          }
+          const nums = cells.map(k => grid[k / N | 0][k % N]).filter(q => q && q.num);
+          nums.forEach(q => mult *= q.num); if (nums.length >= 2) storm += nums.reduce((a, q) => a + q.num, 0);
+          cells.forEach(k => clear.add(k));
+        }
+        mult = Math.min(mult, 30);
+        if (storm) { const pool = []; for (let k = 0; k < N * N; k++) if (!clear.has(k)) pool.push(k); shuffle(pool).slice(0, storm).forEach(k => { clear.add(k); fx.push({ t: 'zap', x1: N / 2, y1: -1, x2: k % N, y2: k / N | 0, life: 1 }); }); label = `Number Storm ×${mult}!`; shake = 10; }
+        else if (mult > 1 && !label) label = `×${mult}`;
+        // gems turning into specials shouldn't fire as they're made
+        for (const cr of create) { const q = grid[cr.y][cr.x]; if (q && !q.sp) q.fired = true; }
+        await blast(clear, create, mult, combo, label);
+        swapA = swapB = null;
+      }
+      return combo;
+    }
+    async function trySwap(a, b) {
+      if (busy || over) return; const A = at(...a), B = at(...b); if (!A || !B) return;
+      busy = true; clearHint(); sel = null;
+      const swapAnim = () => tween(170, u => { A.x = a[0] + (b[0] - a[0]) * u; A.y = a[1] + (b[1] - a[1]) * u; B.x = b[0] + (a[0] - b[0]) * u; B.y = b[1] + (a[1] - b[1]) * u; });
+      await swapAnim(); grid[a[1]][a[0]] = B; grid[b[1]][b[0]] = A;
+      // special + special or prism swaps fire straight away
+      const sps = [A.sp, B.sp];
+      if (A.sp === 'prism' || B.sp === 'prism' || (A.sp && B.sp)) {
+        useMove(); const clear = new Set(); let label = '';
+        if (A.sp === 'prism' && B.sp === 'prism') { for (let k = 0; k < N * N; k++) clear.add(k); label = 'PRISM STORM!'; shake = 14; }
+        else if (A.sp === 'prism' || B.sp === 'prism') {
+          const P2 = A.sp === 'prism' ? A : B, O = P2 === A ? B : A; clear.add(P2.y * N + P2.x); P2.fired = true;
+          grid.flat().forEach(q => { if (q && q.c === O.c && q.sp !== 'prism') { if (O.sp) { q.sp = O.sp === 'bomb' ? 'bomb' : Math.random() < .5 ? 'h' : 'v'; } clear.add(q.y * N + q.x); fx.push({ t: 'zap', x1: P2.x, y1: P2.y, x2: q.x, y2: q.y, life: 1 }); } });
+          label = O.sp ? 'Prism + ' + (O.sp === 'bomb' ? 'Bomb' : 'Blaster') + '!' : 'Prism!';
+        } else {
+          const [x, y] = b; A.fired = B.fired = true; clear.add(y * N + x); clear.add(a[1] * N + a[0]);
+          const lines = sps.filter(s => s === 'h' || s === 'v').length, bombs = sps.filter(s => s === 'bomb').length;
+          const R = bombs === 2 ? 2 : 0, W = lines && bombs ? 1 : 0;
+          if (bombs === 2) { for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) if (at(x + dx, y + dy)) clear.add((y + dy) * N + x + dx); fx.push({ t: 'ring', x, y, r: 3, life: 1 }); label = 'Mega Bomb!'; }
+          else { for (let d = -W; d <= W; d++) for (let i = 0; i < N; i++) { if (at(i, y + d)) clear.add((y + d) * N + i); if (at(x + d, i)) clear.add(i * N + x + d); } fx.push({ t: 'beam', x, y, h: true, life: 1 }, { t: 'beam', x, y, h: false, life: 1 }); label = W ? 'Giant Cross!' : 'Cross Blast!'; }
+          shake = 12;
+        }
+        await blast(clear, [], 1, 1, label); await cascade(null, null, 1); return end();
+      }
+      if (!runs().length) { beep('bad'); grid[a[1]][a[0]] = A; grid[b[1]][b[0]] = B; await tween(170, u => { A.x = b[0] + (a[0] - b[0]) * u; A.y = b[1] + (a[1] - b[1]) * u; B.x = a[0] + (b[0] - a[0]) * u; B.y = a[1] + (b[1] - a[1]) * u; }); A.x = a[0]; A.y = a[1]; B.x = b[0]; B.y = b[1]; busy = false; idle(); return; }
+      useMove(); await cascade(a, b); end();
+    }
+    function useMove() { if (mode === 'moves') movesLeft--; stats(); }
+    async function end() {
+      if (!bestMove()) { floats.push({ x: N / 2 - .5, y: N / 2, text: 'No moves — shuffle!', life: 1.4, big: true, gold: true }); await wait(500); const all = grid.flat(); const cs2 = shuffle(all.map(q => q.c)); all.forEach((q, i) => q.c = cs2[i]); let tries = 0; while ((runs().length || !bestMove()) && tries++ < 50) { const cs3 = shuffle(all.map(q => q.c)); all.forEach((q, i) => q.c = cs3[i]); } }
+      busy = false; stats(); checkEnd(); idle(); coach();
+    }
+    function checkEnd() {
+      if (over) return;
+      if (mode === 'moves' && score >= target) { over = true; const bonus = movesLeft * 150; score += bonus; const r = award('arcade', 'Level ' + level, { moves: 25 - movesLeft, stars: 3 + Math.min(level, 10), hints: hintsUsed }); level++; store.set('arc.level', level); stats(); winOverlay(host, { title: 'Level clear!', lines: [`Score ${score.toLocaleString()} (+${bonus} for ${movesLeft} moves left)`, `Best combo ×${comboMax}`], earned: r.earned, again: newGame }); return; }
+      if (mode === 'moves' && movesLeft <= 0) { over = true; beep('bad'); winOverlay(host, { title: 'Out of moves', lines: [`${score.toLocaleString()} of ${target.toLocaleString()} points`, 'Try again — aim for specials and combos.'], earned: 0, again: newGame }); return; }
+      if (mode === 'timed' && timeLeft <= 0) { over = true; const st = stat('arcade'); const best = st.best['90s']?.moves; const r = award('arcade', '90s', { stars: Math.min(15, Math.floor(score / 4000) + 1), hints: hintsUsed }); st.best['90s'].moves = Math.max(best || 0, score); saveP(); winOverlay(host, { title: 'Time!', lines: [`Score ${score.toLocaleString()}`, `Best ${Math.max(best || 0, score).toLocaleString()} · combo ×${comboMax}`], earned: r.earned, again: newGame }); }
+    }
+    function newGame() {
+      $$('#aM button', opts).forEach(b => b.classList.toggle('on', b.dataset.m === mode));
+      $$('.win', host).forEach(w => w.remove()); clearInterval(tickI);
+      score = 0; comboMax = 0; movesLeft = 25; timeLeft = 90; over = false; busy = false; hintsUsed = 0; target = 2500 + (level - 1) * 1200; fill();
+      if (mode === 'timed') tickI = setInterval(() => { if (over || !alive) return; timeLeft--; stats(); if (timeLeft <= 0 && !busy) checkEnd(); }, 1000);
+      stats(); idle(); coach(); T.note(mode === 'moves' ? `Level ${level}: reach ${target.toLocaleString()} points in 25 moves.` : mode === 'timed' ? 'Score as much as you can in 90 seconds.' : 'Zen mode: no limits. Just play.');
+    }
+    function stats() { $('#gStats').innerHTML = `<span>Score <b>${score.toLocaleString()}</b></span>` + (mode === 'moves' ? `<span>Moves <b>${movesLeft}</b></span><span>Goal <b>${target.toLocaleString()}</b></span>` : mode === 'timed' ? `<span>Time <b>${fmtTime(timeLeft * 1000)}</b></span>` : `<span>Zen</span>`); }
+
+    // ---------- teacher ----------
+    function bestMove() {
+      let best = null;
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) for (const [dx, dy] of [[1, 0], [0, 1]]) {
+        const A = at(x, y), B = at(x + dx, y + dy); if (!A || !B) continue;
+        let val = 0, why = '';
+        if (A.sp === 'prism' || B.sp === 'prism') { val = 40 + ((A.sp && B.sp) ? 30 : 0); why = 'Swap the prism to clear a whole colour'; }
+        else if (A.sp && B.sp) { val = 35; why = 'Swap two specials together for a mega blast'; }
+        else {
+          grid[y][x] = B; grid[y + dy][x + dx] = A; const rs = runs(); grid[y][x] = A; grid[y + dy][x + dx] = B;
+          if (!rs.length) continue; const G = groupsOf(rs); const mx = Math.max(...rs.map(r => r.cells.length)); const lt = G.some(gg => gg.runs.some(r => r.dir === 'h') && gg.runs.some(r => r.dir === 'v'));
+          const cells = G.reduce((a, gg) => a + gg.set.size, 0); const nums = G.reduce((a, gg) => a + [...gg.set].filter(k => grid[k / N | 0][k % N]?.num).length, 0);
+          const spIn = G.some(gg => [...gg.set].some(k => grid[k / N | 0][k % N]?.sp));
+          val = cells + (mx >= 5 ? 25 : lt ? 15 : mx === 4 ? 8 : 0) + nums * 4 + (spIn ? 10 : 0) + (N - y) * .02;
+          why = mx >= 5 ? 'Five in a line makes a Prism' : lt ? 'An L or T shape makes a Bomb' : mx === 4 ? 'Four in a line makes a Blaster' : spIn ? 'This match sets off a special' : nums ? 'This match includes a number gem — bigger score' : 'Make a match of three';
+        }
+        if (!best || val > best.val) best = { a: [x, y], b: [x + dx, y + dy], val, why };
+      }
+      return best;
+    }
+    function clearHint() { hintMv = null; clearTimeout(idleT); }
+    function idle() { clearTimeout(idleT); if (S.teacher === 'live' && !over) idleT = setTimeout(() => { if (!busy) { hintMv = bestMove(); coach(); } }, 3500); }
+    function coach(why) {
+      if (teacherOffMsg(why)) return; const b = bestMove();
+      const tips = mode === 'moves' ? `Goal: ${target.toLocaleString()} points in ${movesLeft} moves left.` : mode === 'timed' ? `${timeLeft}s left — big combos beat lots of small matches.` : 'Zen: no clock, no limits.';
+      T.set({ stage: 'Arcade Puzzle · ' + (mode === 'moves' ? 'Level ' + level : mode === 'timed' ? '90 seconds' : 'Zen'), steps: ['Match 3', 'Make specials', 'Chain combos'], cur: comboMax >= 3 ? 2 : score > 0 ? 1 : 0, prog: mode === 'moves' ? score / target : mode === 'timed' ? 1 - timeLeft / 90 : null,
+        msg: `${tips} Look for matches near the <b>bottom</b>: falling gems can set off free combos. Shapes matter — 4 in a line, L/T shapes and 5 in a line make specials.` + (S.teacher === 'live' ? ' <span class="muted">If you pause, I’ll point out a good swap.</span>' : '<br><span class="muted">Tap 💡 Hint for a good swap.</span>'),
+        next: hintMv && b ? { mv: '⇄', how: `${b.why}. Swap the glowing pair.` } : null, acts: [{ label: '💡 Best swap', fn: hint, primary: true }, { label: '▶ Show me', fn: showMe }, { label: '📖 Lessons', fn: () => showLessons('arcade') }] });
+    }
+    function hint() { hintsUsed++; hintOn(); hintMv = bestMove(); coach(); }
+    function showMe() { hintsUsed++; const b = bestMove(); if (b) trySwap(b.a, b.b); }
+
+    // ---------- input ----------
+    let downCell = null;
+    const cellAt = e => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left - ox) / cs), Math.floor((e.clientY - r.top - oy) / cs)]; };
+    ptr(cv, {
+      down(e) { downCell = cellAt(e); idle(); },
+      move(e, { dx, dy }) { if (!downCell || Math.hypot(dx, dy) < cs * .35) return; const d = Math.abs(dx) > Math.abs(dy) ? [Math.sign(dx), 0] : [0, Math.sign(dy)]; const a = downCell; downCell = null; trySwap(a, [a[0] + d[0], a[1] + d[1]]); },
+      tap(e) { const c = cellAt(e); downCell = null; if (!at(...c)) { sel = null; return; } if (sel && Math.abs(sel[0] - c[0]) + Math.abs(sel[1] - c[1]) === 1) { const a = sel; sel = null; trySwap(a, c); } else { sel = c; beep('pick'); } },
+      up() { downCell = null; }
+    });
+
+    // ---------- drawing ----------
+    function shape(i, r) {
+      g.beginPath();
+      if (i === 0) g.arc(0, 0, r, 0, 7);
+      else if (i === 1) g.roundRect ? g.roundRect(-r * .88, -r * .88, r * 1.76, r * 1.76, r * .3) : g.rect(-r * .88, -r * .88, r * 1.76, r * 1.76);
+      else if (i === 2) { g.moveTo(0, -r * 1.05); g.lineTo(r, r * .8); g.lineTo(-r, r * .8); }
+      else if (i === 3) for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+      else if (i === 4) { g.moveTo(0, -r * 1.05); g.lineTo(r * .9, 0); g.lineTo(0, r * 1.05); g.lineTo(-r * .9, 0); }
+      else for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * .5 : r * 1.05; g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+      g.closePath();
+    }
+    function drawGem(q, now) {
+      const r = cs * .38 * q.s; if (r <= 0.5) return; const C = gemPal(); g.save(); g.translate(ox + (q.x + .5) * cs, oy + (q.y + .5) * cs);
+      if (q.sp === 'prism') { const gr = g.createConicGradient ? g.createConicGradient(now / 600, 0, 0) : null; if (gr) { ['#ff4d6d', '#ffd60a', '#38d17a', '#3a86ff', '#b15cff', '#ff4d6d'].forEach((c, i) => gr.addColorStop(i / 5, c)); g.fillStyle = gr; } else g.fillStyle = '#fff'; g.beginPath(); g.arc(0, 0, r * 1.05, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.75)'; g.beginPath(); g.arc(-r * .3, -r * .35, r * .3, 0, 7); g.fill(); g.restore(); return; }
+      const c = C[q.c]; const gr = g.createRadialGradient(-r * .35, -r * .4, r * .1, 0, 0, r * 1.2); gr.addColorStop(0, '#ffffffcc'); gr.addColorStop(.35, c); gr.addColorStop(1, c);
+      g.fillStyle = gr; g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 4; g.shadowOffsetY = 2; shape(q.c, r); g.fill(); g.shadowColor = 'transparent';
+      if (q.sp === 'h' || q.sp === 'v') { g.save(); shape(q.c, r); g.clip(); g.fillStyle = 'rgba(255,255,255,.8)'; for (let k = -1; k <= 1; k++) q.sp === 'h' ? g.fillRect(-r * 1.2, k * r * .45 - r * .08, r * 2.4, r * .16) : g.fillRect(k * r * .45 - r * .08, -r * 1.2, r * .16, r * 2.4); g.restore(); }
+      if (q.sp === 'bomb') { g.fillStyle = '#1d1a24'; g.beginPath(); g.arc(0, r * .08, r * .55, 0, 7); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.moveTo(r * .3, -r * .35); g.quadraticCurveTo(r * .6, -r * .8, r * .2, -r * .9); g.stroke(); g.fillStyle = (now / 120 | 0) % 2 ? '#ffd60a' : '#ff8a3d'; g.beginPath(); g.arc(r * .2, -r * .92, r * .14, 0, 7); g.fill(); }
+      if (q.num) { g.font = `700 ${r * 1.0}px Bungee, Impact, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,.7)'; g.strokeText('×' + q.num, 0, r * .05); g.fillStyle = '#fff'; g.fillText('×' + q.num, 0, r * .05); }
+      g.restore();
+    }
+    function frame(now) {
+      if (!alive) return; requestAnimationFrame(frame); const r = host.getBoundingClientRect();
+      if (cv.width !== Math.round(r.width * dpr)) { cv.width = r.width * dpr; cv.height = r.height * dpr; cv.style.width = r.width + 'px'; cv.style.height = r.height + 'px'; }
+      cs = Math.min((r.width - 20) / N, (r.height - 30) / N); ox = (r.width - cs * N) / 2; oy = (r.height - cs * N) / 2;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, r.width, r.height);
+      if (shake > 0) { g.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake); shake *= .85; if (shake < .5) shake = 0; }
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { g.fillStyle = (x + y) % 2 ? 'rgba(0,0,0,.22)' : 'rgba(0,0,0,.32)'; g.fillRect(ox + x * cs, oy + y * cs, cs, cs); }
+      const hl = hintMv && !busy ? [hintMv.a, hintMv.b] : [];
+      for (const [x, y] of hl) { g.fillStyle = `rgba(255,255,255,${.18 + .14 * Math.sin(now / 160)})`; g.fillRect(ox + x * cs, oy + y * cs, cs, cs); }
+      if (sel) { g.strokeStyle = '#fff'; g.lineWidth = 3; g.strokeRect(ox + sel[0] * cs + 2, oy + sel[1] * cs + 2, cs - 4, cs - 4); }
+      g.save(); g.beginPath(); g.rect(ox, oy, cs * N, cs * N); g.clip();
+      if (grid) for (const row of grid) for (const q of row) if (q) drawGem(q, now);
+      g.restore();
+      for (let i = fx.length - 1; i >= 0; i--) {
+        const f = fx[i]; f.life -= .035; if (f.life <= 0) { fx.splice(i, 1); continue; } g.globalAlpha = f.life;
+        if (f.t === 'p') { f.x += f.vx; f.y += f.vy; f.vy += .006; g.fillStyle = f.c; g.beginPath(); g.arc(ox + (f.x + .5) * cs, oy + (f.y + .5) * cs, cs * .07 * (f.life + .3), 0, 7); g.fill(); }
+        if (f.t === 'beam') { g.fillStyle = '#fff'; const th = cs * .5 * f.life; f.h ? g.fillRect(ox, oy + (f.y + .5) * cs - th / 2, cs * N, th) : g.fillRect(ox + (f.x + .5) * cs - th / 2, oy, th, cs * N); }
+        if (f.t === 'ring') { g.strokeStyle = '#fff'; g.lineWidth = 4 * f.life; g.beginPath(); g.arc(ox + (f.x + .5) * cs, oy + (f.y + .5) * cs, cs * f.r * (1.4 - f.life), 0, 7); g.stroke(); }
+        if (f.t === 'zap') { g.strokeStyle = '#e8f7ff'; g.lineWidth = 2.5; g.beginPath(); const x1 = ox + (f.x1 + .5) * cs, y1 = oy + (f.y1 + .5) * cs, x2 = ox + (f.x2 + .5) * cs, y2 = oy + (f.y2 + .5) * cs; g.moveTo(x1, y1); for (let k = 1; k < 5; k++) g.lineTo(x1 + (x2 - x1) * k / 5 + (Math.random() - .5) * cs * .4, y1 + (y2 - y1) * k / 5 + (Math.random() - .5) * cs * .4); g.lineTo(x2, y2); g.stroke(); }
+      }
+      g.globalAlpha = 1;
+      for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.life -= .016; f.y -= .012; if (f.life <= 0) { floats.splice(i, 1); continue; } g.globalAlpha = Math.min(1, f.life * 2); g.font = `${f.big ? cs * .6 : cs * .42}px Bungee, Impact, sans-serif`; g.textAlign = 'center'; g.lineWidth = 5; g.strokeStyle = 'rgba(0,0,0,.6)'; const X = ox + (f.x + .5) * cs, Y = oy + (f.y + .5) * cs; g.strokeText(f.text, X, Y); g.fillStyle = f.gold ? '#f2c14e' : '#fff'; g.fillText(f.text, X, Y); }
+      g.globalAlpha = 1;
+    }
+    GAMES.arcade._dbg = { get grid() { return grid; }, trySwap, get score() { return score; } };
+    requestAnimationFrame(frame);
+    setTimeout(newGame, 30);
+    return { hint, newGame, coach, undo() { toast('No undo in the arcade — every swap counts!'); }, restyle() { }, resize() { }, destroy() { alive = false; clearInterval(tickI); clearTimeout(idleT); } };
+  }
+});
+</script>
+<script>
+/* =====================================================================
+   Block Stack — falling-block stacking: Solo, Zen and Vs AI
+   ===================================================================== */
+const Stack = (() => {
+  const W = 10, H = 22, VIS = 20;
+  const SHAPES = { I: [[0, 1], [1, 1], [2, 1], [3, 1]], O: [[1, 0], [2, 0], [1, 1], [2, 1]], T: [[1, 0], [0, 1], [1, 1], [2, 1]], S: [[1, 0], [2, 0], [0, 1], [1, 1]], Z: [[0, 0], [1, 0], [1, 1], [2, 1]], J: [[0, 0], [0, 1], [1, 1], [2, 1]], L: [[2, 0], [0, 1], [1, 1], [2, 1]] };
+  const TYPES = 'IOTSZJL';
+  const ROT = {}; for (const t of TYPES) { const n = t === 'I' ? 4 : t === 'O' ? 4 : 3; let s = SHAPES[t]; ROT[t] = [s]; for (let r = 1; r < 4; r++) { s = t === 'O' ? s : s.map(([x, y]) => [n - 1 - y, x]); ROT[t].push(s); } }
+  const KICKS = [[0, 0], [-1, 0], [1, 0], [0, -1], [-1, -1], [1, -1], [-2, 0], [2, 0], [0, 1]];
+  class Board {
+    constructor() { this.g = [...Array(H)].map(() => Array(W).fill(0)); this.bag = []; this.q = []; this.hold = null; this.canHold = true; this.score = 0; this.lines = 0; this.combo = -1; this.pending = 0; this.alive = true; this.fill(); this.spawn(); this.drop = 0; this.lockT = 0; this.lockMoves = 0; this.sent = 0; }
+    fill() { while (this.q.length < 5) { if (!this.bag.length) this.bag = shuffle(TYPES.split('')); this.q.push(this.bag.pop()); } }
+    cells(p = this.p) { return ROT[p.t][p.r].map(([x, y]) => [p.x + x, p.y + y]); }
+    fits(p) { return this.cells(p).every(([x, y]) => x >= 0 && x < W && y < H && (y < 0 || !this.g[y][x])); }
+    spawn(t) { t = t || this.q.shift(); this.fill(); this.p = { t, r: 0, x: 3, y: t === 'I' ? 0 : 1 }; this.canHoldNow = true; this.lockT = 0; this.lockMoves = 0; return this.fits(this.p); }
+    move(dx, dy) { const n = { ...this.p, x: this.p.x + dx, y: this.p.y + dy }; if (this.fits(n)) { this.p = n; if (dx && this.lockMoves < 15 && this.grounded()) { this.lockT = 0; this.lockMoves++; } return true; } return false; }
+    rotate(d) { const r = (this.p.r + d + 4) % 4; for (const [kx, ky] of KICKS) { const n = { ...this.p, r, x: this.p.x + kx, y: this.p.y + ky }; if (this.fits(n)) { this.p = n; if (this.lockMoves < 15) { this.lockT = 0; this.lockMoves++; } return true; } } return false; }
+    grounded() { return !this.fits({ ...this.p, y: this.p.y + 1 }); }
+    ghostY() { let y = this.p.y; while (this.fits({ ...this.p, y: y + 1 })) y++; return y; }
+    doHold() { if (!this.canHoldNow) return false; const t = this.p.t; if (this.hold) { const h = this.hold; this.hold = t; this.spawn(h); } else { this.hold = t; this.spawn(); } this.canHoldNow = false; return true; }
+    hardDrop() { const d = this.ghostY() - this.p.y; this.p.y += d; this.score += d * 2; return this.lock(); }
+    lock() { // returns {cleared, topout}
+      const ci = TYPES.indexOf(this.p.t) + 1; for (const [x, y] of this.cells()) if (y >= 0) this.g[y][x] = ci;
+      const full = []; for (let y = 0; y < H; y++) if (this.g[y].every(v => v)) full.push(y);
+      for (const y of full) { this.g.splice(y, 1); this.g.unshift(Array(W).fill(0)); }
+      const n = full.length; this.lines += n;
+      if (n) { this.combo++; this.score += [0, 100, 300, 500, 800][n] * this.level() + Math.max(0, this.combo) * 50 * this.level(); } else this.combo = -1;
+      const perfect = n && this.g.every(r => r.every(v => !v));
+      let send = n ? [0, 0, 1, 2, 4][n] + Math.max(0, Math.floor(this.combo / 2)) + (perfect ? 6 : 0) : 0;
+      const cancel = Math.min(send, this.pending); this.pending -= cancel; send -= cancel;
+      if (!n && this.pending) this.addGarbage();
+      const ok = this.spawn();
+      return { cleared: n, rows: full, send, topout: !ok, perfect };
+    }
+    addGarbage() { const k = Math.min(this.pending, 8); const hole = rnd(W); for (let i = 0; i < k; i++) { this.g.shift(); const row = Array(W).fill(8); row[hole] = 0; this.g.push(row); } this.pending -= k; }
+    level() { return 1 + Math.floor(this.lines / 10); }
+  }
+  // ---- AI: score every placement (height, holes, bumpiness, lines) ----
+  function evalGrid(g) {
+    const hts = []; let holes = 0, agg = 0;
+    for (let x = 0; x < W; x++) { let y = 0; while (y < H && !g[y][x]) y++; hts.push(H - y); agg += H - y; for (let yy = y + 1; yy < H; yy++) if (!g[yy][x]) holes++; }
+    let bump = 0; for (let x = 0; x < W - 1; x++) bump += Math.abs(hts[x] - hts[x + 1]);
+    return { agg, holes, bump, max: Math.max(...hts) };
+  }
+  function placements(b, t) {
+    const out = [];
+    for (let r = 0; r < (t === 'O' ? 1 : 4); r++) for (let x = -2; x < W; x++) {
+      const p = { t, r, x, y: t === 'I' ? 0 : 1 }; if (!b.fits(p)) continue; let y = p.y; while (b.fits({ ...p, y: y + 1 })) y++; p.y = y;
+      const g = b.g.map(row => row.slice()); const ci = TYPES.indexOf(t) + 1; let topOut = false;
+      for (const [cx, cy] of ROT[t][r].map(([a, c]) => [x + a, y + c])) { if (cy < 2) topOut = true; if (cy >= 0) g[cy][cx] = ci; }
+      let lines = 0; for (let yy = H - 1; yy >= 0; yy--) if (g[yy].every(v => v)) { g.splice(yy, 1); g.unshift(Array(W).fill(0)); lines++; yy++; }
+      const f = evalGrid(g); const score = -0.510066 * f.agg + 0.760666 * lines * (lines === 4 ? 1.6 : 1) - 0.35663 * f.holes * 1.4 - 0.184483 * f.bump - (topOut ? 50 : 0) - (f.max > 15 ? (f.max - 15) * 2 : 0);
+      out.push({ r, x, y, score, lines, f });
+    }
+    return out.sort((a, b2) => b2.score - a.score);
+  }
+  function best(b, noise = 0, useHold = false) {
+    let pl = placements(b, b.p.t).map(p => ({ ...p, hold: false }));
+    if (useHold && b.canHoldNow) { const ht = b.hold || b.q[0]; pl = pl.concat(placements(b, ht).map(p => ({ ...p, hold: true }))).sort((a, c) => c.score - a.score); }
+    if (noise) pl.forEach(p => p.score += (Math.random() - .5) * noise); pl.sort((a, c) => c.score - a.score);
+    return pl[0];
+  }
+  return { W, H, VIS, TYPES, ROT, Board, best, evalGrid };
+})();
+
+registerGame({
+  id: 'stack', name: 'Block Stack', tag: 'Solo · Zen · Vs AI', desc: 'Stack the falling blocks and clear full lines. Play solo, relax in Zen, or battle the computer.',
+  art: () => { const C = blockPal(); const cells = [[0, 9, 0], [1, 9, 0], [2, 9, 2], [3, 9, 2], [4, 9, 2], [5, 9, 5], [6, 9, 5], [7, 9, 5], [8, 9, 6], [0, 8, 0], [1, 8, 0], [3, 8, 2], [5, 8, 5], [8, 8, 6], [7, 8, 6], [0, 7, 3], [1, 7, 3], [8, 7, 6], [1, 6, 3], [2, 6, 3]]; return `<svg viewBox="0 0 100 100"><rect x="18" y="8" width="64" height="84" rx="4" fill="rgba(0,0,0,.35)"/>${cells.map(([x, y, c]) => `<rect x="${20 + x * 6.4}" y="${26 + (y - 3) * 7}" width="6" height="6.6" rx="1.2" fill="${C[c]}"/>`).join('')}<g fill="${C[4]}"><rect x="39.2" y="14" width="6" height="6.6" rx="1.2"/><rect x="45.6" y="14" width="6" height="6.6" rx="1.2"/><rect x="45.6" y="21" width="6" height="6.6" rx="1.2"/><rect x="52" y="21" width="6" height="6.6" rx="1.2"/></g></svg>`; },
+  how: `<p>Blocks fall from the top. Move and turn them so they fill whole rows — a full row clears.</p><p><b>Touch:</b> drag left/right to move, <b>tap</b> to turn, drag down to drop faster, <b>flick down</b> to slam it in. The buttons under the board do the same, plus <b>Hold</b> to save a block for later.</p><p><b>Keys:</b> ← → move, ↑ or X turn, Z turn back, ↓ soft drop, Space slam, C hold, P pause.</p><p><b>Modes:</b> <b>Solo</b> speeds up every 10 lines. <b>Zen</b> never ends — when the stack reaches the top it melts away. <b>Vs AI</b>: clearing 2, 3 or 4 lines at once sends junk rows to the computer, and it sends them back!</p>`,
+  create(host, opts, o) {
+    let mode = store.get('stack.mode', 'solo'), diff = store.get('stack.diff', 'normal'), me, ai, paused = false, over = false, alive = true, t0 = 0, last = 0, hintsUsed = 0, showHint = false, tip = null, aiPlan = null, aiT = 0, msgs = [];
+    const cv = el('canvas', { class: 'gcanvas' }); host.appendChild(cv); const g = cv.getContext('2d'); let dpr = Math.min(2, devicePixelRatio || 1);
+    const pad = el('div', { class: 'underbar' }, `<button class="btn sm" data-k="hold">Hold</button><button class="btn sm" data-k="ccw" aria-label="Turn back">⟲</button><button class="btn sm" data-k="left" aria-label="Left">◀</button><button class="btn sm" data-k="soft" aria-label="Drop">▼</button><button class="btn sm" data-k="hard" aria-label="Slam">Slam</button><button class="btn sm" data-k="right" aria-label="Right">▶</button><button class="btn sm" data-k="cw" aria-label="Turn">⟳</button><button class="btn sm" data-k="pause" aria-label="Pause">II</button>`); host.appendChild(pad);
+    opts.innerHTML = `<label>Mode</label><div class="seg" id="kM"><button data-m="solo">Solo</button><button data-m="zen">Zen</button><button data-m="vs">Vs AI</button></div><span id="kDw"><label>AI</label> <div class="seg" id="kD"><button data-d="easy">Easy</button><button data-d="normal">Normal</button><button data-d="hard">Hard</button></div></span>`;
+    $('#kM', opts).onclick = e => { const b = e.target.closest('button'); if (b) { mode = b.dataset.m; store.set('stack.mode', mode); newGame(); } };
+    $('#kD', opts).onclick = e => { const b = e.target.closest('button'); if (b) { diff = b.dataset.d; store.set('stack.diff', diff); newGame(); } };
+    const AI = { easy: { delay: 380, noise: 2.2, hold: false }, normal: { delay: 170, noise: .5, hold: false }, hard: { delay: 75, noise: 0, hold: true } };
+    function newGame() {
+      $$('#kM button', opts).forEach(b => b.classList.toggle('on', b.dataset.m === mode)); $$('#kD button', opts).forEach(b => b.classList.toggle('on', b.dataset.d === diff)); $('#kDw', opts).hidden = mode !== 'vs';
+      $$('.win', host).forEach(w => w.remove());
+      me = new Stack.Board(); ai = mode === 'vs' ? new Stack.Board() : null; over = false; paused = false; hintsUsed = 0; t0 = performance.now(); aiPlan = null; msgs = []; tip = null;
+      planTip(); coach(); T.note({ solo: 'Solo: it speeds up every 10 lines. How long can you last?', zen: 'Zen: no game over, steady speed. Relax and stack.', vs: `Vs AI (${diff}): clear 2+ lines at once to send junk rows over. First to reach the top loses.` }[mode]);
+    }
+    const gravity = b => mode === 'zen' ? 900 : Math.max(55, 900 * Math.pow(.83, b.level() - 1));
+    function act(k, b = me, user = true) {
+      if (!b || over || paused || !b.alive) return; let ok = true;
+      if (k === 'left') ok = b.move(-1, 0); if (k === 'right') ok = b.move(1, 0);
+      if (k === 'cw') ok = b.rotate(1); if (k === 'ccw') ok = b.rotate(-1);
+      if (k === 'soft') { if (b.move(0, 1)) { b.score += 1; b.drop = 0; } }
+      if (k === 'hard') { const r = b.hardDrop(); afterLock(b, r); return; }
+      if (k === 'hold') { ok = b.doHold(); if (b === me) planTip(); }
+      if (b === me && user && ok && k !== 'soft') beep('tick');
+    }
+    function afterLock(b, r) {
+      if (b === me) { beep(r.cleared ? 'snap' : 'pick'); if (r.cleared) { buzz(r.cleared * 10); popMsg(r.cleared === 4 ? 'FOUR LINES!' : r.cleared + (r.cleared > 1 ? ' lines' : ' line') + (b.combo > 0 ? `  combo ×${b.combo + 1}` : ''), r.cleared === 4); } if (r.perfect) popMsg('PERFECT CLEAR!', true); }
+      if (ai && r.send) { const other = b === me ? ai : me; other.pending += r.send; b.sent += r.send; if (b === me) popMsg(`Sent ${r.send} junk row${r.send > 1 ? 's' : ''}!`, false, true); }
+      if (r.topout) {
+        if (mode === 'zen' && b === me) { for (let y = 0; y < Stack.H; y++) me.g[y].fill(0); me.spawn(); popMsg('The stack melts away…', true); beep('win'); }
+        else { b.alive = false; finish(b === me ? 'lose' : 'win'); return; }
+      }
+      if (b === me) { planTip(); showHint = false; coach(); } else aiPlan = null;
+    }
+    function popMsg(text, big, gold) { msgs.push({ text, life: 1.6, big, gold }); }
+    function finish(res) {
+      over = true; const time = performance.now() - t0;
+      if (mode === 'vs') { if (res === 'win') { const r = award('stack', 'Vs ' + diff, { time, stars: { easy: 4, normal: 8, hard: 15 }[diff], hints: hintsUsed }); winOverlay(host, { title: 'You win!', lines: [`Beat the ${diff} AI`, `${me.lines} lines · sent ${me.sent} junk rows`], earned: r.earned, again: newGame }); } else { beep('bad'); winOverlay(host, { title: 'AI wins', lines: [`${me.lines} lines · sent ${me.sent} junk rows`, 'Clear 2+ lines at once to send junk back!'], earned: 0, again: newGame }); } }
+      else { const st = stat('stack'); const prev = st.best['Solo score']?.moves || 0; const r = award('stack', 'Solo score', { stars: Math.min(20, 1 + Math.floor(me.lines / 5)), hints: hintsUsed }); st.best['Solo score'].moves = Math.max(prev, me.score); saveP(); beep('bad'); winOverlay(host, { title: 'Game over', lines: [`Score ${me.score.toLocaleString()} · ${me.lines} lines · level ${me.level()}`, `Best ${Math.max(prev, me.score).toLocaleString()}`], earned: r.earned, again: newGame }); }
+      coach();
+    }
+    // ---- teacher: the best spot for your current block ----
+    function planTip() { if (!me) return; const b = Stack.best(me, 0, false); tip = b ? { ...b, t: me.p.t } : null; }
+    function coach(why) {
+      if (teacherOffMsg(why)) return; if (!me) return;
+      const f = Stack.evalGrid(me.g), reveal = S.teacher === 'live' || showHint;
+      const st = f.max > 14 ? 2 : f.holes > 3 ? 1 : 0;
+      const msg = [`Keep the stack <b>low and flat</b>. Leave one column open at the edge so a long I-block can clear four lines at once.`, `You have <b>${f.holes} holes</b> (gaps under blocks). Clear the rows above them to dig them out, and try not to cover new ones.`, `The stack is <b>high</b>! Forget fancy plays — clear any line you can, and use <b>Hold</b> to save an I-block for emergencies.`][st];
+      T.set({ stage: 'Block Stack · ' + { solo: 'Solo · level ' + me.level(), zen: 'Zen', vs: 'Vs AI (' + diff + ')' }[mode], steps: ['Stay flat', 'Fix holes', 'Survive'], cur: st, prog: mode === 'solo' ? (me.lines % 10) / 10 : null,
+        msg: msg + (mode === 'vs' ? ' <span class="muted">Clearing 2, 3 or 4 lines at once sends junk rows to the AI.</span>' : '') + (reveal ? ' <span class="muted">The gold outline shows the spot I’d choose.</span>' : '<br><span class="muted">Tap 💡 Hint to see the best spot.</span>'),
+        next: reveal && tip ? { mv: tip.t, how: `Put it where the <b>gold outline</b> is${tip.lines ? ` — that clears ${tip.lines} line${tip.lines > 1 ? 's' : ''}` : ''}.` } : null,
+        acts: [{ label: '▶ Place it for me', fn: showMe, primary: true }, { label: paused ? '▶ Resume' : 'II Pause', fn: togglePause }, { label: '📖 Lessons', fn: () => showLessons('stack') }] });
+    }
+    function hint() { hintsUsed++; hintOn(); showHint = true; planTip(); coach(); }
+    function showMe() { if (!tip || over || paused) return; hintsUsed++; const keep = me.p; me.p = { t: me.p.t, r: tip.r, x: tip.x, y: me.p.y }; if (!me.fits(me.p)) me.p.y = 0; if (!me.fits(me.p)) { me.p = keep; return; } act('hard', me, false); }
+    function togglePause() { if (over) return; paused = !paused; coach(); }
+    // ---- input ----
+    pad.addEventListener('click', e => { const k = e.target.closest('[data-k]')?.dataset.k; if (!k) return; if (k === 'pause') return togglePause(); act(k); });
+    let acc = { x: 0, y: 0 }, dragT = 0, cellPx = 24;
+    ptr(cv, {
+      down() { acc = { x: 0, y: 0 }; dragT = performance.now(); },
+      move(e, { dx, dy, prev }) {
+        const mx = e.clientX - prev.x, my = e.clientY - prev.y; acc.x += mx; acc.y += my;
+        while (acc.x > cellPx * .9) { act('right'); acc.x -= cellPx * .9; } while (acc.x < -cellPx * .9) { act('left'); acc.x += cellPx * .9; }
+        while (acc.y > cellPx) { act('soft'); acc.y -= cellPx; }
+      },
+      up(e, { start }) { const dy = e.clientY - start.y, dt = performance.now() - dragT; if (dy > cellPx * 2.2 && dy / dt > .9) act('hard'); },
+      tap(e) { const r = cv.getBoundingClientRect(); act(e.clientX - r.left < r.width * .25 ? 'ccw' : 'cw'); }
+    });
+    const keyH = e => { if (e.target.closest('input')) return; const k = { ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'soft', ArrowUp: 'cw', KeyX: 'cw', KeyZ: 'ccw', Space: 'hard', KeyC: 'hold', ShiftLeft: 'hold', ShiftRight: 'hold' }[e.code]; if (e.code === 'KeyP') { togglePause(); return; } if (k) { e.preventDefault(); act(k); } };
+    document.addEventListener('keydown', keyH);
+    const vis = () => { if (document.hidden && !over) { paused = true; coach(); } }; document.addEventListener('visibilitychange', vis);
+    // ---- loop ----
+    function step(b, dt) {
+      if (!b.alive) return; b.drop += dt;
+      if (b.grounded()) { b.lockT += dt; if (b.lockT > 480) { const r = b.lock(); afterLock(b, r); } }
+      else if (b.drop >= gravity(b)) { b.drop = 0; b.move(0, 1); }
+    }
+    function aiThink(dt) {
+      if (!ai || !ai.alive) return; const A = AI[diff];
+      if (!aiPlan) { const bp = Stack.best(ai, A.noise, A.hold); if (!bp) return; const acts = []; if (bp.hold) acts.push('hold'); aiPlan = { bp, acts, started: false }; }
+      aiT += dt; if (aiT < A.delay) return; aiT = 0;
+      const P2 = aiPlan; if (P2.bp.hold && ai.canHoldNow) { act('hold', ai, false); return; }
+      if (ai.p.r !== P2.bp.r) { act('cw', ai, false); if (ai.p.r !== P2.bp.r && !P2.rotTried) P2.rotTries = (P2.rotTries || 0) + 1; if ((P2.rotTries || 0) > 6) act('hard', ai, false); return; }
+      if (ai.p.x < P2.bp.x) { if (!ai.move(1, 0)) act('hard', ai, false); return; } if (ai.p.x > P2.bp.x) { if (!ai.move(-1, 0)) act('hard', ai, false); return; }
+      act('hard', ai, false);
+    }
+    function frame(now) {
+      if (!alive) return; requestAnimationFrame(frame);
+      const dt = Math.min(100, now - (last || now)); last = now;
+      if (me && !over && !paused) { step(me, dt); if (ai) { step(ai, dt); aiThink(dt); } }
+      draw(now);
+    }
+    function cell(x, y, s, c, a = 1) { g.globalAlpha = a; g.fillStyle = c; g.fillRect(x + 1, y + 1, s - 2, s - 2); g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(x + 1, y + 1, s - 2, s * .18); g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(x + 1, y + s * .8, s - 2, s * .2 - 1); g.globalAlpha = 1; }
+    function drawBoard(b, X, Y, s, isMe) {
+      const C = blockPal(), V = Stack.VIS, top = Stack.H - V;
+      g.fillStyle = 'rgba(0,0,0,.42)'; g.fillRect(X, Y, Stack.W * s, V * s); g.strokeStyle = 'rgba(255,255,255,.07)'; g.lineWidth = 1;
+      for (let x = 1; x < Stack.W; x++) { g.beginPath(); g.moveTo(X + x * s, Y); g.lineTo(X + x * s, Y + V * s); g.stroke(); }
+      for (let y = top; y < Stack.H; y++) for (let x = 0; x < Stack.W; x++) { const v = b.g[y][x]; if (v) cell(X + x * s, Y + (y - top) * s, s, v === 8 ? '#6b6577' : C[v - 1]); }
+      if (b.alive && !over) {
+        const ci = C[Stack.TYPES.indexOf(b.p.t)], gy = b.ghostY();
+        for (const [x, y] of Stack.ROT[b.p.t][b.p.r].map(([a, c]) => [b.p.x + a, gy + c])) if (y >= top) { g.strokeStyle = ci; g.globalAlpha = .55; g.lineWidth = 2; g.strokeRect(X + x * s + 2, Y + (y - top) * s + 2, s - 4, s - 4); g.globalAlpha = 1; }
+        if (isMe && tip && tip.t === b.p.t && (S.teacher === 'live' || showHint) && S.teacher !== 'off') { g.setLineDash([4, 3]); g.strokeStyle = '#f2c14e'; g.lineWidth = 2.5; for (const [x, y] of Stack.ROT[tip.t][tip.r].map(([a, c]) => [tip.x + a, tip.y + c])) if (y >= top) g.strokeRect(X + x * s + 1.5, Y + (y - top) * s + 1.5, s - 3, s - 3); g.setLineDash([]); }
+        for (const [x, y] of b.cells()) if (y >= top) cell(X + x * s, Y + (y - top) * s, s, ci);
+      }
+      if (b.pending) { g.fillStyle = '#ff4d6d'; const hgt = Math.min(V, b.pending) * s; g.fillRect(X - 6, Y + V * s - hgt, 4, hgt); }
+      g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 2; g.strokeRect(X - 1, Y - 1, Stack.W * s + 2, V * s + 2);
+    }
+    function mini(t, X, Y, s, dim) { if (!t) return; const C = blockPal(); const cs2 = Stack.ROT[t][0]; const minx = Math.min(...cs2.map(c => c[0])), maxx = Math.max(...cs2.map(c => c[0])); const off = (4 - (maxx - minx + 1)) / 2 - minx; for (const [x, y] of cs2) cell(X + (x + off) * s, Y + y * s, s, C[Stack.TYPES.indexOf(t)], dim ? .4 : 1); }
+    function label(t, x, y, sz = 11) { g.fillStyle = 'rgba(255,255,255,.75)'; g.font = `700 ${sz}px Atkinson Hyperlegible, sans-serif`; g.textAlign = 'left'; g.fillText(t, x, y); }
+    function draw(now) {
+      const r = host.getBoundingClientRect(); if (cv.width !== Math.round(r.width * dpr) || cv.height !== Math.round(r.height * dpr)) { cv.width = r.width * dpr; cv.height = r.height * dpr; cv.style.width = r.width + 'px'; cv.style.height = r.height + 'px'; }
+      g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, r.width, r.height); if (!me) return;
+      const availH = r.height - 70, units = ai ? 10 + 4.6 + 10 * .55 + 1.5 : 10 + 4.6 + 4.6;
+      const s = Math.floor(Math.min(availH / 20.5, (r.width - 20) / units)); cellPx = s; const ss = s * .55, ms = s * .55;
+      const totalW = ai ? (10 + 4.6) * s + 10 * ss + s * 1.5 : (10 + 9.2) * s, X0 = (r.width - totalW) / 2 + (ai ? 0 : 4.6 * s), Y0 = Math.max(10, (availH - 20 * s) / 2);
+      // hold (left in solo, right in vs)
+      const holdX = ai ? X0 + 10 * s + s * .5 : X0 - 4.4 * s;
+      label('HOLD', holdX, Y0 + 10); mini(me.hold, holdX, Y0 + 16, ms, !me.canHoldNow);
+      const nX = ai ? holdX : X0 + 10 * s + s * .6; const nY = ai ? Y0 + 4 * s : Y0;
+      label('NEXT', nX, nY + 10); me.q.slice(0, ai ? 3 : 4).forEach((t, i) => mini(t, nX, nY + 16 + i * ms * 3, ms));
+      drawBoard(me, X0, Y0, s, true);
+      // stats
+      const sx = ai ? holdX : X0 - 4.4 * s, sy = ai ? Y0 + 15 * s : Y0 + 5 * s; label('SCORE', sx, sy); label(me.score.toLocaleString(), sx, sy + 16, 14); label('LINES', sx, sy + 38); label(String(me.lines), sx, sy + 54, 14); if (mode !== 'zen') { label('LEVEL', sx, sy + 76); label(String(me.level()), sx, sy + 92, 14); }
+      if (ai) { const ax = X0 + (10 + 4.6) * s + s * .9, ay = Y0 + (20 * s - 20 * ss) / 2; label('AI · ' + diff.toUpperCase(), ax, ay - 6); drawBoard(ai, ax, ay, ss, false); label(ai.lines + ' lines', ax, ay + 20 * ss + 16); }
+      // messages
+      for (let i = msgs.length - 1; i >= 0; i--) { const m = msgs[i]; m.life -= .012; if (m.life <= 0) { msgs.splice(i, 1); continue; } g.globalAlpha = Math.min(1, m.life); g.font = `${m.big ? s * 1.1 : s * .75}px Bungee, Impact, sans-serif`; g.textAlign = 'center'; g.lineWidth = 5; g.strokeStyle = 'rgba(0,0,0,.6)'; const tx = X0 + 5 * s, ty = Y0 + 7 * s - (1.6 - m.life) * s * 2 + i * s; g.strokeText(m.text, tx, ty); g.fillStyle = m.gold ? '#f2c14e' : '#fff'; g.fillText(m.text, tx, ty); g.globalAlpha = 1; }
+      if (paused && !over) { g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(X0, Y0, 10 * s, 20 * s); g.fillStyle = '#fff'; g.font = `${s}px Bungee, Impact, sans-serif`; g.textAlign = 'center'; g.fillText('PAUSED', X0 + 5 * s, Y0 + 10 * s); g.font = `${s * .5}px Atkinson Hyperlegible, sans-serif`; g.fillText('tap II or P to resume', X0 + 5 * s, Y0 + 11 * s); }
+      $('#gStats').innerHTML = `<span>Score <b>${me.score.toLocaleString()}</b></span><span>Lines <b>${me.lines}</b></span>` + (ai ? `<span>AI <b>${ai.lines}</b></span>` : '');
+    }
+    requestAnimationFrame(frame);
+    setTimeout(newGame, 30);
+    return { hint, newGame, coach, undo() { toast('No undo here — but Hold can save you!'); }, restyle() { }, resize() { }, destroy() { alive = false; document.removeEventListener('keydown', keyH); document.removeEventListener('visibilitychange', vis); } };
+  }
+});
+</script>
+<script>
+/* =====================================================================
+   Jukebox — ten original tracks, composed live in the browser with
+   Web Audio (no audio files, no samples). Each track is a set of rules:
+   tempo, scale, chord progression, drum groove, bass style and a seeded
+   melody, so it plays the same tune every time.
+   ===================================================================== */
+const Music = (() => {
+  const SC = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10], dorian: [0, 2, 3, 5, 7, 9, 10], mixo: [0, 2, 4, 5, 7, 9, 10], harm: [0, 2, 3, 5, 7, 8, 11], lydian: [0, 2, 4, 6, 7, 9, 11] };
+  const GROOVE = {
+    four: { len: 16, k: 'x...x...x...x...', s: '....x.......x...', h: '..x...x...x...x.' },
+    break: { len: 16, k: 'x.....x...x.....', s: '....x.......x..x', h: 'x.x.x.x.x.x.x.x.' },
+    half: { len: 16, k: 'x.........x.....', s: '........x.......', h: '..x...x...x...x.' },
+    shuffle: { len: 16, k: 'x.......x.x.....', s: '....x.......x...', h: 'x.xx.xx.xx.xx.x.' },
+    waltz: { len: 12, k: 'x...........', s: '....x...x...', h: '..x...x...x.' },
+    none: { len: 16, k: '', s: '', h: '' }
+  };
+  const TRACKS = [
+    { name: 'Neon Lounge', mood: 'Smooth late-night groove', bpm: 92, root: 50, mode: 'dorian', prog: [1, 4, 1, 5], groove: 'break', swing: .18, lead: 'triangle', pad: 'sine', bass: 'walk', dens: .45, seed: 11 },
+    { name: 'Brass & Velvet', mood: 'Bright and bouncy', bpm: 108, root: 53, mode: 'major', prog: [1, 6, 2, 5], groove: 'four', swing: 0, lead: 'square', pad: 'triangle', bass: 'root', dens: .55, seed: 23 },
+    { name: 'Cube Waltz', mood: 'Turning in three-four', bpm: 132, root: 55, mode: 'major', prog: [1, 4, 5, 1], groove: 'waltz', swing: 0, lead: 'triangle', pad: 'sine', bass: 'root', dens: .5, seed: 37 },
+    { name: 'Slide Shuffle', mood: 'Swingy and playful', bpm: 112, root: 57, mode: 'mixo', prog: [1, 7, 4, 1], groove: 'shuffle', swing: .33, lead: 'square', pad: 'triangle', bass: 'octave', dens: .5, seed: 41 },
+    { name: 'Midnight Jigsaw', mood: 'Slow and dreamy', bpm: 76, root: 48, mode: 'minor', prog: [1, 6, 3, 7], groove: 'half', swing: .1, lead: 'sine', pad: 'sawtooth', bass: 'root', dens: .35, seed: 53 },
+    { name: 'Arcade Rush', mood: 'Fast chiptune energy', bpm: 150, root: 52, mode: 'minor', prog: [1, 6, 7, 5], groove: 'four', swing: 0, lead: 'square', pad: 'square', bass: 'arp', dens: .7, seed: 67 },
+    { name: 'Zen Garden', mood: 'Calm, no drums', bpm: 64, root: 51, mode: 'major', penta: true, prog: [1, 4, 6, 5], groove: 'none', swing: 0, lead: 'sine', pad: 'sine', bass: 'drone', dens: .28, seed: 71 },
+    { name: 'Maze Runner', mood: 'Mysterious and driving', bpm: 124, root: 45, mode: 'harm', prog: [1, 4, 5, 1], groove: 'break', swing: 0, lead: 'sawtooth', pad: 'triangle', bass: 'arp', dens: .5, seed: 83 },
+    { name: 'Stack Fever', mood: 'Tense and quick', bpm: 140, root: 47, mode: 'minor', prog: [1, 7, 6, 5], groove: 'four', swing: 0, lead: 'square', pad: 'triangle', bass: 'octave', dens: .62, seed: 97 },
+    { name: 'Last Light', mood: 'Hopeful wind-down', bpm: 84, root: 48, mode: 'lydian', prog: [1, 2, 1, 5], groove: 'half', swing: .12, lead: 'triangle', pad: 'sine', bass: 'root', dens: .4, seed: 101 }
+  ];
+  let ac = null, master = null, bus = null, echo = null, noiseBuf = null, timer = null, idx = 0, step = 0, nextT = 0, song = null, playing = false, listeners = [];
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  function init() {
+    if (ac) return; ac = new (window.AudioContext || window.webkitAudioContext)();
+    master = ac.createGain(); const comp = ac.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4;
+    master.connect(comp).connect(ac.destination); bus = ac.createGain(); bus.connect(master);
+    echo = ac.createDelay(1); const fb = ac.createGain(), wet = ac.createGain(); fb.gain.value = .32; wet.gain.value = .22; echo.connect(fb).connect(echo); echo.connect(wet).connect(master);
+    noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    setVol(S.musicVol);
+  }
+  function setVol(v) { if (master) master.gain.setTargetAtTime(v * .55, ac.currentTime, .05); }
+  function compose(tr) { // seeded melody: phrase A, A′, B, A over eight bars
+    const R = rng(tr.seed), g = GROOVE[tr.groove], L = g.len, sc = tr.penta ? [0, 2, 4, 7, 9] : SC[tr.mode];
+    const phrase = () => { const out = []; let p = 7 + Math.floor(R() * 3); for (let i = 0; i < L * 2; i++) { const strong = i % (L / 4) === 0; if (R() < (strong ? tr.dens + .3 : tr.dens * .7)) { p += Math.round((R() - .5) * 4); p = clamp(p, 3, 13); out.push({ p, len: R() < .3 ? 2 : 1, strong }); } else out.push(null); } return out; };
+    const A = phrase(), B = phrase(), A2 = A.map((n, i) => i > L * 1.5 && n ? { ...n, p: n.p + (R() < .5 ? 2 : -2) } : n);
+    return { L, sc, mel: [...A, ...A2, ...B, ...A] };
+  }
+  function tone(type, f, t, dur, vol, dest = bus, att = .01, cutoff = 0) {
+    const o = ac.createOscillator(), gn = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t);
+    gn.gain.setValueAtTime(0, t); gn.gain.linearRampToValueAtTime(vol, t + att); gn.gain.setTargetAtTime(0, t + dur * .7, dur * .25 + .02);
+    let n = o; if (cutoff) { const fl = ac.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = cutoff; o.connect(fl); n = fl; }
+    n.connect(gn).connect(dest); o.start(t); o.stop(t + dur + .5);
+  }
+  function noise(t, dur, vol, hp, bp) { const s = ac.createBufferSource(); s.buffer = noiseBuf; const f = ac.createBiquadFilter(); f.type = bp ? 'bandpass' : 'highpass'; f.frequency.value = hp; const gn = ac.createGain(); gn.gain.setValueAtTime(vol, t); gn.gain.exponentialRampToValueAtTime(.001, t + dur); s.connect(f).connect(gn).connect(bus); s.start(t); s.stop(t + dur + .05); }
+  function kick(t) { const o = ac.createOscillator(), gn = ac.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(42, t + .12); gn.gain.setValueAtTime(.9, t); gn.gain.exponentialRampToValueAtTime(.001, t + .32); o.connect(gn).connect(bus); o.start(t); o.stop(t + .35); }
+  const deg = (sc, root, d, oct = 0) => { const n = sc.length, i = ((d % n) + n) % n; return root + sc[i] + 12 * (Math.floor(d / n) + oct); };
+  function play_step(t) {
+    const tr = TRACKS[idx], { L, sc, mel } = song, g = GROOVE[tr.groove], csc = SC[tr.mode];
+    const bar = Math.floor(step / L), s = step % L, chordDeg = tr.prog[bar % tr.prog.length] - 1, beat = L / 4;
+    const chord = [0, 2, 4].map(k => deg(csc, tr.root, chordDeg + k));
+    // drums
+    if (g.k[s] === 'x') kick(t);
+    if (g.s[s] === 'x') { noise(t, .16, .35, 1800, true); tone('triangle', 190, t, .06, .12); }
+    if (g.h[s] === 'x') noise(t, .04, .12, 7500);
+    if (s === L - 2 && bar % 8 === 7 && tr.groove !== 'none') noise(t, .1, .25, 2500, true);
+    // pad on each bar
+    if (s === 0) chord.forEach((m, i) => tone(tr.pad, mtof(m + 12), t, (60 / tr.bpm) * (L / 4) * .98, .05, bus, .25, 1800));
+    // bass
+    const bstep = 60 / tr.bpm / 4, broot = chord[0] - 12;
+    if (tr.bass === 'root' && s % (beat * 2) === 0) tone('triangle', mtof(broot), t, bstep * beat * 1.8, .32, bus, .01, 600);
+    if (tr.bass === 'walk' && s % beat === 0) tone('triangle', mtof([broot, chord[1] - 12, chord[2] - 12, broot + 10][(s / beat) % 4]), t, bstep * beat * .9, .3, bus, .01, 700);
+    if (tr.bass === 'octave' && s % 2 === 0) tone('square', mtof(broot + (s % 4 ? 12 : 0)), t, bstep * 1.6, .12, bus, .005, 500);
+    if (tr.bass === 'arp' && s % 2 === 0) tone('sawtooth', mtof([broot, chord[1] - 12, chord[2] - 12, broot + 12][(s / 2) % 4]), t, bstep * 1.5, .12, bus, .005, 900);
+    if (tr.bass === 'drone' && s === 0 && bar % 2 === 0) tone('sine', mtof(tr.root - 12), t, bstep * L * 2, .22, bus, .6);
+    // melody
+    const mi = ((bar % 8) * L + s) % mel.length, note = mel[mi];
+    if (note) { let m = deg(song.sc, tr.root + 12, note.p - 7); if (note.strong) { const c = chord.map(x => x + 12 * Math.round((m - x) / 12)); m = c.reduce((a, b) => Math.abs(b - m) < Math.abs(a - m) ? b : a); } const lead = ac.createGain(); lead.connect(bus); lead.connect(echo); tone(tr.lead, mtof(m), t, bstep * (note.len + .6), tr.lead === 'square' || tr.lead === 'sawtooth' ? .08 : .16, lead, .01, tr.lead === 'sawtooth' ? 2400 : 0); }
+  }
+  function tick() {
+    const tr = TRACKS[idx], sd = 60 / tr.bpm / 4;
+    while (nextT < ac.currentTime + .15) { const sw = (step % 2) ? tr.swing * sd : 0; play_step(nextT + sw); nextT += sd; step++; }
+  }
+  function play(i = idx) {
+    init(); if (ac.state === 'suspended') ac.resume();
+    idx = ((i % TRACKS.length) + TRACKS.length) % TRACKS.length; song = compose(TRACKS[idx]); step = 0; nextT = ac.currentTime + .08;
+    echo.delayTime.value = (60 / TRACKS[idx].bpm) * .75;
+    clearInterval(timer); timer = setInterval(tick, 25); playing = true; S.music = true; S.musicTrack = idx; save(); emit();
+  }
+  function stop() { clearInterval(timer); timer = null; playing = false; S.music = false; save(); if (bus) { bus.gain.setTargetAtTime(0, ac.currentTime, .05); setTimeout(() => bus.gain.setValueAtTime(1, ac.currentTime), 300); } emit(); }
+  const emit = () => listeners.forEach(f => f());
+  document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else if (playing) ac.resume(); });
+  return { TRACKS, play, stop, toggle() { playing ? stop() : play(idx); }, next() { play(idx + 1); }, prev() { play(idx - 1); }, setVol, get playing() { return playing; }, get idx() { return idx; }, on(f) { listeners.push(f); }, set idx(v) { idx = v; } };
+})();
+Music.idx = S.musicTrack || 0;
+function paintEq() { const e = $('#hEq'); if (!e) return; e.classList.toggle('on', Music.playing); $('#hMusic').classList.toggle('on', Music.playing); $('#hMusic').title = Music.playing ? 'Now playing: ' + Music.TRACKS[Music.idx].name : 'Jukebox'; }
+Music.on(paintEq);
+function showJukebox() {
+  const render = () => {
+    const m = $('#jbBody'); if (!m) return;
+    m.innerHTML = `<div class="jbnow"><div><div class="eyebrow">${Music.playing ? 'Now playing' : 'Paused'}</div><b style="font-size:1.1rem">${esc(Music.TRACKS[Music.idx].name)}</b><div class="muted">${esc(Music.TRACKS[Music.idx].mood)} · ${Music.TRACKS[Music.idx].bpm} bpm</div></div>
+      <div class="row"><button class="btn" data-j="prev" aria-label="Previous">|◀</button><button class="btn primary" data-j="toggle" aria-label="${Music.playing ? 'Pause' : 'Play'}">${Music.playing ? 'II' : '▶'}</button><button class="btn" data-j="next" aria-label="Next">▶|</button></div></div>
+      <div class="row" style="margin:10px 0"><label class="eyebrow" for="jbVol">Volume</label><input id="jbVol" type="range" min="0" max="1" step="0.05" value="${S.musicVol}" style="flex:1"></div>
+      <div class="jblist">${Music.TRACKS.map((t, i) => `<button class="jbt ${i === Music.idx ? 'on' : ''}" data-t="${i}"><span class="num">${String(i + 1).padStart(2, '0')}</span><span class="grow"><b>${esc(t.name)}</b><br><span class="muted">${esc(t.mood)}</span></span><span>${i === Music.idx && Music.playing ? '♪' : '▶'}</span></button>`).join('')}</div>
+      <p class="muted" style="margin-top:10px;font-size:.84rem">All ten tracks are original and composed live in your browser, so they work offline. Music keeps playing as you move between tables.</p>`;
+  };
+  modal('Jukebox', '<div id="jbBody"></div>', mb => {
+    render();
+    mb.addEventListener('click', e => { const j = e.target.closest('[data-j]'); if (j) { Music[j.dataset.j](); render(); } const t = e.target.closest('[data-t]'); if (t) { +t.dataset.t === Music.idx && Music.playing ? Music.stop() : Music.play(+t.dataset.t); render(); } });
+    mb.addEventListener('input', e => { if (e.target.id === 'jbVol') { S.musicVol = +e.target.value; save(); Music.setVol(S.musicVol); } });
+  });
+}
+$('#hMusic').onclick = showJukebox;
+// browsers only allow sound after a tap, so resume the music on the first one
+document.addEventListener('pointerdown', function first() { document.removeEventListener('pointerdown', first, true); if (S.music && !Music.playing) Music.play(S.musicTrack || 0); }, true);
+</script>
+<script>
+/* =====================================================================
    The lesson book
    ===================================================================== */
 const A = s => `<span class="alg">${s.replace(/'/g, '′')}</span>`;
@@ -1782,6 +2617,15 @@ page('O-001', 'lights', 'Chase the lights', 'lights out chase method rows press 
 page('H-001', 'hanoi', 'Hanoi by recursion', 'hanoi recursion tower disks shortest 2 n minus 1 strategy', `<p>To move a tower of <i>n</i> disks: move the top <i>n − 1</i> to the spare peg, move the biggest disk, then move the <i>n − 1</i> back on top. Each smaller tower is the same problem again.</p><p>Shortcut for doing it by hand: the smallest disk moves every other turn, always in the same direction round the pegs (right for an odd number of disks, left for even). On the other turns there's only one legal move.</p>`);
 page('F-001', 'flood', 'Flood strategy', 'flood colour strategy centre grow', `<p>Push toward the <b>centre</b> first — from there the board is closest. After that, take whichever colour grows you most. Look out for a colour you can <b>erase completely</b>: that's always a good move, because you'll never need it again.</p>`);
 page('B-001', 'balls', 'Ball Sort strategy', 'ball sort tubes strategy empty spare plan', `<p>Empty tubes are your most valuable resource. Fill one only when it starts a colour you can finish. Move whole runs of the same colour together, and work on the colour that's closest to the top of the most tubes.</p>`);
+
+page('M-001', 'maze', 'The right-hand rule', 'maze right hand rule wall follower lost strategy', `<p>Put your right hand on the wall and never let go: at every junction take the right-most opening. In a maze whose start and exit are on the outside edge, this always gets you out — it may not be the shortest way, but it never gets lost.</p><p>The teacher's gold dots show the <b>shortest</b> way, worked out by searching every corridor at once (breadth-first search).</p>`);
+page('M-002', 'maze', 'Maze levels and fog', 'maze levels stroll easy medium hard expert fog dead end loops', `<p><b>Stroll</b> and <b>Easy</b> mazes have one long winding path. <b>Medium</b> and <b>Hard</b> branch much more and have a few loops, so there's more than one way through. <b>Expert</b> is big and foggy: you only see what you've been near.</p><p>Spot a <b>dead end</b> early — if a corridor only leads one way, it's not the path. Swipe to run to the next junction.</p>`);
+page('A-001', 'arcade', 'Specials from match shapes', 'arcade match shapes special blaster bomb prism four five L T', `<p>The shape of your match decides what you get:</p><ul><li><b>3 in a line</b> — just clears.</li><li><b>4 in a line</b> — a <b>Blaster</b> (striped gem). Clearing it wipes a full row or column.</li><li><b>L or T shape</b> (two lines crossing) — a <b>Bomb</b>. Clears the 3×3 around it.</li><li><b>5 in a line</b> — a <b>Prism</b>. Swap it with any gem to clear every gem of that colour.</li></ul>`);
+page('A-002', 'arcade', 'Numbers, combos and mega swaps', 'arcade number gems multiplier combo cascade storm mega swap', `<p><b>Number gems</b> (×2, ×3, ×5) multiply the points of the match they're in. Put <b>two or more</b> numbers in one match and a <b>Number Storm</b> zaps extra gems.</p><p>When falling gems make new matches by themselves, that's a <b>combo</b> — each step scores more. Match low on the board to set them off.</p><p><b>Swap two specials together:</b> Blaster + Blaster = cross, Bomb + Bomb = mega bomb, Blaster + Bomb = giant cross, Prism + special = every gem of that colour becomes that special, Prism + Prism = the whole board.</p>`);
+page('K-001', 'stack', 'Stacking basics', 'stack blocks lines clear flat holes hold tetris basics', `<p>Keep your stack <b>flat and low</b>. Avoid <b>holes</b> (gaps covered by blocks) — they stop rows from clearing. Leave one column open at the edge, and drop a long I-block in to clear <b>four lines at once</b> for big points.</p><p><b>Hold</b> saves a block for later — great for keeping an I-block ready. The faint outline shows where your block will land.</p>`);
+page('K-002', 'stack', 'Beating the AI', 'stack vs ai junk garbage rows send combo battle zen solo modes', `<p>In <b>Vs AI</b>, clearing 2 lines sends 1 junk row, 3 lines sends 2, and 4 lines sends 4. Back-to-back clears (combos) and clearing the whole board send even more. Junk waiting to hit you shows as a red bar; clearing lines first cancels it out.</p><p><b>Solo</b> speeds up every 10 lines. <b>Zen</b> never ends — reach the top and the stack simply melts away.</p>`);
+page('L-004', 'all', 'The shop, kits and dyes', 'shop kits dye colours felt buy reset turn off on custom', `<p>Every game has its own tab in the 🛍 shop and remembers its own look.</p><ul><li><b>Colour kits</b> are premade combos. Buy once; turn on or off whenever you like.</li><li><b>Table felts</b> are bought once and can go on any table; each table keeps its own.</li><li>A <b>dye</b> lets you pick your own colours for one game. Only the colours you change are dyed. They're remembered until you reset them, and switching them off and on is free — but changing them again takes another dye.</li></ul>`);
+page('L-005', 'all', 'The jukebox', 'music jukebox tracks songs volume play pause', `<p>Tap ♪ at the top for the jukebox: ten original tracks, from the smooth <b>Neon Lounge</b> to the drum-free <b>Zen Garden</b>. Pick one, skip, or set the volume. The music is composed live in your browser, so it works offline, and it keeps playing as you move between tables.</p>`);
 </script>
 <script>
 /* ---------- boot ---------- */
