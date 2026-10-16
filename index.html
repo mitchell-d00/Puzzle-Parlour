@@ -1943,9 +1943,9 @@ const MAZE_LEVELS = [
 registerGame({
   id: 'maze', name: 'Maze Runner', tag: '5 levels', desc: 'A brand-new random maze every game, from a gentle stroll to a foggy expert labyrinth.',
   art: () => { const K = mazeSkin(); return `<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="6" fill="${K.floor}"/><path d="M10 10h80v80H10zM30 10v40h20M70 30v40H30M50 30h20M10 70h20v20M50 70v20M70 90V70h20" fill="none" stroke="${K.wall}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20h20v40h20v-20h20v40" fill="none" stroke="${K.trail}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 7"/><circle cx="20" cy="20" r="6" fill="${K.player}"/><path d="M80 75l3 6 6 1-4.5 4 1 6-5.5-3-5.5 3 1-6-4.5-4 6-1z" fill="${K.exit}"/></svg>`; },
-  how: `<p>Get from the top-left corner to the ★ at the bottom-right.</p><p><b>Swipe</b> to run along a corridor — you keep going until the next turn or junction. <b>Tap</b> a square next to you to take one step, or use the arrow buttons or keys.</p><p>Five levels: Stroll, Easy, Medium, Hard, and Expert, where fog hides everything you haven't been near. Every maze is new.</p>`,
+  how: `<p>Get from the top-left corner to the ★ at the bottom-right.</p><p><b>Trace with your finger:</b> put your finger on your dot and draw through the corridors — the dot follows you. Drag back along your trail to back up. Every <b>junction</b> is a hexagon ⬢: once you've passed one it fills in as a <b>save spot</b> — tap it to zip straight back there. Or <b>swipe</b> anywhere else to run to the next junction, <b>tap</b> a square next to you to step, or use the arrow buttons or keys.</p><p>Five levels: Stroll, Easy, Medium, Hard, and Expert, where fog hides everything you haven't been near. Every maze is new.</p>`,
   create(host, opts, o) {
-    let lv = store.get('maze.lv', 1), L, w, h, cells, me, trail, seen, moves = 0, t0 = null, timerI = null, hintsUsed = 0, showHint = false, done = false;
+    let lv = store.get('maze.lv', 1), L, w, h, cells, me, trail, seen, visited, jumping = false, moves = 0, t0 = null, timerI = null, hintsUsed = 0, showHint = false, done = false;
     const cv = el('canvas', { class: 'gcanvas' }); host.appendChild(cv); const g = cv.getContext('2d');
     const pad = el('div', { class: 'underbar' }, `<button class="btn sm" data-d="3" aria-label="Left">◀</button><button class="btn sm" data-d="0" aria-label="Up">▲</button><button class="btn sm" data-d="2" aria-label="Down">▼</button><button class="btn sm" data-d="1" aria-label="Right">▶</button><button class="btn sm" data-a="show">▶ Show me</button>`); host.appendChild(pad);
     opts.innerHTML = `<label>Level</label><div class="seg" id="mL">${MAZE_LEVELS.map((x, i) => `<button data-l="${i}">${i + 1} · ${x.name}</button>`).join('')}</div>`;
@@ -1956,7 +1956,7 @@ registerGame({
       $$('#mL button', opts).forEach(b => b.classList.toggle('on', +b.dataset.l === lv));
       L = MAZE_LEVELS[lv]; const r = host.getBoundingClientRect(); const asp = clamp((r.width) / Math.max(200, r.height - 60), .6, 1.7);
       w = Math.max(6, Math.round(L.n * Math.sqrt(asp))); h = Math.max(6, Math.round(L.n / Math.sqrt(asp)));
-      cells = MazeGen.make(w, h, L.style, L.loops); me = 0; trail = [0]; seen = new Uint8Array(w * h); moves = 0; done = false; hintsUsed = 0; showHint = false; stopTimer();
+      cells = MazeGen.make(w, h, L.style, L.loops); me = 0; trail = [0]; seen = new Uint8Array(w * h); visited = new Uint8Array(w * h); visited[0] = 1; jumping = false; moves = 0; done = false; hintsUsed = 0; showHint = false; stopTimer();
       reveal(); size(); draw(); stats(); coach();
       const best = MazeGen.path(cells, w, h, 0, w * h - 1).length; T.note(`New ${L.name} maze, ${w}×${h}. The shortest way out is ${best} steps.`);
     }
@@ -1974,6 +1974,14 @@ registerGame({
       g.strokeStyle = K.wall; g.lineWidth = Math.max(2, s * .16); g.lineCap = 'round'; g.beginPath();
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const c = cells[y * w + x], X = ox + x * s, Y = oy + y * s; if (!(c & 1)) { g.moveTo(X, Y); g.lineTo(X + s, Y); } if (!(c & 8)) { g.moveTo(X, Y); g.lineTo(X, Y + s); } if (x === w - 1 && !(c & 2)) { g.moveTo(X + s, Y); g.lineTo(X + s, Y + s); } if (y === h - 1 && !(c & 4)) { g.moveTo(X, Y + s); g.lineTo(X + s, Y + s); } }
       g.stroke();
+      // junctions: hexagons; the ones you've passed are save spots you can tap to jump back to
+      const pulse = .5 + .5 * Math.sin(performance.now() / 300);
+      for (let i = 0; i < w * h; i++) {
+        if (!isJunction(i) || (L.fog && !seen[i])) continue; const cx = ox + (i % w + .5) * s, cy = oy + ((i / w | 0) + .5) * s, r = s * .36;
+        g.beginPath(); for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.closePath();
+        if (visited[i]) { g.fillStyle = K.trail; g.globalAlpha = i === me ? .9 : .55 + .2 * pulse; g.fill(); g.globalAlpha = 1; g.strokeStyle = '#fff'; g.lineWidth = Math.max(1.5, s * .06); g.stroke(); }
+        else { g.strokeStyle = K.wall; g.globalAlpha = .28; g.lineWidth = Math.max(1, s * .05); g.stroke(); g.globalAlpha = 1; }
+      }
       // exit and you
       const ex = ox + (w - .5) * s, ey = oy + (h - .5) * s; g.fillStyle = K.exit; star(ex, ey, s * .38);
       g.fillStyle = K.player; g.beginPath(); g.arc(ox + (me % w + .5) * s, oy + ((me / w | 0) + .5) * s, s * .32, 0, 7); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke();
@@ -1982,22 +1990,41 @@ registerGame({
     }
     function star(x, y, r) { g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } g.fill(); }
     const open = (i, d) => cells[i] & DIRS[d][2];
+    const isJunction = i => { const c = cells[i]; return ((c & 1) > 0) + ((c & 2) > 0) + ((c & 4) > 0) + ((c & 8) > 0) >= 3; };
+    function jumpTo(target) { // zip back along the maze to a save spot
+      const p = MazeGen.path(cells, w, h, me, target); if (!p || !p.length) return; jumping = true; beep('pick'); buzz(10);
+      const go = () => { if (!p.length || done) { jumping = false; after(); return; } const c = p.shift(); const d = DIRS.findIndex((_, k) => open(me, k) && nb(me, k) === c); if (d < 0 || !step(d)) { jumping = false; after(); return; } draw(); setTimeout(go, 28 * SPEED()); }; go();
+      T.note('⬢ Jumped back to a save spot.');
+    }
     const nb = (i, d) => i + DIRS[d][0] + DIRS[d][1] * w;
     function step(d, user = true) {
       if (done || !open(me, d)) { if (user) { beep('bad'); buzz(15); } return false; }
       if (!t0) startTimer(); me = nb(me, d); moves++;
       if (trail.length > 1 && trail[trail.length - 2] === me) trail.pop(); else trail.push(me);
-      reveal(); showHint = false; return true;
+      visited[me] = 1; reveal(); showHint = false; return true;
     }
     function run(d) { // keep going until a junction or a turn
       if (!step(d)) return; beep('tick'); let guard = 0;
       while (guard++ < 200 && me !== w * h - 1) { const ways = [0, 1, 2, 3].filter(k => open(me, k) && k !== (d + 2) % 4); if (ways.length !== 1) break; d = ways[0]; step(d); }
       after();
     }
-    function after() { draw(); stats(); if (me === w * h - 1) return win(); coach(); }
+    let coachT = null;
+    function after() { draw(); stats(); if (me === w * h - 1) return win(); clearTimeout(coachT); if (tracing) coachT = setTimeout(coach, 120); else coach(); }
+    // finger tracing: start on (or near) your dot and drag through the corridors; drag back over your trail to back up
+    let tracing = false, swiped = false;
+    const cellOf = e => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left - ox) / s), Math.floor((e.clientY - r.top - oy) / s)]; };
+    function traceTo(x, y) {
+      if (x < 0 || y < 0 || x >= w || y >= h) return; const target = y * w + x; if (target === me || done) return;
+      // follow the corridor to the finger, but only if it's close along the maze (no jumping through walls)
+      const p = MazeGen.path(cells, w, h, me, target); if (!p || p.length > 6) return;
+      for (const c of p) { const d = DIRS.findIndex((_, k) => open(me, k) && nb(me, k) === c); if (d < 0 || !step(d)) break; if (me === w * h - 1) break; }
+      beep('tick'); after();
+    }
     ptr(cv, {
-      up(e, { start }) { const dx = e.clientX - start.x, dy = e.clientY - start.y; if (Math.hypot(dx, dy) < 18) return; run(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0)); },
-      tap(e) { const r = cv.getBoundingClientRect(); const x = Math.floor((e.clientX - r.left - ox) / s), y = Math.floor((e.clientY - r.top - oy) / s); const mx = me % w, my = me / w | 0; const d = DIRS.findIndex(([a, b]) => mx + a === x && my + b === y); if (d >= 0) { if (step(d)) beep('tick'); after(); } }
+      down(e) { if (jumping) { tracing = false; return; } const [x, y] = cellOf(e); const mx = me % w, my = me / w | 0; tracing = Math.abs(x - mx) <= 1 && Math.abs(y - my) <= 1; swiped = false; },
+      move(e) { if (tracing && !jumping) traceTo(...cellOf(e)); },
+      up(e, { start }) { if (tracing) { tracing = false; return; } const dx = e.clientX - start.x, dy = e.clientY - start.y; if (Math.hypot(dx, dy) < 18) return; run(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0)); },
+      tap(e) { tracing = false; if (jumping) return; const [x, y] = cellOf(e); if (x >= 0 && y >= 0 && x < w && y < h) { const i = y * w + x; if (i !== me && visited[i] && isJunction(i)) return jumpTo(i); } const mx = me % w, my = me / w | 0; const d = DIRS.findIndex(([a, b]) => mx + a === x && my + b === y); if (d >= 0) { if (step(d)) beep('tick'); after(); } }
     });
     pad.addEventListener('click', e => { const b = e.target.closest('[data-d]'); if (b) { if (step(+b.dataset.d)) beep('tick'); after(); } if (e.target.closest('[data-a=show]')) showMe(); });
     const keyH = e => { const d = { ArrowUp: 0, KeyW: 0, ArrowRight: 1, KeyD: 1, ArrowDown: 2, KeyS: 2, ArrowLeft: 3, KeyA: 3 }[e.code]; if (d != null) { e.preventDefault(); e.shiftKey ? run(d) : (step(d) && beep('tick'), after()); } };
@@ -2011,7 +2038,7 @@ registerGame({
       const p = MazeGen.path(cells, w, h, me, w * h - 1) || [], total = MazeGen.path(cells, w, h, 0, w * h - 1).length;
       const ways = [0, 1, 2, 3].filter(k => open(me, k)).length; const reveal = S.teacher === 'live' || showHint;
       const dirN = ['up', 'right', 'down', 'left']; const d = p.length ? DIRS.findIndex((_, k) => open(me, k) && nb(me, k) === p[0]) : -1;
-      const tip = ways === 1 && me !== 0 ? 'This is a <b>dead end</b> — turn back to the last junction you passed.' : ways >= 3 ? 'You’re at a <b>junction</b>. If you’re lost, use the <b>right-hand rule</b>: keep your right hand on the wall and always take the right-most way. It always finds the exit of a maze like this.' : 'Corridor: swipe to run to the next junction.';
+      const tip = ways === 1 && me !== 0 ? 'This is a <b>dead end</b> — tap the last filled hexagon ⬢ to jump back to that junction, or trace back along your trail.' : ways >= 3 ? 'You’re at a <b>junction</b> ⬢ — it’s now a save spot. Tap any filled hexagon to jump straight back to it if a path goes nowhere. Lost? Use the <b>right-hand rule</b>: always take the right-most way.' : 'Trace with your finger from your dot, or swipe to run to the next junction.';
       const st = p.length > total * .66 ? 0 : p.length > total * .25 ? 1 : 2;
       T.set({ stage: `${L.name} · ${p.length} steps to the exit`, steps: ['Start', 'Halfway', 'Home stretch'], cur: st, prog: 1 - p.length / Math.max(1, total), msg: tip + (L.fog ? ' <span class="muted">Fog: you only see what you’ve been near.</span>' : '') + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint to light up the way.</span>'), next: reveal && d >= 0 ? { mv: ['▲', '▶', '▼', '◀'][d], how: `Go <b>${dirN[d]}</b>. The gold dots show the shortest way.` } : null, acts: [{ label: '▶ Show me', fn: showMe, primary: true }, { label: '📖 Lessons', fn: () => showLessons('maze') }] });
       draw();
@@ -2019,6 +2046,7 @@ registerGame({
     function hint() { hintsUsed++; hintOn(); showHint = true; coach(); }
     function showMe() { hintsUsed++; const p = MazeGen.path(cells, w, h, me, w * h - 1); if (!p || !p.length) return; const d = DIRS.findIndex((_, k) => open(me, k) && nb(me, k) === p[0]); if (step(d, false)) beep('tick'); after(); }
     function undo() { if (trail.length < 2) return; trail.pop(); me = trail[trail.length - 1]; moves++; draw(); coach(); }
+    GAMES.maze._dbg = () => ({ me, w, h, cells, ox, oy, s, trail: trail.length });
     const ro = new ResizeObserver(() => { if (cells) { size(); draw(); } }); ro.observe(host);
     setTimeout(newGame, 30);
     return { undo, hint, newGame, coach, resize() { size(); draw(); }, restyle: draw, destroy() { ro.disconnect(); stopTimer(); document.removeEventListener('keydown', keyH); } };
@@ -2619,7 +2647,7 @@ page('F-001', 'flood', 'Flood strategy', 'flood colour strategy centre grow', `<
 page('B-001', 'balls', 'Ball Sort strategy', 'ball sort tubes strategy empty spare plan', `<p>Empty tubes are your most valuable resource. Fill one only when it starts a colour you can finish. Move whole runs of the same colour together, and work on the colour that's closest to the top of the most tubes.</p>`);
 
 page('M-001', 'maze', 'The right-hand rule', 'maze right hand rule wall follower lost strategy', `<p>Put your right hand on the wall and never let go: at every junction take the right-most opening. In a maze whose start and exit are on the outside edge, this always gets you out — it may not be the shortest way, but it never gets lost.</p><p>The teacher's gold dots show the <b>shortest</b> way, worked out by searching every corridor at once (breadth-first search).</p>`);
-page('M-002', 'maze', 'Maze levels and fog', 'maze levels stroll easy medium hard expert fog dead end loops', `<p><b>Stroll</b> and <b>Easy</b> mazes have one long winding path. <b>Medium</b> and <b>Hard</b> branch much more and have a few loops, so there's more than one way through. <b>Expert</b> is big and foggy: you only see what you've been near.</p><p>Spot a <b>dead end</b> early — if a corridor only leads one way, it's not the path. Swipe to run to the next junction.</p>`);
+page('M-002', 'maze', 'Maze levels and fog', 'maze levels stroll easy medium hard expert fog dead end loops junction hexagon save spot jump back', `<p><b>Stroll</b> and <b>Easy</b> mazes have one long winding path. <b>Medium</b> and <b>Hard</b> branch much more and have a few loops, so there's more than one way through. <b>Expert</b> is big and foggy: you only see what you've been near.</p><p>Spot a <b>dead end</b> early — if a corridor only leads one way, it's not the path. Every junction is a hexagon ⬢. Once you've passed through one it fills in and becomes a <b>save spot</b>: tap it any time to zip straight back there and try another way.</p>`);
 page('A-001', 'arcade', 'Specials from match shapes', 'arcade match shapes special blaster bomb prism four five L T', `<p>The shape of your match decides what you get:</p><ul><li><b>3 in a line</b> — just clears.</li><li><b>4 in a line</b> — a <b>Blaster</b> (striped gem). Clearing it wipes a full row or column.</li><li><b>L or T shape</b> (two lines crossing) — a <b>Bomb</b>. Clears the 3×3 around it.</li><li><b>5 in a line</b> — a <b>Prism</b>. Swap it with any gem to clear every gem of that colour.</li></ul>`);
 page('A-002', 'arcade', 'Numbers, combos and mega swaps', 'arcade number gems multiplier combo cascade storm mega swap', `<p><b>Number gems</b> (×2, ×3, ×5) multiply the points of the match they're in. Put <b>two or more</b> numbers in one match and a <b>Number Storm</b> zaps extra gems.</p><p>When falling gems make new matches by themselves, that's a <b>combo</b> — each step scores more. Match low on the board to set them off.</p><p><b>Swap two specials together:</b> Blaster + Blaster = cross, Bomb + Bomb = mega bomb, Blaster + Bomb = giant cross, Prism + special = every gem of that colour becomes that special, Prism + Prism = the whole board.</p>`);
 page('K-001', 'stack', 'Stacking basics', 'stack blocks lines clear flat holes hold tetris basics', `<p>Keep your stack <b>flat and low</b>. Avoid <b>holes</b> (gaps covered by blocks) — they stop rows from clearing. Leave one column open at the edge, and drop a long I-block in to clear <b>four lines at once</b> for big points.</p><p><b>Hold</b> saves a block for later — great for keeping an I-block ready. The faint outline shows where your block will land.</p>`);
