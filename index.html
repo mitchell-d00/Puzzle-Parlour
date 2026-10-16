@@ -586,7 +586,7 @@ $('#gNew').onclick = () => cur?.newGame?.();
 $('#gLearn').onclick = () => curId && showLessons(curId);
 $('#gTeach').onclick = () => { const grid = $('#gameGrid'); if (S.teacher === 'off') { S.teacher = 'live'; save(); T.paintMode(); grid.classList.remove('noteacher'); cur?.coach?.('mode'); } else grid.classList.toggle('noteacher'); };
 $('#hAsk').onclick = () => showAsk(curId);
-$('#hShop').onclick = showShop; $('#hSet').onclick = showSettings;
+$('#hShop').onclick = () => showShop(curId && KITS[curId] ? curId : undefined); $('#hSet').onclick = showSettings;
 window.addEventListener('resize', () => cur?.resize?.());
 
 /* ---------- lounge ---------- */
@@ -613,7 +613,7 @@ function renderLounge() {
   }
   $('#lCube', L).onclick = () => openGame('cube');
   $('#lJig', L).onclick = () => openGame('jigsaw');
-  $('#lTour', L).onclick = tour; $('#lShop', L).onclick = showShop; $('#lAsk', L).onclick = () => showAsk();
+  $('#lTour', L).onclick = tour; $('#lShop', L).onclick = () => showShop('featured'); $('#lAsk', L).onclick = () => showAsk();
   const rec = Object.values(GAMES).map(g => { const s = P.stats[g.id]; if (!s) return ''; const bests = Object.entries(s.best).filter(([, v]) => v.time != null).map(([k, v]) => `${k} ${fmtTime(v.time)}`).slice(0, 3).join(', '); return `<div><b style="color:var(--ink)">${esc(g.name)}</b>: ${s.solves} solved${bests ? ' · best ' + esc(bests) : ''}</div>`; }).join('');
   $('#lRec', L).innerHTML = rec || 'Solve something and your times show up here.';
 }
@@ -639,7 +639,8 @@ const dyeSlots = game => [...KITS[game].slots, 'felt'];
 const dyeSlotName = (game, s) => s === 'felt' ? 'Table felt' : KITS[game].slotName[s];
 function refreshLooks() { save(); applySettings(); cur?.restyle?.(); renderLoungeIfOpen(); }
 function showShop(tab) {
-  if (tab) shopTab = tab;
+  if (typeof tab === 'string') shopTab = tab;
+  if (shopTab !== 'featured' && shopTab !== 'dye' && !(KITS[shopTab] && GAMES[shopTab])) shopTab = 'featured';
   const gname = g => GAMES[g]?.name || g;
   const tabs = [['featured', '⭐ Featured'], ...Object.keys(KITS).filter(g => GAMES[g]).map(g => [g, KITS[g].icon + ' ' + gname(g)]), ['dye', '🎨 Dye Workshop']];
   const kitCard = (g, id, it, price, extra = '') => {
@@ -974,7 +975,7 @@ registerGame({
     const paintOpts = () => { $$('#cSize button', opts).forEach(b => b.classList.toggle('on', +b.dataset.n === size)); $('#cPad', opts).classList.toggle('on', padOn); padEl.hidden = !padOn; padEl.innerHTML = (size === 3 ? ['U', 'D', 'F', 'B', 'R', 'L', 'M', 'E', 'S'] : ['U', 'D', 'F', 'B', 'R', 'L']).flatMap(f => [f, f + "'"]).map(m => `<button data-m="${m}">${m.replace("'", '′')}</button>`).join(''); };
     $('#cSize', opts).onclick = e => { const b = e.target.closest('button'); if (!b) return; size = +b.dataset.n; store.set('cube.size', size); build(); newGame(); };
     $('#cPad', opts).onclick = () => { padOn = !padOn; store.set('cube.pad', padOn); paintOpts(); };
-    $('#cSolve', opts).onclick = () => { hintsUsed++; autoplay = true; ensurePlan(() => { playAll(); }); };
+    $('#cSolve', opts).onclick = () => { if (autoplay) return; hintsUsed++; autoplay = true; ensurePlan(() => { playAll(); }); };
     $('#cReset', opts).onclick = () => { state = CubeModel.HOME.slice(); hist = []; moves = 0; scrambled = false; stopTimer(); recolor(); replan(); stats(); };
     padEl.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; const m = CubeModel.parse(b.dataset.m)[0]; doMove({ k: m.k, L: m.L, q: m.q }, true); });
 
@@ -1059,7 +1060,7 @@ registerGame({
       }
     });
     host.addEventListener('wheel', e => { e.preventDefault(); V = M3.ortho(M3.mul(M3.rot(1, -e.deltaX * 0.004), M3.mul(M3.rot(0, -e.deltaY * 0.004), V))); render(); }, { passive: false });
-    const keyH = e => { if (e.target.closest('input')) return; const k = e.key.toUpperCase(); if ('UDFBRLMES'.includes(k) && k.length === 1) { if (size === 2 && 'MES'.includes(k)) return; const m = CubeModel.parse(k + (e.shiftKey ? "'" : ''))[0]; doMove({ k: m.k, L: m.L, q: m.q }, true); } if (e.key === ' ') { e.preventDefault(); showMe(); } };
+    const keyH = e => { if (e.target.closest?.('input')) return; const k = e.key.toUpperCase(); if ('UDFBRLMES'.includes(k) && k.length === 1) { if (size === 2 && 'MES'.includes(k)) return; const m = CubeModel.parse(k + (e.shiftKey ? "'" : ''))[0]; doMove({ k: m.k, L: m.L, q: m.q }, true); } if (e.key === ' ') { e.preventDefault(); showMe(); } };
     document.addEventListener('keydown', keyH);
 
     // ----- game flow -----
@@ -1146,8 +1147,8 @@ registerGame({
       if (reveal) { arrows(m); banner.innerHTML = `<span>${esc(stages[it.stage])}: ${CubeModel.name(m).replace("'", '′')}</span>`; }
     }
     function hint() { hintsUsed++; if (S.teacher === 'off') { S.teacher = 'hints'; save(); T.paintMode(); $('#gameGrid').classList.remove('noteacher'); } showHint = true; ensurePlan(coach); }
-    function showMe() { hintsUsed++; ensurePlan(() => { if (plan.length) { showHint = false; doMove(plan[0].m, 'auto'); } }); }
-    function doStep() { hintsUsed++; ensurePlan(() => { if (!plan.length) return; const it = plan[0].it; plan.filter(x => x.it === it).forEach(x => queue.push({ m: x.m, user: 'auto' })); if (!anim) next(); }); }
+    function showMe() { if (anim || queue.length) return; hintsUsed++; ensurePlan(() => { if (plan.length) { showHint = false; doMove(plan[0].m, 'auto'); } }); }
+    function doStep() { if (anim || queue.length) return; hintsUsed++; ensurePlan(() => { if (!plan.length) return; const it = plan[0].it; plan.filter(x => x.it === it).forEach(x => queue.push({ m: x.m, user: 'auto' })); if (!anim) next(); }); }
     function playAll() { if (!plan.length) return; if (!anim) next(); }
     function undo() { const m = hist.pop(); if (!m) return; queue.push({ m: { k: m.k, L: m.L, q: -m.q }, user: true, undo: true }); moves = Math.max(0, moves - 1); if (!anim) next(); }
 
@@ -1513,7 +1514,7 @@ registerGame({
       down(e) {
         const r = cv.getBoundingClientRect(); const [wx, wy] = toWorld(e.clientX - r.left, e.clientY - r.top); downAt = [wx, wy];
         const G = hit(wx, wy); idle();
-        if (G && !G.locked) { dragG = G; dragOff = [wx - G.x, wy - G.y]; groups.splice(groups.indexOf(G), 1); groups.push(G); if (!t0) startTimer(); beep('pick'); draw(); }
+        if (G && !G.locked && !placing) { dragG = G; dragOff = [wx - G.x, wy - G.y]; groups.splice(groups.indexOf(G), 1); groups.push(G); if (!t0) startTimer(); beep('pick'); draw(); }
         else { dragG = null; panStart = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y }; }
       },
       move(e) {
@@ -1539,9 +1540,10 @@ registerGame({
     cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); const sx = e.clientX - r.left, sy = e.clientY - r.top; const [wx, wy] = toWorld(sx, sy); const z = clamp(cam.z * Math.exp(-e.deltaY * .0015), .05, 6); cam = { z, x: sx - wx * z, y: sy - wy * z }; draw(); }, { passive: false });
 
     function merge(A, B) { // move A's pieces into B (same rotation, already aligned)
-      for (const p of A.pcs) { p.g = B; B.pcs.push(p); } groups.splice(groups.indexOf(A), 1);
+      if (A === B) return; for (const p of A.pcs) { p.g = B; B.pcs.push(p); } A.pcs = []; A.dead = true; const i = groups.indexOf(A); if (i >= 0) groups.splice(i, 1);
     }
     function drop(G) {
+      if (!G || G.dead || !groups.includes(G)) return;
       const tol = Math.max(pw, ph) * .22 + 10 / cam.z; let snapped = false;
       // frame
       if (G.rot === 0) { const p = G.pcs[0], [x, y] = pos(G, p); if (Math.hypot(x - p.hx, y - p.hy) < tol) { G.x += p.hx - x; G.y += p.hy - y; G = lock(G); snapped = true; } }
@@ -1564,9 +1566,7 @@ registerGame({
     }
     function lock(G) {
       G.locked = true; G.rot = 0; const p = G.pcs[0]; G.x = p.hx; G.y = p.hy; G.ref = [p.hx, p.hy];
-      const L = groups.find(x => x.locked && x !== G); if (L) { // put all locked pieces in one frame group
-        for (const q of G.pcs) { q.g = L; L.pcs.push(q); } groups.splice(groups.indexOf(G), 1); G = L;
-      }
+      const L = groups.find(x => x.locked && x !== G); if (L) { merge(G, L); G = L; } // all locked pieces live in one frame group
       groups.splice(groups.indexOf(G), 1); groups.unshift(G); return G;
     }
     function placedCount() { const L = groups.find(G => G.locked); return L ? L.pcs.length : 0; }
@@ -1614,14 +1614,16 @@ registerGame({
         acts: [{ label: '💡 Find a piece', fn: hint, primary: true }, { label: '🧩 Line up edges', fn: edges }, { label: '▶ Place one for me', fn: showMe }] });
     }
     function hint() { hintsUsed++; const p = suggest(); if (!p) return; hl = { p, sticky: true }; const [x, y] = pos(p.g, p); T.note('Look for the glowing piece — it goes in the dashed gold spot.'); draw(); setTimeout(() => { if (hl && hl.p === p) { hl = null; draw(); } }, 6000); }
+    let placing = false;
     function showMe() {
-      hintsUsed++; const p = suggest(); if (!p) return; const G = p.g; if (G.locked) return;
+      if (placing || done) return; const p = suggest(); if (!p) return; const G = p.g; if (G.locked) return; hintsUsed++; placing = true;
       const from = [G.x, G.y, G.rot]; const tt = performance.now(), D = 600 * SPEED();
       // animate to its home in the frame
       const targetRot = 0; G.rot = targetRot; const [hx, hy] = pos({ ...G, x: 0, y: 0 }, p); const to = [p.hx - hx, p.hy - hy];
-      const step = n => { const u = Math.min(1, (n - tt) / D), e = 1 - Math.pow(1 - u, 3); G.x = from[0] + (to[0] - from[0]) * e; G.y = from[1] + (to[1] - from[1]) * e; draw(); if (u < 1) requestAnimationFrame(step); else drop(G); };
+      const step = n => { const u = Math.min(1, (n - tt) / D), e = 1 - Math.pow(1 - u, 3); G.x = from[0] + (to[0] - from[0]) * e; G.y = from[1] + (to[1] - from[1]) * e; draw(); if (u < 1) requestAnimationFrame(step); else { placing = false; drop(G); } };
       groups.splice(groups.indexOf(G), 1); groups.push(G); requestAnimationFrame(step);
     }
+    GAMES.jigsaw._dbg = () => ({ groups, pieces });
     function newGame() { start(); }
     const ro = new ResizeObserver(() => { sizeCanvas(); draw(); }); ro.observe(host);
     setTimeout(() => { sizeCanvas(); start(); }, 30);
@@ -1785,7 +1787,8 @@ registerGame({
       for (let a = 0; a < K; a++) { if (a === cs[0]) continue; const c1 = fill(cs, a); const s1 = size(c1); if (s1 === s0) continue; let s2 = s1; for (let b = 0; b < K; b++) if (b !== a) s2 = Math.max(s2, size(fill(c1, b))); const r1 = region(c1); const gone = !c1.some((v, i) => v === a && !r1[i]); const score = s2 * 10 + s1 + (gone ? 40 : 0); if (score > bestS) { bestS = score; bestC = a; } }
       return bestC;
     }
-    function newGame() { $$('#fN button', opts).forEach(x => x.classList.toggle('on', +x.dataset.n === N)); T.note('New board. The teacher found a way in fewer moves than your limit — can you match it?'); cells = [...Array(N * N)].map(() => rnd(K)); let c = cells, L = 0; while (!c.every(v => v === c[0]) && L < 80) { c = fill(c, best(c)); L++; } limit = L + (N >= 18 ? 4 : 3); moves = 0; hist = []; hintsUsed = 0; over = false; render(); coach(); }
+    function finishLen(c) { let L = 0; while (!c.every(v => v === c[0]) && L < 80) { c = fill(c, best(c)); L++; } return L; }
+    function newGame() { $$('#fN button', opts).forEach(x => x.classList.toggle('on', +x.dataset.n === N)); T.note('New board. The teacher found a way in fewer moves than your limit — can you match it?'); cells = [...Array(N * N)].map(() => rnd(K)); limit = finishLen(cells) + (N >= 18 ? 4 : 3); moves = 0; hist = []; hintsUsed = 0; over = false; render(); coach(); }
     function render() {
       const [w] = fitSquare(host, B, 1, 80); const s = w / N, C = floodPal(); const r = region(cells);
       if (!B.firstChild || B.childElementCount !== 1) { B.innerHTML = ''; B.appendChild(el('canvas', { class: 'gcanvas', style: 'border-radius:10px' })); }
@@ -1800,7 +1803,7 @@ registerGame({
     function pick(k, user = true) {
       if (over || k === cells[0]) return; hist.push(cells); cells = fill(cells, k); moves++; showHint = false; beep('tick');
       if (cells.every(v => v === cells[0])) { over = true; render(); const r = award('flood', N + '×' + N, { moves, stars: N / 3 | 0, hints: hintsUsed }); T.set({ msg: `Flooded with ${limit - moves} moves to spare!`, next: null, prog: 1 }); winOverlay(host, { title: 'Flooded!', lines: [`${moves} of ${limit} moves`], earned: r.earned, again: newGame }); return; }
-      if (moves >= limit) { over = true; render(); beep('bad'); T.set({ msg: `Out of moves — ${Math.round(size(cells) / (N * N) * 100)}% filled. Tap ↻ New to try another board, or ↶ Undo to go back and try a different path.`, next: null }); return; }
+      if (moves >= limit) { over = true; render(); beep('bad'); coach(); T.set({ msg: `Out of moves — ${Math.round(size(cells) / (N * N) * 100)}% filled. Use the rewind button to go back to where you could still win, or tap ↻ New.`, next: null }); return; }
       render(); coach();
     }
     bar.addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) pick(+b.dataset.c); });
@@ -1810,7 +1813,12 @@ registerGame({
       const f = size(cells) / (N * N); const reachedCentre = region(cells)[(N >> 1) * N + (N >> 1)];
       const st = !reachedCentre ? 0 : f < .7 ? 1 : 2; const reveal = S.teacher === 'live' || showHint; const h = best();
       const msgs = ['Head for the <b>centre</b> first: pick colours that push your area diagonally toward the middle.', 'You’ve reached the middle. Now take the colour that swallows the <b>most squares</b> — and look for colours you can wipe out completely.', 'Mopping up: finish off the small pockets. Every colour you erase is one fewer move needed.'];
-      T.set({ stage: 'Flood · ' + (limit - moves) + ' moves left', steps: ['Reach the centre', 'Grow big', 'Mop up'], cur: st, prog: f, msg: msgs[st] + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint for the best colour.</span>'), next: reveal && h >= 0 ? { mv: '●', how: `Pick the glowing colour. Looking two moves ahead, it grows your area the most.` } : null, acts: [{ label: '▶ Show me', fn: showMe, primary: true }, { label: '📖 Lessons', fn: () => showLessons('flood') }] });
+      // can the teacher still finish in the moves left? if not, find how far to rewind
+      const need = finishLen(cells), left = limit - moves; let rew = 0;
+      if (need > left) for (let k = hist.length - 1; k >= 0; k--) { if (finishLen(hist[k]) <= limit - k) { rew = hist.length - k; break; } }
+      const warn = need > left ? (rew ? `<b>Careful:</b> from here I need ${need} moves but you only have ${left}. <b>Rewind ${rew}</b> and I can get you home in time. ` : `From here it needs ${need} moves and you have ${left} — finish as much as you can, then try a new board. `) : `I can finish from here in <b>${need}</b> of your ${left} moves. `;
+      T.set({ stage: 'Flood · ' + left + ' moves left', steps: ['Reach the centre', 'Grow big', 'Mop up'], cur: st, prog: f, msg: warn + msgs[st] + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint for the best colour.</span>'), next: reveal && h >= 0 ? { mv: '●', how: `Pick the glowing colour. Looking two moves ahead, it grows your area the most.` } : null,
+        acts: [rew ? { label: `↶ Rewind ${rew}`, fn: () => { for (let i = 0; i < rew; i++) { cells = hist.pop(); moves--; } hintsUsed++; over = false; render(); coach(); }, primary: true } : { label: '▶ Show me', fn: showMe, primary: true }, { label: '📖 Lessons', fn: () => showLessons('flood') }] });
       if (reveal && h >= 0) { const m = $('#tMv'); if (m) m.style.color = floodPal()[h]; }
       render();
     }
@@ -1888,19 +1896,26 @@ registerGame({
       coach();
     }
     ptr(B, { tap(e) { const t = e.target.closest('[data-t]'); if (!t) { held = null; render(); return; } const i = +t.dataset.t; if (held == null) { if (tubes[i].length) { held = i; beep('pick'); render(); } } else move(held, i); } });
-    function ensure() { if (!plan) plan = BallSolver.solve(tubes, cap, 80000); return plan; }
+    let rewindN = 0;
+    function ensure() {
+      if (!plan) { plan = BallSolver.solve(tubes, cap, 80000); rewindN = 0;
+        // stuck? find how far back the player has to go to get to a rack that can still be solved
+        if (!plan) for (let k = hist.length - 1; k >= 0; k--) if (BallSolver.solve(hist[k], cap, 40000)) { rewindN = hist.length - k; break; } }
+      return plan;
+    }
+    function rewind() { if (!rewindN) return; for (let i = 0; i < rewindN; i++) { const t = hist.pop(); if (t) { tubes = t; moves--; } } hintsUsed++; plan = null; held = null; T.note(`Rewound ${rewindN} move${rewindN > 1 ? 's' : ''} — you can still win from here.`); render(); coach(); }
     function coach(why) {
       if (teacherOffMsg(why)) { render(); return; }
       ensure(); const reveal = S.teacher === 'live' || showHint; const nx = plan && plan[0];
       const sorted = tubes.filter(x => x.length === cap && x.every(v => v === x[0])).length; const empties = tubes.filter(x => !x.length).length;
       T.set({ stage: `Ball Sort · ${sorted} of ${k} sorted`, steps: null, prog: sorted / k,
-        msg: (plan ? '' : 'Hmm — I can’t find a way out from here. Try ↶ Undo a few moves. ') + (empties ? `You have <b>${empties}</b> empty tube${empties > 1 ? 's' : ''}. Use them to park balls while you dig out the colour you’re building.` : 'No empty tubes left: only move balls onto a matching colour now, and aim to free a tube.') + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint for a good move.</span>'),
+        msg: (plan ? '' : rewindN ? `This rack can’t be solved any more from here. <b>Rewind ${rewindN} move${rewindN > 1 ? 's' : ''}</b> and I’ll guide you out. ` : 'This rack can’t be solved from here. Tap ↻ New for a fresh one. ') + (empties ? `You have <b>${empties}</b> empty tube${empties > 1 ? 's' : ''}. Use them to park balls while you dig out the colour you’re building.` : 'No empty tubes left: only move balls onto a matching colour now, and aim to free a tube.') + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint for a good move.</span>'),
         next: reveal && nx ? { mv: `${nx[0] + 1}→${nx[1] + 1}`, how: `Move from tube ${nx[0] + 1} to tube ${nx[1] + 1}. <span class="muted">${plan.length} moves to finish this way.</span>` } : null,
-        acts: [{ label: '▶ Show me', fn: showMe, primary: true }, { label: '📖 Lessons', fn: () => showLessons('balls') }] });
+        acts: plan ? [{ label: '▶ Show me', fn: showMe, primary: true }, { label: '📖 Lessons', fn: () => showLessons('balls') }] : [rewindN ? { label: `↶ Rewind ${rewindN}`, fn: rewind, primary: true } : { label: '↻ New rack', fn: newGame, primary: true }, { label: '📖 Lessons', fn: () => showLessons('balls') }] });
       render();
     }
     function hint() { hintsUsed++; hintOn(); showHint = true; coach(); }
-    function showMe() { hintsUsed++; ensure(); if (plan && plan.length) move(plan[0][0], plan[0][1], false); }
+    function showMe() { hintsUsed++; ensure(); if (plan && plan.length) move(plan[0][0], plan[0][1], false); else if (rewindN) rewind(); }
     function undo() { const t = hist.pop(); if (!t) return; tubes = t; moves--; plan = null; held = null; render(); coach(); }
     setTimeout(newGame, 30);
     return { undo, hint, newGame, coach, resize: render, restyle: render, destroy() { } };
@@ -2431,7 +2446,7 @@ registerGame({
       up(e, { start }) { const dy = e.clientY - start.y, dt = performance.now() - dragT; if (dy > cellPx * 2.2 && dy / dt > .9) act('hard'); },
       tap(e) { const r = cv.getBoundingClientRect(); act(e.clientX - r.left < r.width * .25 ? 'ccw' : 'cw'); }
     });
-    const keyH = e => { if (e.target.closest('input')) return; const k = { ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'soft', ArrowUp: 'cw', KeyX: 'cw', KeyZ: 'ccw', Space: 'hard', KeyC: 'hold', ShiftLeft: 'hold', ShiftRight: 'hold' }[e.code]; if (e.code === 'KeyP') { togglePause(); return; } if (k) { e.preventDefault(); act(k); } };
+    const keyH = e => { if (e.target.closest?.('input')) return; const k = { ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'soft', ArrowUp: 'cw', KeyX: 'cw', KeyZ: 'ccw', Space: 'hard', KeyC: 'hold', ShiftLeft: 'hold', ShiftRight: 'hold' }[e.code]; if (e.code === 'KeyP') { togglePause(); return; } if (k) { e.preventDefault(); act(k); } };
     document.addEventListener('keydown', keyH);
     const vis = () => { if (document.hidden && !over) { paused = true; coach(); } }; document.addEventListener('visibilitychange', vis);
     // ---- loop ----

@@ -34,8 +34,8 @@ jigsaws and slide puzzles never leave your device.
 | Jigsaw Studio | Any picture cut into **50, 100 or 500** real interlocking pieces, each one different. Snapping groups, optional rotation (tap to turn), pinch-zoom, ghost image, peek | Corners → edges → frame → colour patches. **Edges** sorts the border pieces into the empty frame; **Find a piece** highlights one and its spot |
 | Lights Out | 3×3 to 7×7, classic or three-colour | “Chase the lights”, plus the exact presses (solved by Gaussian elimination over GF(2) or GF(3)) |
 | Tower of Hanoi | 3–8 disks; tap or drag | Recursion. Shows the optimal next move from *any* position and how many moves remain |
-| Flood | 10×10, 14×14, 18×18 | Head for the centre, then grow; two-move lookahead. The move limit comes from the teacher's own solution plus a few spare |
-| Ball Sort | 4–9 colours | Keep spare tubes empty; a solver plans the route and replans if you go your own way |
+| Flood | 10×10, 14×14, 18×18 | Head for the centre, then grow; two-move lookahead. The move limit comes from the teacher's own solution plus a few spare, and it warns you (with a rewind) when you can no longer finish in time |
+| Ball Sort | 4–9 colours | Keep spare tubes empty; a solver plans the route and replans if you go your own way. If your own moves trap the rack, it works out exactly how many moves to rewind |
 | Maze Runner | A new random maze every game at 5 skill levels: Stroll, Easy, Medium, Hard and Expert (big, branching, looped and foggy). Trace the path with your finger (the dot follows you; drag back along your trail to back up), junctions are hexagons that become tap-to-return save spots once you pass them, swipe to run to the next junction, tap to step, arrow keys | The right-hand rule and dead-end spotting; gold dots light up the shortest way out |
 | Arcade Puzzle | Match-3 with six colour-and-shape gems. 4 in a line makes a Blaster, an L or T makes a Bomb, 5 in a line makes a Prism. Number gems (×2, ×3, ×5) multiply the match; two numbers in one match set off a Number Storm. Cascades build combos, and swapping two specials makes mega effects. Levels, 90-second and Zen modes | Points out the best swap and why (which special it makes) |
 | Block Stack | Falling-block stacking with hold, next queue and ghost piece. **Solo** speeds up every 10 lines, **Zen** never ends, **Vs AI** (easy/normal/hard) trades junk rows when you clear 2+ lines | Shows the spot its own AI would choose for your block, with tips on holes and height |
@@ -96,6 +96,17 @@ headless browser:
   extra loops on harder levels, breadth-first search for the shortest way.
 - **Block Stack AI:** scores every placement by height, holes, bumpiness and
   lines cleared; difficulty changes its speed, mistakes and use of Hold.
+
+## Testing
+
+Every teacher was checked by letting it solve, starting from random positions
+and after random wrong moves: 1,200 cube plans (3×3 and 2×2, including slice
+moves), 360 slide puzzles, 2,000 Lights Out boards (classic and three-colour,
+3×3 to 7×7), 1,800 Tower of Hanoi positions (every move legal and exactly the
+shortest), 240 Ball Sort racks, 300 mazes, plus full in-browser playthroughs of
+every table — jigsaws of 50, 100 and 500 pieces with rotation, Flood, Arcade,
+and Block Stack solo and against the AI — and the shop (buying, turning kits on
+and off, felts per table, dyes, reset, and reload) driven by real taps.
 
 ## Files
 
