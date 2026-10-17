@@ -233,7 +233,9 @@ select{background:var(--panel);border:1px solid var(--line);border-radius:9px;pa
 .thumbs button.on{border-color:var(--accent)}
 /* ---- the show ---- */
 .show{position:absolute;inset:0;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px;color:#fff;--cw:64px;--back:#b3202a;--trim:#fff}
-.show .patter{background:rgba(0,0,0,.35);border:1px solid rgba(242,193,78,.45);border-radius:12px;padding:10px 12px;font-size:1rem;line-height:1.45}
+.show .ssteps{display:flex;flex-wrap:wrap;gap:6px}.show .ssteps:empty{display:none}.show .ssteps span{font-size:.75rem;padding:.2rem .55rem;border-radius:99px;background:rgba(0,0,0,.3);color:rgba(255,255,255,.65)}.show .ssteps span b{color:#f2c14e;margin-right:3px}.show .ssteps span.cur{background:#f2c14e;color:#14111c;font-weight:700}.show .ssteps span.cur b{color:#14111c}.show .ssteps span.done{color:#fff}
+.show .gone{opacity:.12;transform:scale(.92)}
+.show .patter{background:rgba(0,0,0,.35);border:1px solid rgba(242,193,78,.45);border-radius:12px;padding:10px 12px;font-size:1.08rem;line-height:1.45}
 .show .ctable{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px}
 .show .ctrl{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding-bottom:4px}
 .show .ctrl .btn:not(.primary){background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.3)}
@@ -270,6 +272,26 @@ select{background:var(--panel);border:1px solid var(--line);border-radius:9px;pa
 .act .abtn{display:flex;flex-direction:column;gap:4px}.act .abtn .btn:not(.primary){background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.3)}
 .show.explain .estep{flex:1;background:rgba(0,0,0,.3);border-radius:14px;padding:18px;font-size:1.15rem;line-height:1.55;display:flex;flex-direction:column;gap:12px;justify-content:center}
 .estep .enum{font:400 .9rem var(--display);color:#f2c14e}.edots{display:flex;gap:6px}.edots i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25)}.edots i.on{background:#f2c14e}
+/* ---- 20 questions ---- */
+.tq{position:absolute;inset:0;overflow:auto;padding:16px;display:flex;flex-direction:column;align-items:center;gap:14px;color:#fff;--bub:#fffdf8;--bubink:#1d1a24}
+.tqbub{background:var(--bub);color:var(--bubink);border-radius:20px;padding:16px 20px;max-width:640px;width:100%;font-size:1.1rem;line-height:1.45;box-shadow:0 8px 20px rgba(0,0,0,.3);position:relative}
+.tqbub.big{font-size:1.45rem;text-align:center;padding:22px}
+.tqbub::after{content:"";position:absolute;left:40px;bottom:-12px;border:12px solid transparent;border-top-color:var(--bub);border-bottom:0}
+.tqbig{font-size:2.4rem;vertical-align:middle}
+.tqsmall{display:block;font-size:.85rem;opacity:.75;margin-top:6px}
+.tqcount{font:400 .95rem var(--display);color:#f2c14e;letter-spacing:.05em}
+.tqbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}.tqbtns .btn{min-width:110px;min-height:48px;font-size:1.05rem}
+.tqbtns .btn:not(.primary){background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.3)}
+.tqemo{font-size:1.5rem;text-align:center;max-width:640px;line-height:1.5;letter-spacing:.1em}
+.tqthink{text-align:center;opacity:.9}.tqthink .tqsmall{color:#fff}
+.tqform{display:flex;flex-direction:column;gap:8px;width:100%;max-width:560px}.tqform input{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem;font-size:1rem}
+.tqasked{display:flex;flex-wrap:wrap;gap:6px;max-width:760px;justify-content:center}.tqa{font-size:.82rem;padding:.25rem .6rem;border-radius:99px;background:rgba(0,0,0,.35)}.tqa.y b{color:#5fd08f}.tqa.n b{color:#ff7a6b}.tqa.d b{color:#f2c14e}
+.tqqs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:860px}
+.tqq{background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:.45rem .7rem;font-size:.88rem;text-align:left}
+.tqq:hover{border-color:#f2c14e}.tqq.hint{border-color:#f2c14e;background:rgba(242,193,78,.25);animation:pulse .9s infinite}
+.tqpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;width:100%;max-width:900px}
+.tqpick button{display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:6px;font-size:.78rem}
+.tqpick button span{font-size:1.6rem}.tqpick button.dim{opacity:.35}.tqpick button.gone{opacity:.12;text-decoration:line-through}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -423,6 +445,10 @@ const KITS = {
     blue: { name: 'Bicycle blue', price: 15, v: { back: '#1f4fb4', trim: '#ffffff' } },
     noir: { name: 'Noir & gold', price: 25, v: { back: '#14111c', trim: '#f2c14e' } },
     emerald: { name: 'Emerald', price: 20, v: { back: '#0f6b4f', trim: '#e9c46a' } } } },
+  twenty: { icon: '❓', def: 'paper', slots: ['bubble', 'ink'], slotName: { bubble: 'Speech bubble', ink: 'Writing' }, items: {
+    paper: { name: 'Paper', price: 0, v: { bubble: '#fffdf8', ink: '#1d1a24' } },
+    candy: { name: 'Bubblegum', price: 15, v: { bubble: '#ffd6e8', ink: '#5a1435' } },
+    night: { name: 'Night sky', price: 20, v: { bubble: '#1d2a4a', ink: '#e8f1ff' } } } },
   stack: { icon: '🧱', def: 'classic', slots: IDX(7), slotName: { 0: 'I', 1: 'O', 2: 'T', 3: 'S', 4: 'Z', 5: 'J', 6: 'L' }, items: {
     classic: { name: 'Lounge blocks', price: 0, v: ['#4fd6ff', '#f2c14e', '#b15cff', '#5fd08f', '#ff4d6d', '#3a86ff', '#ff8a3d'] },
     pastel: { name: 'Pastel stack', price: 25, v: ['#a0e7e5', '#fbe7c6', '#d5aaff', '#b4f8c8', '#ffaebc', '#a0c4ff', '#ffd6a5'] },
@@ -637,7 +663,7 @@ window.addEventListener('resize', () => cur?.resize?.());
 function renderLounge() {
   const L = $('#lounge');
   const total = Object.values(P.stats).reduce((a, s) => a + s.solves, 0);
-  L.innerHTML = `<div class="marquee" id="mq"><h1>PUZZLE PARLOUR</h1><div class="sub">CUBES · MAZES · JIGSAWS · GLITTERS & SPARKLES · CARD TRICKS · AND A TEACHER ON EVERY TABLE</div>
+  L.innerHTML = `<div class="marquee" id="mq"><h1>PUZZLE PARLOUR</h1><div class="sub">CUBES · MAZES · JIGSAWS · GLITTERS & SPARKLES · CARD TRICKS · 20 QUESTIONS · AND A TEACHER ON EVERY TABLE</div>
    <p>Walk up to any table. Every puzzle comes with Professor Pip, a live teacher who watches your moves and shows the next one, plus lessons that teach you the method so you can solve it alone.</p>
    <div class="row"><button class="btn primary" id="lCube">Learn the cube</button><button class="btn" id="lJig">Make a jigsaw from a photo</button><button class="btn" id="lTour">Tour the lounge</button></div></div>
    <div class="floor-h"><h2>The floor</h2><span class="muted">${total ? total + ' puzzles solved so far' : 'Tap a table to sit down'}</span></div>
@@ -2696,6 +2722,13 @@ const TrickMath = {
   faroOut(d) { const h = d.length / 2, out = []; for (let i = 0; i < h; i++) out.push(d[i], d[h + i]); return out; },
   faroIn(d) { const h = d.length / 2, out = []; for (let i = 0; i < h; i++) out.push(d[h + i], d[i]); return out; },
   elmsley(n) { const k = n - 1; if (k === 0) return []; return k.toString(2).split('').map(b => b === '1' ? 'in' : 'out'); }, // top card to position n
+  // twins: card i and card n-1-i are "mates" (same value, same colour); perfect shuffles keep it that way
+  mate: c => Cards.card(c.r, [2, 3, 0, 1][c.s]), // clubs<->spades, hearts<->diamonds
+  stayStack(n = 20) { const half = shuffle(Cards.deck().filter(c => c.s < 2)).slice(0, n / 2); return [...half, ...half.slice().reverse().map(TrickMath.mate)]; },
+  // 13 cards of a suit add up to 91
+  suitTotal: 91,
+  // 16-card grid: transpose rows into columns
+  transpose(g) { return g[0].map((_, c) => g.map(r => r[c])); },
   // 20. Hummer's CATO
   cut(d, k) { return d.slice(k).concat(d.slice(0, k)); },
   turnTwo(d) { const [a, b, ...r] = d; return [{ ...b, up: !b.up }, { ...a, up: !a.up }, ...r]; }
@@ -2714,17 +2747,19 @@ function cardHTML(c, o = {}) {
   return `<div class="pc ${down ? 'down' : 'face'} ${red ? 'red' : ''} ${o.hl ? 'hl' : ''} ${o.pick ? 'pickable' : ''}" ${o.i != null ? `data-i="${o.i}"` : ''} data-id="${Cards.id(c)}">${down ? '' : `<span class="cr">${Cards.RANKS[c.r - 1]}<br>${Cards.SUITS[c.s]}</span><span class="cbig">${Cards.SUITS[c.s]}</span>`}</div>`;
 }
 function ShowStage(root) {
-  root.innerHTML = `<div class="patter" aria-live="polite"></div><div class="ctable"></div><div class="ctrl"></div>`;
-  const P = $('.patter', root), Tb = $('.ctable', root), C = $('.ctrl', root);
+  root.innerHTML = `<div class="ssteps"></div><div class="patter" aria-live="polite"></div><div class="ctable"></div><div class="ctrl"></div>`;
+  const P = $('.patter', root), Tb = $('.ctable', root), C = $('.ctrl', root), SS = $('.ssteps', root); let stepList = [];
   let tok = 0;
   const api = {
     start() { return ++tok; },
     stop() { tok++; },
     guard(t) { if (t !== tok) throw CANCEL; },
     say(html) { P.innerHTML = html; },
+    setSteps(list) { stepList = list || []; api.step(0); },
+    step(i) { SS.innerHTML = stepList.map((x, j) => `<span class="${j < i ? 'done' : j === i ? 'cur' : ''}"><b>${j + 1}</b> ${esc(x)}</span>`).join(''); api.onstep && api.onstep(i); },
     clear() { Tb.innerHTML = ''; C.innerHTML = ''; },
     room() { const r = root.getBoundingClientRect(); return { w: r.width - 24, h: Math.max(160, r.height - P.getBoundingClientRect().height - 110) }; },
-    size(n, cols) { const { w, h } = api.room(); const per = Math.min(cols || n, n), rows = Math.ceil(n / per); const cw = clamp(Math.floor(Math.min((w - per * 6) / per, (h - rows * 6) / rows / 1.4)), 24, 92); root.style.setProperty('--cw', cw + 'px'); },
+    size(n, cols) { const { w, h } = api.room(); const per = Math.min(cols || n, n), rows = Math.ceil(n / per); const cw = clamp(Math.floor(Math.min((w - per * 6) / per, (h - rows * 6) / rows / 1.4)), 18, 92); root.style.setProperty('--cw', cw + 'px'); },
     sizePiles(np, maxLen, squared) { const { w, h } = api.room(); const vis = squared ? .04 : .35; const cw = clamp(Math.floor(Math.min((w - np * 28) / np, (h - 44) / (1.4 + Math.max(0, maxLen - 1) * vis))), 22, 92); root.style.setProperty('--cw', cw + 'px'); },
     show(cards, o = {}) { // a spread or grid of cards; o.pick → resolves with index tapped
       api.size(cards.length, o.cols); Tb.innerHTML = `<div class="crow ${o.fan ? 'fan' : ''}" style="${o.cols ? `max-width:calc(var(--cw) * ${o.cols} + ${o.cols * 6}px)` : ''}">${cards.map((c, i) => cardHTML(c, { i, down: o.down, hl: o.hl && o.hl.has(i), pick: o.pick })).join('')}</div>${o.note ? `<p class="cnote">${o.note}</p>` : ''}`;
@@ -2753,211 +2788,216 @@ function ShowStage(root) {
 /* ---------- the 20 acts ---------- */
 const PILES3 = ['Left', 'Middle', 'Right'];
 const TRICKS = [
-  { id: 'twentyone', title: 'The 21-Card Trick', principle: 'Gergonne’s pile trick', blurb: 'Think of any card. Three times you tell me which pile it’s in, and I find it.',
+  { id: 'twentyone', title: 'The 21-Card Trick', principle: 'Three piles', blurb: 'Think of any card. Tell me which pile it’s in, three times, and I find it.', steps: ['Think of a card', 'Pick a pile ×3', 'Reveal'],
     async perform(u, t) {
-      let d = Cards.draw(21); u.say('Here are 21 cards. <b>Think of any one</b> — don’t tell me or tap it.'); await u.show(d, { cols: 7 }); await u.next('I’ve got one'); u.guard(t);
-      for (let r = 0; r < 3; r++) { const p = TrickMath.deal3(d); u.say(`I deal them into three piles${r ? ' again' : ''}. <b>Which pile is your card in?</b>`); const ch = await u.piles(p, { pick: true, labels: PILES3 }); u.guard(t); d = TrickMath.gather(p, ch, 1); u.say('I gather the piles, with yours in the middle…'); await u.wait(500); u.guard(t); }
-      u.say('Now I count down to the eleventh card…'); await u.wait(700); u.guard(t); u.reveal(d[10], 'Is this your card?');
+      u.step(0); let d = Cards.draw(21); u.say('Here are 21 cards. <b>Think of any one</b> — don’t tap it, just remember it.'); await u.show(d, { cols: 7 }); await u.next('I’ve got one'); u.guard(t);
+      for (let r = 0; r < 3; r++) { u.step(1); const p = TrickMath.deal3(d); u.say(`Round ${r + 1} of 3. <b>Tap the pile your card is in.</b>`); const ch = await u.piles(p, { pick: true, labels: PILES3 }); u.guard(t); d = TrickMath.gather(p, ch, 1); u.say('I stack the piles with <b>your pile in the middle</b>…'); await u.wait(600); u.guard(t); }
+      u.step(2); u.say('I count to the 11th card…'); await u.wait(700); u.guard(t); u.reveal(d[10], 'Is this your card?');
     },
-    explain: ['Every time you point at a pile, I put that pile <b>in the middle</b> of the three. Your card is then somewhere in positions 8–14.', 'When those 21 cards are dealt into three piles again, positions 8–14 land in the <b>middle third of each pile</b> (rows 3–5).', 'Picking up with your pile in the middle again squeezes it into positions 10–12.', 'One more round and it can only be at position <b>11</b> — the exact centre of 21. Three choices were enough to trap it.', 'The same idea works with 27 cards and four rounds would trap a card in 81: each round divides where it can be by three.'] },
-  { id: 'twentyseven', title: 'Your Lucky Number (27 cards)', principle: 'Base three', blurb: 'Pick a card and a number from 1 to 27. Your card ends up at exactly that position.',
+    explain: ['Each time you choose a pile, I put that pile <b>in the middle</b> of the stack.', 'That pushes your card toward the middle of the 21 cards. After three times, it is <b>exactly in the middle</b> — card number 11.', '<b>Do it yourself:</b> deal 21 cards into 3 piles, face up, one card to each pile in turn. Ask which pile, put it in the middle, deal again. After 3 rounds, count to the 11th card.'] },
+  { id: 'twentyseven', title: 'Your Lucky Number (27 cards)', principle: 'Three piles, three places', blurb: 'Pick a number from 1 to 27 and a card. Your card ends up at your number.', steps: ['Pick a number', 'Think of a card', 'Pick a pile ×3', 'Count to your number'],
     async perform(u, t) {
-      let d = Cards.draw(27); u.say('Choose a <b>lucky number</b> from 1 to 27.'); const n = await u.num('Your number', 1, 27, 9); u.guard(t);
-      const dg = TrickMath.digits3(n); u.say('Now <b>think of any card</b> here.'); await u.show(d, { cols: 9 }); await u.next('Got it'); u.guard(t);
-      for (let r = 0; r < 3; r++) { const p = TrickMath.deal3(d); u.say('Which pile is your card in?'); const ch = await u.piles(p, { pick: true, labels: PILES3 }); u.guard(t); d = TrickMath.gather(p, ch, dg[r]); u.say(`I put your pile on the <b>${['top', 'middle', 'bottom'][dg[r]]}</b>.`); await u.wait(600); u.guard(t); }
-      u.say(`Counting down to card number <b>${n}</b>…`); await u.show(d.slice(0, n), { down: true, cols: 9 }); await u.wait(800); u.guard(t); u.reveal(d[n - 1], `Card number ${n}. Yours?`);
+      u.step(0); let d = Cards.draw(27); u.say('Choose a <b>lucky number</b> from 1 to 27.'); const n = await u.num('Your number', 1, 27, 9); u.guard(t);
+      const dg = TrickMath.digits3(n); u.step(1); u.say('Now <b>think of any card</b> here.'); await u.show(d, { cols: 9 }); await u.next('Got it'); u.guard(t);
+      for (let r = 0; r < 3; r++) { u.step(2); const p = TrickMath.deal3(d); u.say(`Round ${r + 1} of 3. <b>Tap the pile your card is in.</b>`); const ch = await u.piles(p, { pick: true, labels: PILES3 }); u.guard(t); d = TrickMath.gather(p, ch, dg[r]); u.say(`Your pile goes on the <b>${['top', 'middle', 'bottom'][dg[r]]}</b>.`); await u.wait(700); u.guard(t); }
+      u.step(3); u.say(`Counting to card number <b>${n}</b>…`); await u.show(d.slice(0, n), { down: true, cols: 9 }); await u.wait(800); u.guard(t); u.reveal(d[n - 1], `Card number ${n}. Yours?`);
     },
-    explain: ['Write your number minus one in <b>base three</b>. For 9: 9 − 1 = 8 = 0·9 + 2·3 + 2·1, so the digits (smallest first) are 2, 2, 0.', 'Each digit says where your pile goes: 0 = top, 1 = middle, 2 = bottom.', 'Each placement moves your card into a different block of nine, three and one positions above it — exactly like the place values of base three.', 'After three rounds it is preceded by exactly (number − 1) cards, so it sits at your lucky number.'] },
-  { id: 'kruskal', title: 'The Kruskal Count', principle: 'Coupling of random walks', blurb: 'You follow a secret path through a shuffled deck. I predict where you stop.',
+    explain: ['It works like the 21-card trick, but instead of always putting your pile in the middle, I choose <b>top, middle or bottom</b> each time.', 'Those three choices work like a code for your number: each one moves your card by 9s, then 3s, then 1s.', 'After three rounds there are exactly (your number − 1) cards above it.', '<b>Do it yourself:</b> take your number minus 1 and write it with 9s, 3s and 1s. Example 12 − 1 = 11 = 1×9 + 0×3 + 2×1. Read it backwards for the rounds: 2 (bottom), 0 (top), 1 (middle).'] },
+  { id: 'rowcol', title: 'Row and Column', principle: 'A grid', blurb: 'Think of a card in a 4×4 grid. Two answers and I have it.', steps: ['Think of a card', 'Which row?', 'I re-deal', 'Which row now?', 'Reveal'],
     async perform(u, t) {
-      const d = Cards.shuffled(); u.say('Secretly choose a number from <b>1 to 10</b>. Count that many cards from the start (left to right, row by row). That’s your first card.<br>Its value is your next count: Ace = 1, number cards their number, J/Q/K = 5. Keep jumping until there aren’t enough cards left. <b>Remember the last card you land on.</b>'); await u.show(d, { cols: 13 }); await u.next('I’ve landed'); u.guard(t);
-      const mine = TrickMath.kruskal(d, 1); u.say('Your final card is…'); await u.wait(600); u.guard(t);
-      await u.show(d, { cols: 13, hl: new Set([mine]) }); u.say(`<b>The ${Cards.long(d[mine])}!</b> Was I right?`);
-      const r = await u.ask([{ label: 'Yes!', value: 1, primary: true }, { label: 'No', value: 0 }]); u.guard(t);
-      const agree = [...Array(10)].filter((_, k) => TrickMath.kruskal(d, k + 1) === mine).length;
-      u.say(r ? `${agree} of the 10 possible starting numbers end on that card. Paths that meet stay together forever.` : `It works about 85% of the time — here ${agree} of the 10 starts end on my card. Tap a start to see your path.`);
-      if (!r) { const s = await u.num('Your secret number', 1, 10, 1); u.guard(t); const path = TrickMath.kruskalPath(d, s); await u.show(d, { cols: 13, hl: new Set(path) }); u.say(`Your path: ${path.map(i => Cards.name(d[i])).join(' → ')}`); }
+      const d = Cards.draw(16), g = [0, 1, 2, 3].map(r => d.slice(r * 4, r * 4 + 4));
+      u.step(0); u.size(20, 5); u.say('Sixteen cards in four rows. <b>Think of one.</b>'); await u.html(gridHTML(g)); await u.next('Got one'); u.guard(t);
+      u.step(1); u.say('<b>Which row is your card in?</b>'); const r = await u.ask([0, 1, 2, 3].map(i => ({ label: 'Row ' + (i + 1), value: i }))); u.guard(t);
+      u.step(2); u.say('I pick the cards up and lay them out again — <b>each row becomes a column</b>.'); const g2 = TrickMath.transpose(g); await u.html(gridHTML(g2)); await u.wait(900); u.guard(t);
+      u.step(3); u.say('<b>Which row is your card in now?</b>'); const r2 = await u.ask([0, 1, 2, 3].map(i => ({ label: 'Row ' + (i + 1), value: i }))); u.guard(t);
+      u.step(4); u.reveal(g[r][r2], 'Your card!');
     },
-    explain: ['I secretly follow a path too, starting from the first card.', 'Each path jumps about 5–6 cards at a time. With 52 cards, my path and yours each land on about ten cards.', 'If our paths ever land on the <b>same card</b>, they stay together from then on — every later jump is identical.', 'The chance two paths never meet over the whole deck is small, so we usually finish on the same card — about 85% of the time.', 'This is the <b>Kruskal count</b>, named after mathematician Martin Kruskal; the idea of two random walks “coupling” is used in probability theory.'] },
-  { id: 'fitch', title: 'The Five-Card Trick', principle: 'Pigeonhole principle', blurb: 'From five cards, my assistant shows me four in a special order. I name the fifth.',
+    explain: ['Your first answer tells me your card is one of the <b>4 cards in that row</b>.', 'When I lay the cards out again, each old row becomes a column — so those 4 cards end up in <b>4 different rows</b>.', 'Your second answer points to exactly one of them. Row + row = one card.', '<b>Do it yourself:</b> deal 16 cards in 4 rows. Ask the row, pick up row by row, deal again in columns. Ask the row again — the card is where the two meet.'] },
+  { id: 'yesno', title: 'Yes or No', principle: 'Halving', blurb: 'Think of one of 16 cards. Four yes-or-no answers and I name it.', steps: ['Think of a card', 'Answer 4 questions', 'Reveal'],
     async perform(u, t) {
-      const h = Cards.draw(5); u.say('Here are <b>five random cards</b>. Imagine you picked them. My assistant will hide one and show me the other four.'); await u.show(h); await u.next('Hand them over'); u.guard(t);
-      const e = TrickMath.fitchEncode(h); u.say('My assistant hides one card and lays out four, <b>in a particular order</b>:'); await u.show([...e.shown, { up: false, r: 1, s: 0 }]); await u.next('Name the hidden card'); u.guard(t);
-      const g = TrickMath.fitchDecode(e.shown); u.reveal(g, `The hidden card is the <b>${Cards.long(g)}</b>.`);
+      const cs = Cards.draw(16); u.step(0); u.say('<b>Think of one of these 16 cards.</b>'); await u.show(cs, { cols: 8 }); await u.next('Got one'); u.guard(t);
+      let v = 0; for (let b = 0; b < 4; b++) { u.step(1); const board = cs.filter((_, i) => i >> b & 1); u.say(`Question ${b + 1} of 4: <b>is your card here?</b>`); await u.show(board, { cols: 8 }); const y = await u.ask([{ label: 'Yes', value: 1, primary: true }, { label: 'No', value: 0 }]); u.guard(t); if (y) v |= 1 << b; }
+      u.step(2); u.reveal(cs[v], `Your card: the <b>${Cards.long(cs[v])}</b>.`);
     },
-    explain: ['Five cards, four suits: two cards <b>must</b> share a suit (the pigeonhole principle).', 'The assistant hides one of those two and shows the other <b>first</b> — so I know the suit.', 'Arrange the 13 values in a circle. From either of the two cards, the other is at most <b>6 steps clockwise</b> away. The assistant hides the one that is 1–6 steps ahead.', 'The other three cards encode that number 1–6 by their order: ranking them Low, Middle, High, the orders LMH, LHM, MLH, MHL, HLM, HML mean 1 to 6.', 'So I count that many steps from the first card, in its suit. Ties in value are broken by suit order ♣ ♦ ♥ ♠ — I use clubs, hearts, spades, diamonds.'] },
-  { id: 'gilbreath', title: 'The Gilbreath Shuffle', principle: 'Gilbreath’s principle', blurb: 'You deal and riffle-shuffle the cards yourself, yet every pair is still one red and one black.',
+    explain: ['I give each card a secret number from 0 to 15.', 'Each question shows half the cards. A “yes” adds that question’s points to the total: 1, then 2, then 4, then 8.', 'The total of your “yes” points is your card’s number — no two cards get the same total.', 'This is how computers count: each yes/no is one <b>bit</b>, and 4 bits can tell 16 things apart.'] },
+  { id: 'detective', title: 'The Card Detective', principle: 'Halving', blurb: 'Think of ANY card in the deck. I find it in six questions — and you watch the cards disappear.', steps: ['Think of any card', 'Six questions', 'Reveal'],
     async perform(u, t) {
-      const reds = shuffle(Cards.deck().filter(Cards.red)), blacks = shuffle(Cards.deck().filter(c => !Cards.red(c))); const d = []; for (let i = 0; i < 10; i++) d.push(reds[i], blacks[i]);
-      u.say('Twenty cards, colours alternating. Deal <b>as many as you like</b> into a pile on the table.'); await u.show(d, { cols: 10 }); const k = await u.num('Cards to deal', 2, 18, 9); u.guard(t);
-      const mixed = TrickMath.gilbreath(d, k); u.say(`You dealt ${k} (that reverses them). Now I <b>riffle-shuffle</b> the two piles together at random…`); await u.show(mixed, { down: true, cols: 10 }); await u.next('Turn them over'); u.guard(t);
-      await u.show(mixed, { cols: 10, note: 'Look at the cards two at a time…' }); u.say('Take the cards <b>two at a time</b>: every pair is one red and one black!'); Tb_markPairs();
+      const deck = Cards.deck(); let left = deck.slice(); const draw = () => u.html(`<div class="crow" style="max-width:calc(var(--cw)*13 + 78px)">${deck.map(c => `<div class="${left.includes(c) ? '' : 'gone'}">${cardHTML(c)}</div>`).join('')}</div><p class="cnote">${left.length} card${left.length > 1 ? 's' : ''} still possible</p>`);
+      u.step(0); u.size(52, 13); u.say('<b>Think of any card in the whole deck.</b>'); draw(); await u.next('Got one'); u.guard(t);
+      const ask = async (q, test) => { u.step(1); u.say(q); const y = await u.ask([{ label: 'Yes', value: 1, primary: true }, { label: 'No', value: 0 }]); u.guard(t); left = left.filter(c => !!test(c) === !!y); draw(); await u.wait(400); u.guard(t); };
+      await ask('Is your card <b>red</b>? (hearts or diamonds)', c => Cards.red(c));
+      const s1 = left[0].s; await ask(`Is it a <b>${['club', 'heart', 'spade', 'diamond'][s1]}</b>?`, c => c.s === s1);
+      while (left.length > 1) { const vals = [...new Set(left.map(c => c.r))].sort((a, b) => a - b); const mid = vals[Math.floor(vals.length / 2)]; await ask(`Is its value <b>${Cards.RANKS[mid - 1]} or higher</b>? (A = 1, J = 11, Q = 12, K = 13)`, c => c.r >= mid); }
+      u.step(2); u.reveal(left[0], `Your card: the <b>${Cards.long(left[0])}</b>.`);
     },
-    explain: ['Start with colours alternating: R B R B…', 'Dealing some cards into a pile <b>reverses</b> them, so the two piles now start with opposite colours at their bottoms.', 'In a riffle, the cards fall from the bottoms of both piles. Whatever falls, the next card from either pile is always the opposite colour of the last two possibilities.', 'Norman Gilbreath proved that after one such riffle, each pair (cards 1–2, 3–4, …) still contains one of each colour.', 'Magicians and mathematicians love it because the shuffle is genuinely random, yet the order is not.'] },
-  { id: 'binary', title: 'The Mind-Reading Boards', principle: 'Binary numbers', blurb: 'Think of one of 32 cards. Answer yes or no five times and I name it.',
+    explain: ['Every question cuts the cards still possible <b>in half</b>.', 'Colour: 52 → 26. Suit: 26 → 13. Then “this value or higher?” cuts 13 → 7 → 4 → 2 → 1.', 'Six questions are enough because 2 × 2 × 2 × 2 × 2 × 2 = 64, more than 52.', '<b>Do it yourself:</b> always ask questions that split what’s left into two halves. It’s also the best way to win 20 Questions!'] },
+  { id: 'missing', title: 'The Missing Card', principle: 'Adding up', blurb: 'Take away any card while I look away. I add up the rest and name the missing one.', steps: ['Take a card away', 'I add them up', 'Reveal'],
     async perform(u, t) {
-      const cs = TrickMath.binaryCards(); u.say('Think of <b>one of these 32 cards</b>.'); await u.show(cs, { cols: 8 }); await u.next('Got one'); u.guard(t);
-      let v = 0; for (let b = 0; b < 5; b++) { const board = cs.filter((_, i) => i >> b & 1); u.say(`Board ${b + 1} of 5: <b>is your card here?</b>`); await u.show(board, { cols: 8 }); const y = await u.ask([{ label: 'Yes', value: 1, primary: true }, { label: 'No', value: 0 }]); u.guard(t); if (y) v |= 1 << b; }
-      u.reveal(cs[v], `Your card: the <b>${Cards.long(cs[v])}</b>.`);
+      const s = rnd(4); const cs = [...Array(13)].map((_, i) => Cards.card(i + 1, s));
+      u.step(0); u.say('All thirteen ' + ['clubs', 'hearts', 'spades', 'diamonds'][s] + '. <b>Tap one to take it away</b> — I’ll shuffle the rest.'); const i = await u.show(cs, { pick: true, cols: 7 }); u.guard(t);
+      const rest = shuffle(cs.filter((_, k) => k !== i)); u.step(1); await u.show(rest, { cols: 6 }); let sum = 0;
+      for (const c of rest) { sum += c.r; u.say(`Adding up: … + ${c.r} = <b>${sum}</b>`); await u.wait(220); u.guard(t); }
+      u.say(`All 13 cards always add up to <b>91</b>. These add up to <b>${sum}</b>. 91 − ${sum} = <b>${91 - sum}</b>.`); await u.next('Name it'); u.guard(t);
+      u.step(2); u.reveal(Cards.card(91 - sum, s), `You took the <b>${Cards.long(Cards.card(91 - sum, s))}</b>.`);
     },
-    explain: ['Each of the 32 cards has a number 0–31. In binary that’s five digits.', 'Board 1 shows every card whose 1s digit is 1, board 2 the 2s digit, then 4s, 8s and 16s.', 'Each “yes” tells me one binary digit is 1. I add up 1 + 2 + 4 + 8 + 16 for the yes boards.', 'That total is your card’s number. Five yes/no questions can split 2⁵ = 32 possibilities exactly.'] },
-  { id: 'downunder', title: 'The Down-Under Deal', principle: 'The Josephus problem', blurb: 'Deal one down, one under, over and over. I already know which card survives.',
+    explain: ['Count each card by its value: Ace = 1 … Jack = 11, Queen = 12, King = 13.', 'A full suit always adds up to 1 + 2 + … + 13 = <b>91</b>.', 'Add up the cards that are left. Whatever is missing from 91 is the card that was taken.', '<b>Do it yourself:</b> use one suit, let a friend hide a card, add up the rest (a calculator helps), and take it away from 91.'] },
+  { id: 'think', title: 'Think of a Number', principle: 'Numbers that cancel out', blurb: 'Pick a number, do four easy sums, and you land on the card I predicted.', steps: ['Prediction', 'Think of a number', 'Do the sums', 'Count the cards'],
     async perform(u, t) {
-      u.say('How many cards shall we use?'); const n = await u.num('Cards', 4, 20, 10); u.guard(t); const d = Cards.draw(n); const pos = TrickMath.downUnder(n);
-      u.say(`My prediction is sealed. Now: deal the top card <b>down</b> onto the table, put the next one <b>under</b> the packet, and repeat.`); await u.show([d[pos]], { down: true, note: 'Prediction' }); await u.next('Deal'); u.guard(t);
-      let q = d.slice(), out = []; while (q.length > 1) { out.push(q.shift()); if (q.length > 1) q.push(q.shift()); u.html(`<div class="crow">${q.map(c => cardHTML(c, { down: true })).join('')}</div><p class="cnote">${out.length} dealt down · ${q.length} left</p>`); await u.wait(260); u.guard(t); }
-      u.reveal(q[0], `The last card is the <b>${Cards.long(q[0])}</b> — exactly my prediction.`);
+      const row = Cards.draw(10); u.step(0); u.say('Ten cards face down. My prediction is sealed.'); await u.show(row, { down: true, cols: 10 }); await u.next('OK'); u.guard(t);
+      u.step(1); u.say('<b>Think of a number from 1 to 10.</b> Keep it secret.'); await u.next('Got it'); u.guard(t);
+      u.step(2); for (const q of ['<b>Double</b> it.', '<b>Add 10.</b>', '<b>Halve</b> it.', '<b>Take away</b> the number you first thought of.']) { u.say(q); await u.next('Done'); u.guard(t); }
+      u.step(3); u.say('Now count that many cards along the row and turn that one over.'); await u.show(row, { down: true, cols: 10, hl: new Set([4]) }); await u.next('Turn it over'); u.guard(t);
+      await u.show(row.map((c, i) => i === 4 ? c : { ...c, up: false }), { cols: 10, hl: new Set([4]) }); await u.wait(500); u.guard(t);
+      u.reveal(row[4], `You landed on the <b>${Cards.long(row[4])}</b> — and my prediction says… the same card! Everyone ends on <b>5</b>.`);
     },
-    explain: ['Write the number of cards as a power of two plus a bit: 10 = 8 + 2.', 'Every full pass halves the packet. If the packet is an exact power of two, the <b>last card</b> of the packet survives.', 'With an extra 2 cards, two cards must go first; after that the packet is a power of two again and the card then at the bottom survives.', 'So the survivor is at position 2 × (extra) — here 2 × 2 = 4th from the top. For an exact power of two it is the bottom card.', 'This is a version of the ancient <b>Josephus problem</b>.'] },
-  { id: 'spell', title: 'Spell It Out', principle: 'Working backwards', blurb: 'Spell each value — A-C-E, T-W-O… — and that very card turns up every time.',
+    explain: ['Call your number N. Double it: 2N. Add 10: 2N + 10. Halve it: N + 5.', 'Take away your number: N + 5 − N = <b>5</b>. Your number cancels out!', 'So everyone counts to the 5th card, and I already knew which card that is.', '<b>Do it yourself:</b> peek at the 5th card from the top before you start. Change “add 10” to “add 8” and everyone gets 4.'] },
+  { id: 'teentwenty', title: 'The 10–20 Trick', principle: 'Numbers that cancel out', blurb: 'Pick any number from 10 to 19. Deal, add, count back — and land on my card.', steps: ['Prediction', 'Pick a number', 'Deal that many', 'Add the digits', 'Count back'],
     async perform(u, t) {
-      const suit = rnd(4); const order = TrickMath.spellOrder(); let q = order.map(r => Cards.card(r, suit));
-      u.say('Thirteen cards of one suit, face down. For each value I move one card to the bottom per letter, then turn the next card over.'); await u.show(q, { down: true }); await u.next('Spell A-C-E'); u.guard(t);
-      const dealt = []; for (let v = 0; v < 13; v++) { const w = TrickMath.SPELL[v]; for (let k = 0; k < w.length; k++) { q.push(q.shift()); u.say(`${w.slice(0, k + 1).split('').join('-')}…`); await u.wait(150); u.guard(t); } dealt.push(q.shift()); u.html(`<div class="crow">${dealt.map(c => cardHTML(c)).join('')}</div><div class="crow" style="margin-top:8px">${q.map(c => cardHTML(c, { down: true })).join('')}</div>`); if (v < 12) { await u.next('Spell ' + TrickMath.SPELL[v + 1].split('').join('-')); u.guard(t); } }
-      u.say('Every value turned up right on its last letter!'); beep('win');
+      const d = Cards.draw(24); u.step(0); u.say('My prediction is sealed. Here’s a face-down packet.'); await u.show([d[9]], { down: true, note: 'Prediction' }); await u.next('OK'); u.guard(t);
+      u.step(1); u.say('Pick <b>any number from 10 to 19</b>.'); const n = await u.num('Your number', 10, 19, 14); u.guard(t);
+      u.step(2); u.say(`Deal <b>${n}</b> cards one at a time into a pile.`); const pile = d.slice(0, n).reverse(); await u.show(pile, { down: true, cols: 10 }); await u.wait(700); u.guard(t);
+      const a = Math.floor(n / 10), b = n % 10, k = a + b; u.step(3); u.say(`Add the two digits of ${n}: ${a} + ${b} = <b>${k}</b>.`); await u.next('Count back'); u.guard(t);
+      u.step(4); u.say(`Count <b>${k}</b> cards off the top of your pile. Turn over the ${k}${k === 1 ? 'st' : k === 2 ? 'nd' : k === 3 ? 'rd' : 'th'}.`); await u.show(pile, { down: true, cols: 10, hl: new Set([k - 1]) }); await u.wait(700); u.guard(t);
+      u.reveal(pile[k - 1], `The <b>${Cards.long(pile[k - 1])}</b> — exactly my prediction!`);
     },
-    explain: ['The secret is the order the cards start in. I find it by <b>working backwards</b>.', 'Imagine 13 empty slots. Spell A-C-E by moving three slots to the bottom; the next slot must hold the Ace.', 'Keep spelling with the remaining slots: T-W-O marks the slot for the Two, and so on to the King.', 'Filling the slots that way gives the starting order — here 3, 8, 7, A, Q, 6, 4, 2, J, K, 10, 9, 5. Then spelling it forwards always works.'] },
-  { id: 'thirteen', title: 'The Bottom-Card Sum', principle: 'Counting with algebra', blurb: 'Deal piles counting up to 13. You choose three. I tell you what their bottom cards add up to.',
+    explain: ['Dealing cards into a pile turns them upside down in order: the last card dealt is on top.', 'With a number like 14, adding the digits (1 + 4 = 5) and counting back 5 always brings you back to card number <b>10</b> of the original packet.', 'That’s because 14 − 5 + 1 = 10, and the same happens for every number from 10 to 19.', '<b>Do it yourself:</b> secretly look at the 10th card from the top before you start.'] },
+  { id: 'keycard', title: 'Pick a Card, Any Card', principle: 'The key card', blurb: 'The classic: choose a card, lose it in the deck with as many cuts as you like, and I find it.', steps: ['Pick a card', 'Cut the deck', 'I find it'],
     async perform(u, t) {
-      const d = Cards.shuffled(); const { piles, leftover } = TrickMath.thirteenPiles(d);
-      u.say('Turn a card up and count on from its value to 13, adding a card for each number — so a 9 gets 4 more cards. Then turn the pile over. Repeat until you can’t finish a pile.'); await u.piles(piles, { down: true, squared: true, counts: true }); await u.next('Next'); u.guard(t);
-      const chosen = []; while (chosen.length < 3) { u.say(`<b>Choose a pile</b> (${chosen.length + 1} of 3).`); const p = await u.piles(piles.map((pp, i) => chosen.includes(i) ? [] : pp), { down: true, squared: true, pick: true }); u.guard(t); if (!chosen.includes(p) && piles[p].length) chosen.push(p); }
-      const left = 52 - chosen.reduce((a, i) => a + piles[i].length, 0); const sum = left - 10;
-      u.say(`I gather everything else: <b>${left} cards</b>. Subtract 10… your three bottom cards add up to <b>${sum}</b>.`); await u.next('Turn them over'); u.guard(t);
-      await u.show(chosen.map(i => piles[i][0])); u.say(`${chosen.map(i => piles[i][0].r).join(' + ')} = <b>${chosen.reduce((a, i) => a + piles[i][0].r, 0)}</b>. (Ace = 1, Jack = 11, Queen = 12, King = 13.)`);
-    },
-    explain: ['A pile that starts with value v has 13 − v + 1 = 14 − v cards.', 'So three piles with bottom values a, b, c hold 42 − (a + b + c) cards altogether.', 'Everything else — the leftovers — is 52 − 42 + (a + b + c) = 10 + (a + b + c).', 'So the sum of the three bottom cards is simply <b>leftovers − 10</b>. Counting the leftovers is all I need.'] },
-  { id: 'n1089', title: 'The 1089 Prediction', principle: 'Place value', blurb: 'Make any 3-digit number from cards, do some sums, and land on my sealed prediction.',
-    async perform(u, t) {
-      u.say('My prediction is sealed. Now <b>tap three cards</b> to make a 3-digit number (first and last digit at least 2 apart).');
-      const digits = [...Array(9)].map((_, i) => Cards.card(i + 1, rnd(4))); let pick;
-      for (; ;) { pick = []; while (pick.length < 3) { const i = await u.show(digits, { pick: true, note: 'Picked: ' + (pick.join('') || '—') }); u.guard(t); pick.push(i + 1); } if (Math.abs(pick[0] - pick[2]) >= 2) break; u.say('First and last digits need to be at least 2 apart. Try again.'); }
-      const n = +pick.join(''), r = TrickMath.rev3(n), dd = Math.abs(n - r), rr = TrickMath.rev3(dd), sum = dd + rr;
-      const line = (a, b, op, c) => `<div class="sum"><div>${String(a).padStart(3, '0')}</div><div>${op} ${String(b).padStart(3, '0')}</div><div class="eq">${c}</div></div>`;
-      u.say('Reverse it and subtract the smaller from the bigger…'); u.html(line(Math.max(n, r), Math.min(n, r), '−', String(dd).padStart(3, '0'))); await u.next(); u.guard(t);
-      u.say('Now reverse the answer and add…'); u.html(line(dd, rr, '+', sum)); await u.next('Open the prediction'); u.guard(t);
-      u.html(`<div class="creveal"><div class="sealed">1089</div><p>The prediction said <b>1089</b>.</p></div>`); beep('win');
-    },
-    explain: ['Call the number abc. Reversed it is cba. Their difference is 99 × (a − c).', 'So the difference is always a multiple of 99: 198, 297, 396, 495, 594, 693, 792 or 891.', 'In each of those the outer digits add to 9 and the middle digit is 9.', 'Adding any of them to its reverse gives 900 + 180 + 9 = <b>1089</b>, every time.'] },
-  { id: 'ninelives', title: 'The Missing Digit', principle: 'Casting out nines', blurb: 'Make a number, scramble it, subtract, hide one digit. I name the hidden digit.',
-    async perform(u, t) {
-      const digits = [...Array(9)].map((_, i) => Cards.card(i + 1, rnd(4))); const pick = [];
-      u.say('Tap <b>four cards</b> to make a 4-digit number.'); while (pick.length < 4) { const i = await u.show(digits, { pick: true, note: 'Your number: ' + (pick.join('') || '—') }); u.guard(t); pick.push(i + 1); }
-      const n = +pick.join(''); let m; let tries = 0; do { m = +shuffle(pick.slice()).join(''); } while (m === n && ++tries < 30 && new Set(pick).size > 1);
-      if (m === n) { u.say('All your digits are the same, so scrambling changes nothing — try again with different digits!'); return; }
-      const res = Math.abs(n - m); u.say(`Scramble it to ${m} and subtract: ${Math.max(n, m)} − ${Math.min(n, m)} = <b>${res}</b>. <b>Tap one digit</b> (not a zero) to hide it.`);
-      const ds = String(res).split('').map(Number); const cards = ds.map(v => v ? Cards.card(v, rnd(4)) : { blank: '0' });
-      let hide; for (; ;) { hide = await u.show(cards, { pick: true }); u.guard(t); if (ds[hide]) break; u.say('Not a zero — tap another digit.'); }
-      const rest = ds.filter((_, i) => i !== hide); u.say(`Read me the others: ${rest.join(', ')}.`); await u.wait(700); u.guard(t);
-      u.reveal(Cards.card(TrickMath.missingDigit(rest), 1), `You hid a <b>${TrickMath.missingDigit(rest)}</b>.`);
-    },
-    explain: ['A number and any scramble of its digits leave the same remainder when divided by 9 (their digit sums are equal).', 'So their difference is always a <b>multiple of 9</b>, and its digits add up to a multiple of 9.', 'When you hide a digit, I add up the rest and see how far it is below the next multiple of 9.', 'That gap is your digit. (If the rest already make a multiple of 9, the hidden digit is 9 — that’s why zeros aren’t allowed.)'] },
-  { id: 'clock', title: 'The Clock', principle: 'Counting backwards', blurb: 'Think of an hour. Cards go round a clock face. The card at your hour is my prediction.',
-    async perform(u, t) {
-      const d = Cards.draw(20); u.say('I peek at one card and write down a prediction. Now <b>think of an hour</b> from 1 to 12.'); const H = await u.num('Your hour', 1, 12, 7); u.guard(t);
-      u.say(`Secretly move <b>${H}</b> cards from the top of the deck to your pocket…`); await u.show(d.slice(0, H), { down: true }); await u.wait(600); u.guard(t);
-      const rest = d.slice(H), clock = {}; rest.slice(0, 12).forEach((c, k) => clock[TrickMath.clockHour(k + 1)] = c);
-      u.say('I deal 12 cards round the clock, starting at 12 and going backwards.'); u.html(`<div class="clock">${[...Array(12)].map((_, i) => { const h = i + 1, a = (h / 12) * Math.PI * 2; return `<div class="ch" style="left:${50 + 40 * Math.sin(a)}%;top:${50 - 40 * Math.cos(a)}%"><span>${h}</span>${cardHTML(clock[h], { down: h !== H })}</div>`; }).join('')}<div class="cmid">Prediction:<br><b>${Cards.name(d[12])}</b></div></div>`);
-      Tb_dataReveal(d[12]); await u.next('Wow'); u.guard(t); beep('win');
-    },
-    explain: ['Before you start, I note the <b>13th card</b> from the top.', 'You take H cards off the top, so my card is now at position 13 − H.', 'I deal card 1 to 12 o’clock, card 2 to 11 o’clock, and so on — card k goes to hour 13 − k.', 'So the card at position 13 − H lands on hour 13 − (13 − H) = <b>H</b>: your hour.'] },
-  { id: 'keycard', title: 'Pick a Card, Any Card', principle: 'The key card', blurb: 'The classic: choose a card, lose it in the deck with as many cuts as you like, and I find it.',
-    async perform(u, t) {
-      let d = Cards.draw(20); u.say('<b>Pick a card, any card</b> — tap it and remember it.'); const i = await u.show(d, { pick: true, cols: 10 }); u.guard(t); const mine = d[i];
+      let d = Cards.draw(20); u.step(0); u.say('<b>Pick a card, any card</b> — tap it and remember it.'); const i = await u.show(d, { pick: true, cols: 10 }); u.guard(t); const mine = d[i];
       u.say(`You chose the ${Cards.long(mine)}. It goes on top of the deck…`); d.splice(i, 1); d.unshift(mine); Tb_key = d[d.length - 1]; await u.show(d, { down: true, cols: 10 }); await u.wait(500); u.guard(t);
-      for (let k = 0; ; k++) { u.say(k ? 'Cut again, or stop when you’re happy it’s lost.' : 'Now <b>cut the deck</b> — as many times as you like.'); const v = await u.ask([{ label: 'Cut', value: 1, primary: true }, { label: 'Done cutting', value: 0 }]); u.guard(t); if (!v) break; d = TrickMath.cut(d, 1 + rnd(19)); await u.show(d, { down: true, cols: 10 }); beep('tick'); }
-      u.say('I spread the cards face up and look…'); await u.show(d, { cols: 10 }); await u.wait(900); u.guard(t);
-      const key = Cards.id(Tb_key); const ki = d.findIndex(c => Cards.id(c) === key); u.reveal(d[(ki + 1) % d.length], 'Your card!');
+      for (let k = 0; ; k++) { u.step(1); u.say(k ? 'Cut again, or stop when you think it’s lost.' : '<b>Cut the deck</b> as many times as you like.'); const v = await u.ask([{ label: 'Cut', value: 1, primary: true }, { label: 'Done cutting', value: 0 }]); u.guard(t); if (!v) break; d = TrickMath.cut(d, 1 + rnd(19)); await u.show(d, { down: true, cols: 10 }); beep('tick'); }
+      u.step(2); u.say('I spread the cards face up…'); await u.show(d, { cols: 10 }); await u.wait(900); u.guard(t);
+      const ki = d.findIndex(c => Cards.id(c) === Cards.id(Tb_key)); await u.show(d, { cols: 10, hl: new Set([ki]) }); u.say(`I look for my secret <b>key card</b> — the ${Cards.long(Tb_key)}. Your card is right after it.`); await u.next('Show me'); u.guard(t);
+      u.reveal(d[(ki + 1) % d.length], 'Your card!');
     },
-    explain: ['When your card goes back, I secretly note the <b>bottom card</b> — my key card.', 'Your card goes on top, so it sits directly after the key card when the deck is thought of as a circle.', 'A cut just rotates the circle. No matter how many cuts, your card stays right after the key.', 'So I find the key card in the spread and your card is the very next one.'],
-  },
-  { id: 'kings', title: 'Chase the Kings', principle: 'Cyclic order', blurb: 'Cut a packet as often as you like and deal it into four piles: all four Kings chase each other into one pile.',
+    explain: ['Before your card goes back, I secretly remember the <b>bottom card</b> — my key card.', 'Your card goes on top, so it sits right after the key card.', 'Cutting the deck never separates them (unless the cut is exactly between them, which just puts your card on top).', '<b>Do it yourself:</b> glimpse the bottom card, have the chosen card put on top, let them cut, then look for your key card.'] },
+  { id: 'stebbins', title: 'I Know the Top Card', principle: 'A secret order', blurb: 'Cut the deck as often as you like. I peek at the bottom card and name the top one.', steps: ['Cut the deck', 'I peek', 'I name the top card'],
     async perform(u, t) {
-      const others = Cards.deck().filter(c => c.r !== 13); shuffle(others); let p = []; let o = 0; for (let i = 0; i < 16; i++) p.push(i % 4 === 3 ? Cards.card(13, i / 4 | 0) : others[o++]);
-      u.say('Sixteen cards with the four Kings mixed in. <b>Cut</b> as many times as you like.'); await u.show(p, { cols: 8 });
-      for (; ;) { const v = await u.ask([{ label: 'Cut', value: 1, primary: true }, { label: 'Deal the piles', value: 0 }]); u.guard(t); if (!v) break; p = TrickMath.cut(p, 1 + rnd(15)); await u.show(p, { down: true, cols: 8 }); beep('tick'); }
-      const piles = [[], [], [], []]; p.forEach((c, i) => piles[i % 4].push(c));
-      u.say('Dealing into four piles, one card each in turn…'); await u.piles(piles, { down: true }); await u.next('Turn them up'); u.guard(t);
-      const k = piles.findIndex(x => x.filter(c => c.r === 13).length === 4); await u.piles(piles, { hl: k, hlCard: c => c.r === 13 }); u.say(`All four Kings chased each other into <b>pile ${k + 1}</b>!`); beep('win');
-    },
-    explain: ['The Kings start every 4th card apart.', 'A cut moves cards from the top to the bottom, which doesn’t change the gaps between them — the deck is really a circle.', 'With 16 cards and four piles, cards 4 apart always go to the <b>same pile</b>.', 'So wherever you cut, all four Kings land together.'] },
-  { id: 'stebbins', title: 'The Si Stebbins Stack', principle: 'Modular arithmetic', blurb: 'Cut the deck anywhere. I glimpse the bottom card and name the top one — then every card after it.',
-    async perform(u, t) {
-      let d = TrickMath.stebbins(); u.say('A full deck. <b>Cut</b> as many times as you like.'); await u.show(d, { down: true, cols: 13 });
+      let d = TrickMath.stebbins(); u.step(0); u.say('A full deck. <b>Cut it</b> as many times as you like.'); await u.show(d.slice(0, 1).map(c => ({ ...c, up: false })), { note: 'The deck' });
       for (; ;) { const v = await u.ask([{ label: 'Cut', value: 1, primary: true }, { label: 'Done', value: 0 }]); u.guard(t); if (!v) break; d = TrickMath.cut(d, 1 + rnd(51)); beep('tick'); }
-      u.say(`I glimpse the bottom card: the <b>${Cards.long(d[51])}</b>. So the top card is…`); await u.next('Name it'); u.guard(t);
-      let c = TrickMath.stebNext(d[51]); for (let i = 0; i < 8; i++) { await u.show(d.slice(0, i + 1).concat([{ up: false, r: 1, s: 0 }])); u.say(`Card ${i + 1}: I say <b>${Cards.long(c)}</b>.`); await u.next(i < 7 ? 'Next card' : 'Finish'); u.guard(t); c = TrickMath.stebNext(c); }
-      u.say('Every card, named in order. Want the secret?');
+      u.step(1); u.say(`I peek at the bottom card: the <b>${Cards.long(d[51])}</b>.`); await u.show([d[51]], { note: 'Bottom card' }); await u.next('Name the top card'); u.guard(t);
+      u.step(2); const top = TrickMath.stebNext(d[51]); u.say(`So the top card must be the <b>${Cards.long(top)}</b>…`); await u.wait(600); u.guard(t); u.reveal(d[0], `The top card: the <b>${Cards.long(d[0])}</b>. Correct!`);
     },
-    explain: ['The deck is stacked: each card is <b>3 higher</b> than the one before (Jack = 11, Queen = 12, King = 13, then round to Ace).', 'Suits go round in the order ♣ ♥ ♠ ♦ — CHaSeD.', 'Because the stack wraps around evenly (52 cards, 13 values, 4 suits), cutting never breaks the pattern.', 'Knowing any card tells me the next: add 3 to the value and move to the next suit. The bottom card gives me the top.'] },
-  { id: 'mutus', title: 'Mutus Nomen Dedit Cocis', principle: 'A secret code word', blurb: 'Pick a pair of cards. Tell me which rows they land in, and I name both cards.',
+    explain: ['The deck is in a secret order: each card is <b>3 higher</b> than the one before, and the suits go round ♣ ♥ ♠ ♦ (“CHaSeD”).', 'Cutting doesn’t break the order — it just starts the circle somewhere else.', 'So the top card is always the bottom card plus 3, in the next suit. A 7♠ on the bottom means a 10♦ on top.', '<b>Do it yourself:</b> set a real deck up: A♣ 4♥ 7♠ 10♦ K♣ 3♥ 6♠ 9♦ Q♣ 2♥ … keep adding 3 (after K comes A).'] },
+  { id: 'twins', title: 'Twin Cards', principle: 'Mirror order', blurb: 'However many perfect shuffles you ask for, the top and bottom cards are always twins.', steps: ['Shuffle', 'Turn over', 'Twins!'],
     async perform(u, t) {
-      const d = Cards.draw(20), pairs = []; for (let i = 0; i < 10; i++) pairs.push([d[2 * i], d[2 * i + 1]]);
-      u.say('Ten pairs of cards. <b>Remember one pair.</b>'); await u.piles(pairs, { labels: pairs.map((_, i) => 'Pair ' + (i + 1)) }); await u.next('Got my pair'); u.guard(t);
-      const g = TrickMath.mutusLayout(pairs); u.say('I lay them out in four rows of five. <b>Which row or rows are your two cards in?</b>'); u.size(24, 6);
-      u.html(`<div class="mgrid">${g.map((row, r) => `<div class="mrow"><span class="eyebrow">Row ${r + 1}</span>${row.map(c => cardHTML(c)).join('')}</div>`).join('')}</div>`);
-      const rows = []; for (; ;) { const v = await u.ask([...[0, 1, 2, 3].filter(r => !rows.includes(r)).map(r => ({ label: 'Row ' + (r + 1), value: r })), ...(rows.length ? [{ label: rows.length === 1 ? 'Both in that row' : 'Done', value: -1, primary: true }] : [])]); u.guard(t); if (v === -1) break; rows.push(v); if (rows.length === 2) break; }
-      const k = TrickMath.mutusFind(rows); u.say('Your pair is…'); await u.show(pairs[k]); Tb_dataReveal(pairs[k][0]); beep('win');
+      let d = TrickMath.stayStack(20); u.step(0); u.say('Twenty cards. Ask for <b>as many perfect shuffles as you like</b>.'); await u.show(d, { down: true, cols: 10 });
+      for (; ;) { const v = await u.ask([{ label: 'Shuffle', value: 'o', primary: true }, { label: 'Shuffle the other way', value: 'i' }, { label: 'Done', value: 0 }]); u.guard(t); if (!v) break; d = v === 'o' ? TrickMath.faroOut(d) : TrickMath.faroIn(d); await u.show(d, { down: true, cols: 10 }); beep('tick'); }
+      u.step(1); u.say('Now turn over the <b>top</b> card and the <b>bottom</b> card…'); await u.show([d[0], { up: false, r: 1, s: 0 }, d[19]]); await u.next('And the next pair'); u.guard(t);
+      u.step(2); await u.show([d[1], { up: false, r: 1, s: 0 }, d[18]]); u.say('Twins again — same value, same colour! Every pair from the outside in matches.'); await u.next('Show all'); u.guard(t); await u.show(d, { cols: 10 }); beep('win');
     },
-    explain: ['The cards are laid out using four Latin words: <b>MUTUS NOMEN DEDIT COCIS</b>.', 'Those 20 letters use only 10 different letters, and each appears exactly <b>twice</b>.', 'Pair 1 goes on the two M’s, pair 2 on the two U’s, and so on in order: M U T S N O E D I C.', 'When you tell me the row(s), only one letter has its two copies in exactly those rows — that letter is your pair.'] },
-  { id: 'redblack', title: 'Out of This World', principle: 'Conservation of colour', blurb: 'Deal the deck in pairs: two reds here, two blacks there, mixed pairs away. Both piles end up the same size.',
+    explain: ['I start the cards in a <b>mirror order</b>: the 1st and last are twins (same value and colour), the 2nd and 2nd-last are twins, and so on.', 'A perfect shuffle cuts the cards exactly in half and weaves them together one by one.', 'Weaving the two halves like that keeps the mirror: whatever happens at the top happens in reverse at the bottom.', '<b>Do it yourself:</b> it needs perfect shuffles, which take practice — on a computer it’s easy!'] },
+  { id: 'kings', title: 'Chase the Kings', principle: 'Every 4th card', blurb: 'Cut a packet as often as you like and deal four piles: all four Kings land in one pile.', steps: ['Cut', 'Deal 4 piles', 'Find the Kings'],
     async perform(u, t) {
-      const d = Cards.shuffled(); u.say('Prediction: <b>the red pile and the black pile will be exactly the same size.</b> Let’s deal the shuffled deck two cards at a time.'); await u.next('Deal'); u.guard(t);
-      const R = [], B = [], D = []; for (let i = 0; i < 52; i += 2) { const a = d[i], b = d[i + 1]; (Cards.red(a) && Cards.red(b) ? R : !Cards.red(a) && !Cards.red(b) ? B : D).push(a, b); if (i % 8 === 0 || i === 50) { await u.piles([R, B, D], { labels: ['Two reds', 'Two blacks', 'Mixed'], counts: true, squared: true }); await u.wait(200); u.guard(t); } }
-      u.say(`Red pile: <b>${R.length}</b>. Black pile: <b>${B.length}</b>. Exactly as predicted!`); beep('win');
+      const others = shuffle(Cards.deck().filter(c => c.r !== 13)); let p = []; let o = 0; for (let i = 0; i < 16; i++) p.push(i % 4 === 3 ? Cards.card(13, i / 4 | 0) : others[o++]);
+      u.step(0); u.say('Sixteen cards with the four Kings mixed in. <b>Cut</b> as many times as you like.'); await u.show(p, { cols: 8 });
+      for (; ;) { const v = await u.ask([{ label: 'Cut', value: 1, primary: true }, { label: 'Deal the piles', value: 0 }]); u.guard(t); if (!v) break; p = TrickMath.cut(p, 1 + rnd(15)); await u.show(p, { down: true, cols: 8 }); beep('tick'); }
+      u.step(1); const piles = [[], [], [], []]; p.forEach((c, i) => piles[i % 4].push(c)); u.say('I deal four piles, one card to each in turn.'); await u.piles(piles, { down: true }); await u.next('Turn them up'); u.guard(t);
+      u.step(2); const k = piles.findIndex(x => x.filter(c => c.r === 13).length === 4); await u.piles(piles, { hl: k, hlCard: c => c.r === 13 }); u.say(`All four Kings are together in <b>pile ${k + 1}</b>!`); beep('win');
     },
-    explain: ['The deck has 26 reds and 26 blacks.', 'Every mixed pair throws away one red and one black — equal amounts.', 'So whatever is left over, the reds in the red pile must equal the blacks in the black pile.', 'Since each pile is built two-by-two of one colour, the two piles are always the same size.'] },
-  { id: 'remainder', title: 'The Remainder Reader', principle: 'Chinese remainder theorem', blurb: 'Count out a secret number of cards (1–60). Deal them in threes, fours and fives and tell me what’s left over.',
+    explain: ['The Kings start <b>every 4th card</b>.', 'Cutting moves cards from the top to the bottom, but the Kings stay 4 apart.', 'Dealing into 4 piles puts every 4th card in the same pile — so all the Kings go together.', '<b>Do it yourself:</b> put a King every 4th card in 16 cards, let your friend cut, deal 4 piles.'] },
+  { id: 'redblack', title: 'Red and Black', principle: 'Fair shares', blurb: 'Deal the deck in pairs. Two reds go left, two blacks go right. Both piles end up the same size.', steps: ['Prediction', 'Deal in pairs', 'Count'],
     async perform(u, t) {
-      u.say('Count out a <b>secret number</b> of cards from 1 to 60 (from a real deck, or just imagine it). Deal them into rows of <b>3</b>. How many are left over?');
-      const a = await u.ask([0, 1, 2].map(v => ({ label: String(v), value: v }))); u.guard(t);
-      u.say('Now deal the same cards in rows of <b>4</b>. Left over?'); const b = await u.ask([0, 1, 2, 3].map(v => ({ label: String(v), value: v }))); u.guard(t);
-      u.say('And rows of <b>5</b>. Left over?'); const c = await u.ask([0, 1, 2, 3, 4].map(v => ({ label: String(v), value: v }))); u.guard(t);
-      const n = TrickMath.crt(a, b, c); u.html(`<div class="creveal"><div class="sealed">${n}</div><p>You counted out <b>${n}</b> cards.</p></div>`); beep('win');
+      const d = Cards.shuffled(); u.step(0); u.say('My prediction: <b>the red pile and the black pile will be exactly the same size.</b>'); await u.next('Deal'); u.guard(t);
+      u.step(1); const R = [], B = [], D = []; for (let i = 0; i < 52; i += 2) { const a = d[i], b = d[i + 1]; (Cards.red(a) && Cards.red(b) ? R : !Cards.red(a) && !Cards.red(b) ? B : D).push(a, b); u.say(`Pair ${i / 2 + 1} of 26: ${Cards.name(a)} and ${Cards.name(b)}`); await u.piles([R, B, D], { labels: ['Two reds', 'Two blacks', 'Mixed'], counts: true, squared: true }); await u.wait(110); u.guard(t); }
+      u.step(2); u.say(`Red pile: <b>${R.length}</b>. Black pile: <b>${B.length}</b>. The same, as predicted!`); beep('win');
     },
-    explain: ['3, 4 and 5 share no common factors, and 3 × 4 × 5 = 60.', 'The <b>Chinese remainder theorem</b> says each number from 1 to 60 has its own unique set of three remainders.', 'I just look up which number leaves those three remainders.', 'It’s 1,700 years old — it appears in the Chinese text <i>Sunzi Suanjing</i>.'] },
-  { id: 'faro', title: 'Perfect Shuffles', principle: 'Binary and permutations', blurb: 'Eight perfect shuffles put a deck back in order — and in/out shuffles send a card anywhere you like.',
-    async perform(u, t) {
-      u.say('Pick a position from 1 to 16. I’ll move the <b>top card</b> there using only perfect shuffles.'); const n = await u.num('Position', 1, 16, 6); u.guard(t);
-      let p = Cards.draw(16); const top = p[0]; const seq = TrickMath.elmsley(n);
-      await u.show(p, { cols: 8, hl: new Set([0]) }); u.say(`${n - 1} in binary is <b>${(n - 1).toString(2)}</b>. 1 = in-shuffle, 0 = out-shuffle: ${seq.join(', ') || 'no shuffles needed'}.`); await u.next('Shuffle'); u.guard(t);
-      for (const s of seq) { p = s === 'in' ? TrickMath.faroIn(p) : TrickMath.faroOut(p); await u.show(p, { cols: 8, hl: new Set([p.indexOf(top)]) }); u.say(`${s === 'in' ? 'In' : 'Out'}-shuffle…`); await u.wait(700); u.guard(t); }
-      u.say(`The top card is now at position <b>${p.indexOf(top) + 1}</b>.`); Tb_dataReveal(top); await u.next('And the 8 shuffles?'); u.guard(t);
-      let d = Cards.deck(); for (let i = 1; i <= 8; i++) { d = TrickMath.faroOut(d); await u.show(d, { cols: 13 }); u.say(`Out-shuffle ${i} of 8${i === 8 ? ' — back in perfect order!' : ''}`); await u.wait(500); u.guard(t); }
-    },
-    explain: ['A perfect shuffle cuts exactly in half and interleaves one card from each half.', 'An <b>out</b>-shuffle keeps the top card on top; an <b>in</b>-shuffle tucks it into second place.', 'After an out-shuffle a card at position p (counting from 0) moves to 2p; after an in-shuffle to 2p + 1. That’s writing a binary digit!', 'So to send the top card to position n, write n − 1 in binary and do in for 1, out for 0. Alex Elmsley discovered this.', 'For 52 cards, 2⁸ = 256 leaves remainder 1 when divided by 51, so 8 out-shuffles return every card home.'] },
-  { id: 'cato', title: 'Cut and Turn Over Two', principle: 'Parity (Hummer’s principle)', blurb: 'Mix ten cards by cutting and flipping pairs. I predict exactly how many end up face up.',
+    explain: ['There are 26 red and 26 black cards.', 'Every mixed pair throws away <b>one red and one black</b> — the same amount of each.', 'So the reds left over must equal the blacks left over: the two piles always match.', '<b>Do it yourself:</b> shuffle a real deck and deal in pairs — it works every time.'] },
+  { id: 'cato', title: 'Five and Five', principle: 'Odd and even places', blurb: 'Mix ten cards by cutting and flipping pairs. Exactly five end up face up.', steps: ['Mix them up', 'Flip every 2nd card', 'Count'],
     async perform(u, t) {
       let d = Cards.draw(10).map(c => ({ ...c, up: false })); const draw = () => u.show(d.map(c => c.up ? c : { ...c, up: false }), { cols: 10 });
-      u.say('Ten cards face down. Do these two moves as often as you like: <b>cut</b>, or <b>turn the top two over together</b>. Prediction: <b>exactly five</b> cards will end up facing each way.'); await draw();
-      for (; ;) { const v = await u.ask([{ label: 'Cut', value: 'c' }, { label: 'Turn over two', value: 't' }, { label: 'Finish', value: 'f', primary: true }]); u.guard(t); if (v === 'f') break; d = v === 'c' ? TrickMath.cut(d, 1 + rnd(9)) : TrickMath.turnTwo(d); await draw(); beep('tick'); }
-      u.say('Now I turn over every second card…'); await u.wait(600); u.guard(t); d = d.map((c, i) => i % 2 ? { ...c, up: !c.up } : c); await draw();
-      u.say(`Face up: <b>${d.filter(c => c.up).length}</b>. Face down: <b>${d.filter(c => !c.up).length}</b>. Five and five!`); beep('win');
+      u.step(0); u.say('Ten cards face down. Mix them using these two moves as much as you like. Prediction: <b>five will end face up</b>.'); await draw();
+      for (; ;) { const v = await u.ask([{ label: 'Cut', value: 'c' }, { label: 'Flip the top two', value: 't' }, { label: 'Finished', value: 'f', primary: true }]); u.guard(t); if (v === 'f') break; d = v === 'c' ? TrickMath.cut(d, 1 + rnd(9)) : TrickMath.turnTwo(d); await draw(); beep('tick'); }
+      u.step(1); u.say('Now I flip over <b>every second card</b>…'); await u.wait(600); u.guard(t); d = d.map((c, i) => i % 2 ? { ...c, up: !c.up } : c); await draw();
+      u.step(2); u.say(`Face up: <b>${d.filter(c => c.up).length}</b>. Face down: <b>${d.filter(c => !c.up).length}</b>. Five and five!`); beep('win');
     },
-    explain: ['Think of the ten places as alternately “odd” and “even”.', 'Turning two over flips one card in an odd place and one in an even place, and swaps them.', 'With an even-sized packet, a cut moves every card by the same amount, so odd and even places either stay or all swap together.', 'Charles Hummer noticed the result: the number of face-up cards in odd places always equals the number face-down in even places (or the reverse).', 'So after flipping every second card, exactly half the cards face up.'] }
+    explain: ['Number the places 1–10: odd places and even places.', 'Flipping the top two always flips one card in an odd place and one in an even place.', 'Cutting an even number of cards keeps odd and even places matched up.', 'Because of that balance, flipping every second card at the end always leaves exactly half face up. (This is Charles Hummer’s trick.)'] },
+  { id: 'n1089', title: 'The 1089 Prediction', principle: 'Numbers that cancel out', blurb: 'Make any 3-digit number from cards, do two sums, and match my sealed prediction.', steps: ['Prediction', 'Pick 3 cards', 'Reverse & subtract', 'Reverse & add'],
+    async perform(u, t) {
+      u.step(0); u.say('My prediction is sealed.'); u.html('<div class="creveal"><div class="sealed">?</div></div>'); await u.next('OK'); u.guard(t);
+      const digits = [...Array(9)].map((_, i) => Cards.card(i + 1, rnd(4))); let pick;
+      for (; ;) { u.step(1); u.say('<b>Tap three cards</b> to make a number. (First and last should be at least 2 apart.)'); pick = []; while (pick.length < 3) { const i = await u.show(digits, { pick: true, note: 'Your number: ' + (pick.join('') || '—') }); u.guard(t); pick.push(i + 1); } if (Math.abs(pick[0] - pick[2]) >= 2) break; u.say('The first and last digits need to be at least 2 apart. Try again!'); await u.wait(900); }
+      const n = +pick.join(''), r = TrickMath.rev3(n), dd = Math.abs(n - r), rr = TrickMath.rev3(dd), sum = dd + rr;
+      const line = (a, b, op, c) => `<div class="sum"><div>${String(a).padStart(3, '0')}</div><div>${op} ${String(b).padStart(3, '0')}</div><div class="eq">${c}</div></div>`;
+      u.step(2); u.say(`Your number is <b>${n}</b>. Reverse it (${String(r).padStart(3, '0')}) and take the smaller from the bigger:`); u.html(line(Math.max(n, r), Math.min(n, r), '−', String(dd).padStart(3, '0'))); await u.next(); u.guard(t);
+      u.step(3); u.say('Reverse that answer and add them together:'); u.html(line(dd, rr, '+', sum)); await u.next('Open the prediction'); u.guard(t);
+      u.html(`<div class="creveal"><div class="sealed">1089</div><p>The prediction: <b>1089</b>!</p></div>`); beep('win');
+    },
+    explain: ['When you reverse a 3-digit number and subtract, the answer is always one of: 198, 297, 396, 495, 594, 693, 792 or 891.', 'Look closely: the middle digit is always 9, and the outside digits add up to 9.', 'Add any of those to its reverse and you always get <b>1089</b>.', '<b>Do it yourself:</b> write 1089 on paper first, then let your friend pick any number.'] },
+  { id: 'downunder', title: 'Last Card Standing', principle: 'Halving again and again', blurb: 'Deal one card down, move one to the bottom, again and again. I know which card is left.', steps: ['Prediction', 'Deal down, move under', 'Last card'],
+    async perform(u, t) {
+      const n = 10, d = Cards.draw(n), pos = TrickMath.downUnder(n); u.step(0); u.say('Ten cards. My prediction is sealed.'); await u.show([d[pos]], { down: true, note: 'Prediction' }); await u.next('Start dealing'); u.guard(t);
+      u.step(1); let q = d.slice(), out = [];
+      while (q.length > 1) { const a = q.shift(); out.push(a); u.say(`Deal the <b>${Cards.name(a)}</b> down onto the table…`); await u.html(`<div class="crow">${q.map(c => cardHTML(c)).join('')}</div><div class="crow" style="opacity:.5;margin-top:8px">${out.map(c => cardHTML(c)).join('')}</div>`); await u.wait(500); u.guard(t);
+        if (q.length > 1) { const b = q.shift(); q.push(b); u.say(`…and move the <b>${Cards.name(b)}</b> to the bottom.`); await u.html(`<div class="crow">${q.map(c => cardHTML(c, { hl: c === b })).join('')}</div><div class="crow" style="opacity:.5;margin-top:8px">${out.map(c => cardHTML(c)).join('')}</div>`); await u.wait(500); u.guard(t); } }
+      u.step(2); u.reveal(q[0], `The last card standing is the <b>${Cards.long(q[0])}</b> — my prediction!`);
+    },
+    explain: ['Each time round, half of the cards get dealt away.', 'With 8 or 16 cards, the <b>bottom</b> card is always the last one left.', 'With 10 cards, two extra cards must go first; after that 8 are left, so the card that is then at the bottom wins — that’s the <b>4th card</b> from the top.', '<b>Do it yourself:</b> with 10 cards, peek at the 4th card from the top before you deal.'] },
+  { id: 'pairs', title: 'Pick a Pair', principle: 'A secret code word', blurb: 'Remember a pair of cards, tell me which rows they’re in, and I find both.', steps: ['Remember a pair', 'I lay them out', 'Which rows?', 'Reveal'],
+    async perform(u, t) {
+      const d = Cards.draw(20), pairs = []; for (let i = 0; i < 10; i++) pairs.push([d[2 * i], d[2 * i + 1]]);
+      u.step(0); u.say('Ten pairs. <b>Remember one pair</b> — both cards.'); await u.piles(pairs, { labels: pairs.map((_, i) => 'Pair ' + (i + 1)) }); await u.next('Got my pair'); u.guard(t);
+      u.step(1); const g = TrickMath.mutusLayout(pairs); u.size(24, 6); u.say('I lay the cards out in four rows.'); u.html(`<div class="mgrid">${g.map((row, r) => `<div class="mrow"><span class="eyebrow">Row ${r + 1}</span>${row.map(c => cardHTML(c)).join('')}</div>`).join('')}</div>`); await u.wait(500); u.guard(t);
+      u.step(2); u.say('<b>Which row is your first card in?</b>'); const r1 = await u.ask([0, 1, 2, 3].map(r => ({ label: 'Row ' + (r + 1), value: r }))); u.guard(t);
+      u.say('<b>And your second card?</b>'); const r2 = await u.ask([0, 1, 2, 3].map(r => ({ label: 'Row ' + (r + 1), value: r }))); u.guard(t);
+      u.step(3); const k = TrickMath.mutusFind([...new Set([r1, r2])]); u.say('Your pair is…'); await u.show(pairs[k]); Tb_dataReveal(pairs[k][0]); beep('win');
+    },
+    explain: ['The secret is four words: <b>MUTUS NOMEN DEDIT COCIS</b> (Latin, but the meaning doesn’t matter).', 'Each letter in those words appears <b>exactly twice</b>. Pair 1 goes on the two M’s, pair 2 on the two U’s, and so on.', 'When you name the two rows, only one letter appears in exactly those rows — and its two places hold your pair.', '<b>Do it yourself:</b> write the four words on a card as your secret map.'] },
+  { id: 'spell', title: 'Spell It Out', principle: 'Working backwards', blurb: 'Spell A-C-E, T-W-O… one card per letter, and each card appears right on cue.', steps: ['The packet', 'Spell each card', 'Done'],
+    async perform(u, t) {
+      const suit = rnd(4); const words = TrickMath.SPELL.slice(0, 5); let q = [...Array(5)].map((_, i) => i); const slot = new Array(5);
+      words.forEach((w, v) => { for (let k = 0; k < w.length; k++) q.push(q.shift()); slot[q.shift()] = v + 1; }); q = slot.map(r => Cards.card(r, suit));
+      u.step(0); u.say('Five cards face down: Ace to Five, in a secret order. For each letter I move one card from the top to the bottom, then turn the next one over.'); await u.show(q, { down: true }); await u.next('Spell A-C-E'); u.guard(t);
+      const dealt = []; for (let v = 0; v < 5; v++) { u.step(1); const w = words[v]; for (let k = 0; k < w.length; k++) { q.push(q.shift()); u.say(`${w.slice(0, k + 1).split('').join('-')}…`); await u.html(`<div class="crow">${dealt.map(c => cardHTML(c)).join('')}</div><div class="crow" style="margin-top:8px">${q.map(c => cardHTML(c, { down: true })).join('')}</div>`); await u.wait(350); u.guard(t); }
+        dealt.push(q.shift()); u.say(`…and the next card is the <b>${['Ace', 'Two', 'Three', 'Four', 'Five'][v]}</b>!`); await u.html(`<div class="crow">${dealt.map(c => cardHTML(c)).join('')}</div><div class="crow" style="margin-top:8px">${q.map(c => cardHTML(c, { down: true })).join('')}</div>`); if (v < 4) { await u.next('Spell ' + words[v + 1].split('').join('-')); u.guard(t); } }
+      u.step(2); u.say('Every card turned up right on time!'); beep('win');
+    },
+    explain: ['The trick is all in the starting order: <b>5, 3, 2, A, 4</b> from the top (for Ace to Five).', 'I found it by working <b>backwards</b>: pretend to spell A-C-E with empty spaces, and the space you land on must hold the Ace. Then spell T-W-O with the spaces left, and so on.', 'Set the cards in that order and the spelling always works.', '<b>Do it yourself:</b> arrange A–5 of one suit as 5, 3, 2, A, 4 from the top, face down.'] },
+  { id: 'clock', title: 'Around the Clock', principle: 'Counting backwards', blurb: 'Pick an hour and secretly take that many cards. The card at your hour is my prediction.', steps: ['Prediction', 'Take your hour in cards', 'I make a clock', 'Look at your hour'],
+    async perform(u, t) {
+      const d = Cards.draw(24); u.step(0); u.say('My prediction is sealed. Here is a pile of cards.'); await u.show([d[12]], { down: true, note: 'Prediction' }); await u.next('OK'); u.guard(t);
+      u.step(1); u.say('<b>Pick an hour</b> from 1 to 12. Then take that many cards off the top and put them in your pocket — I won’t look.'); const H = await u.num('Your hour', 1, 12, 7); u.guard(t);
+      await u.show(d.slice(0, H), { down: true, note: `${H} cards go in your pocket` }); await u.wait(900); u.guard(t);
+      u.step(2); const rest = d.slice(H), clock = {}; rest.slice(0, 12).forEach((c, k) => clock[TrickMath.clockHour(k + 1)] = c);
+      u.say('I deal 12 cards round a clock, starting at 12 o’clock and going backwards: 12, 11, 10 …');
+      const face = shown => u.html(`<div class="clock">${[...Array(12)].map((_, i) => { const h = i + 1, a = (h / 12) * Math.PI * 2; return `<div class="ch" style="left:${50 + 40 * Math.sin(a)}%;top:${50 - 40 * Math.cos(a)}%"><span>${h}</span>${cardHTML(clock[h], { down: !shown.includes(h) })}</div>`; }).join('')}<div class="cmid">${shown.length ? 'Prediction:<br><b>' + Cards.name(d[12]) + '</b>' : 'Your hour?'}</div></div>`);
+      face([]); await u.next('Turn over my hour'); u.guard(t); u.step(3); face([H]); Tb_dataReveal(d[12]); u.say(`At ${H} o’clock: the <b>${Cards.long(clock[H])}</b> — the same as my prediction!`); beep('win');
+    },
+    explain: ['Before you start, I remember the <b>13th card</b> from the top.', 'When you take away your hour in cards, my card moves up to the spot (13 − your hour).', 'Dealing round the clock backwards puts that spot exactly on <b>your hour</b>.', '<b>Do it yourself:</b> peek at the 13th card, let them pocket their hour, deal from 12 o’clock backwards.'] },
+  { id: 'name', title: 'Spell Your Name', principle: 'Counting letters', blurb: 'Pick a card and tell me your name. Spell your name one card per letter — your card is on the last letter.', steps: ['Pick a card', 'Your name', 'I shuffle', 'Spell it'],
+    async perform(u, t) {
+      const d = Cards.draw(20); u.step(0); u.say('<b>Pick a card</b> — tap it and remember it.'); const i = await u.show(d, { pick: true, cols: 10 }); u.guard(t); const mine = d[i];
+      u.step(1); u.say('How many letters are in your first name?'); const L = await u.num('Letters', 2, 12, 5); u.guard(t);
+      u.step(2); const rest = shuffle(d.filter((_, k) => k !== i)); rest.splice(L - 1, 0, mine); u.say('I shuffle the cards…'); await u.show(rest, { down: true, cols: 10 }); await u.wait(900); u.guard(t);
+      u.step(3); u.say('Now deal one card for each letter of your name. On the last letter, turn the card over!'); for (let k = 0; k < L; k++) { await u.show(rest, { down: true, cols: 10, hl: new Set([k]) }); u.say(`Letter ${k + 1} of ${L}…`); await u.wait(400); u.guard(t); }
+      u.reveal(mine, 'Your card, on the last letter of your name!');
+    },
+    explain: ['When I “shuffle”, I secretly slide your card into the spot that matches the number of letters in your name.', 'A 5-letter name puts it 5th from the top.', 'Dealing one card per letter then lands on it exactly on the last letter.', '<b>Do it yourself:</b> have the card returned on top, then secretly move as many cards as the name has letters, minus one, from the bottom to the top before spelling.'] }
 ];
+function gridHTML(g) { return `<div class="mgrid">${g.map((row, r) => `<div class="mrow"><span class="eyebrow">Row ${r + 1}</span>${row.map(c => cardHTML(c)).join('')}</div>`).join('')}</div>`; }
+
 let Tb_key = null; function Tb_markPairs() { const cs = $$('.show .pc'); cs.forEach((c, i) => c.classList.add(i % 4 < 2 ? 'pairA' : 'pairB')); }
 function Tb_dataReveal(c) { const t = $('.show .ctable'); if (t) t.dataset.reveal = Cards.id(c); }
 registerGame({
-  id: 'show', name: 'The Show', tag: 'Studio · 20 tricks', desc: 'A studio of 20 mathematical card tricks. Watch each one performed on you, then learn exactly how it works, step by step.',
+  id: 'show', name: 'The Show', tag: 'Studio · 20 tricks', desc: '20 easy card tricks. Make a simple choice, watch the computer do the magic, then learn how to do it yourself.',
   art: () => { const K = kitVal('show'); return `<svg viewBox="0 0 100 100"><path d="M10 88h80" stroke="#f2c14e" stroke-width="3"/><g transform="rotate(-18 50 70)"><rect x="22" y="28" width="30" height="42" rx="4" fill="${K.back}" stroke="#fff" stroke-width="2"/><path d="M26 32h22v34H26z" fill="none" stroke="${K.trim}" stroke-width="1.5"/></g><g transform="rotate(4 50 70)"><rect x="35" y="22" width="30" height="42" rx="4" fill="#fff" stroke="#14111c" stroke-width="1.5"/><text x="40" y="34" font-size="9" font-family="Georgia" fill="#c41e3a">A</text><text x="50" y="50" font-size="16" text-anchor="middle" fill="#c41e3a">♥</text></g><g transform="rotate(22 50 70)"><rect x="48" y="26" width="30" height="42" rx="4" fill="${K.back}" stroke="#fff" stroke-width="2"/><path d="M52 30h22v34H52z" fill="none" stroke="${K.trim}" stroke-width="1.5"/></g><path d="M18 14l4 6 6-4-2 7 7 2-7 2 2 7-6-4-4 6-1-7-7-1 6-4-4-6 7 2z" fill="#f2c14e" transform="scale(.6) translate(10 0)"/></svg>`; },
   how: `<p>Welcome to <b>The Show</b>: 20 card tricks that work by mathematics, not sleight of hand.</p><p>Tap <b>Perform it on me</b> and the trick is done to you — you think of cards, choose piles, cut the deck. Then tap <b>How it works</b> and Professor Pip explains it step by step, so you can do it for your friends with a real deck.</p>`,
   create(host, opts) {
     const root = el('div', { class: 'show' }); host.appendChild(root);
     const paintBack = () => { const K = kitVal('show'); root.style.setProperty('--back', K.back); root.style.setProperty('--trim', K.trim); }; paintBack();
-    let mode = 'program', cur = null, step = 0, stage = null;
+    let mode = 'program', cur = null, step = 0, stage = null, curStep = 0;
     opts.innerHTML = `<button class="btn sm" id="shProg">🎩 The programme</button><span class="muted" style="font-size:.85rem">${TRICKS.length} acts · each explained step by step</span>`;
     $('#shProg', opts).onclick = program;
     const seen = () => P.showSeen || (P.showSeen = {});
     function program() {
       if (stage) stage.stop(); mode = 'program'; cur = null; root.className = 'show programme'; root.style.removeProperty('--cw');
-      root.innerHTML = `<div class="patter"><b>Tonight’s programme.</b> Pick an act. Every trick works by mathematics — watch it, then learn the secret.</div><div class="acts">${TRICKS.map((x, i) => `<div class="act ${seen()[x.id] ? 'done' : ''}"><div class="anum">${String(i + 1).padStart(2, '0')}</div><div class="grow"><b>${esc(x.title)}</b><div class="muted">${esc(x.blurb)}</div><div class="aprin">${esc(x.principle)}</div></div><div class="abtn"><button class="btn sm primary" data-perform="${i}">▶ Perform</button><button class="btn sm" data-explain="${i}">How it works</button></div></div>`).join('')}</div>`;
+      root.innerHTML = `<div class="patter"><b>Tonight’s programme.</b> Pick an act. You make one easy choice at a time and I do the rest — then I show you the secret so you can do it for your friends.</div><div class="acts">${TRICKS.map((x, i) => `<div class="act ${seen()[x.id] ? 'done' : ''}"><div class="anum">${String(i + 1).padStart(2, '0')}</div><div class="grow"><b>${esc(x.title)}</b><div class="muted">${esc(x.blurb)}</div><div class="aprin">${esc(x.principle)}</div></div><div class="abtn"><button class="btn sm primary" data-perform="${i}">▶ Perform</button><button class="btn sm" data-explain="${i}">How it works</button></div></div>`).join('')}</div>`;
       $('#gStats').innerHTML = `<span>Seen <b>${Object.keys(seen()).length}/${TRICKS.length}</b></span>`;
       coach();
     }
     root.addEventListener('click', e => { const a = e.target.closest('[data-perform]'), b = e.target.closest('[data-explain]'); if (a) perform(+a.dataset.perform); if (b) explain(+b.dataset.explain); });
     async function perform(i) {
-      if (stage) stage.stop(); cur = TRICKS[i]; mode = 'perform'; root.className = 'show'; const my = stage = ShowStage(root); const t = my.start(); coach();
+      if (stage) stage.stop(); cur = TRICKS[i]; mode = 'perform'; root.className = 'show'; const my = stage = ShowStage(root); const t = my.start(); my.onstep = k => { curStep = k; coach(); }; my.setSteps(cur.steps); coach();
       try { await cur.perform(my, t); my.guard(t);
         if (!seen()[cur.id]) { seen()[cur.id] = 1; const r = award('show', 'acts', { stars: 2 }); toast(`New act seen! +${r.earned} ★`); }
         saveP(); $('#gStats').innerHTML = `<span>Seen <b>${Object.keys(seen()).length}/${TRICKS.length}</b></span>`;
@@ -2976,7 +3016,7 @@ registerGame({
       if (mode === 'program' || !cur) { T.set({ stage: 'The Show · tonight’s programme', steps: null, prog: Object.keys(seen()).length / TRICKS.length, msg: 'Every act here works by <b>mathematics</b>. Watch one performed on you, then tap <b>How it works</b> and I’ll walk you through it, step by step, so you can perform it with a real deck.', next: null, acts: [{ label: '▶ Start with a classic', fn: () => perform(0), primary: true }] }); return; }
       const i = TRICKS.indexOf(cur);
       if (mode === 'explain') T.set({ stage: cur.title, steps: cur.explain.map((_, j) => 'Step ' + (j + 1)), cur: step, prog: (step + 1) / cur.explain.length, msg: `<b>${esc(cur.principle)}.</b> ${cur.explain[step]}`, next: null, acts: [{ label: '▶ Try it now', fn: () => perform(i), primary: true }, { label: '🎩 Programme', fn: program }] });
-      else T.set({ stage: cur.title, steps: ['Perform', 'Explain'], cur: 0, prog: .5, msg: `Play along — I’m performing <b>${esc(cur.title)}</b> on you. Afterwards I’ll show you the secret: <b>${esc(cur.principle)}</b>.`, next: null, acts: [{ label: '💡 How it works', fn: () => explain(i), primary: true }, { label: '🎩 Programme', fn: program }] });
+      else T.set({ stage: cur.title, steps: cur.steps, cur: curStep, prog: (curStep + 1) / cur.steps.length, msg: `Step ${curStep + 1} of ${cur.steps.length}: <b>${esc(cur.steps[curStep])}</b>. Just follow the instructions on the table — I do the hard part. Afterwards I’ll show you the secret so you can do it too.`, next: null, acts: [{ label: '💡 How it works', fn: () => explain(i), primary: true }, { label: '🎩 Programme', fn: program }] });
     }
     GAMES.show._api = { perform, explain, program };
     setTimeout(program, 20);
@@ -2985,6 +3025,166 @@ registerGame({
 });
 // every act's explanation is also a page in the lesson book
 TRICKS.forEach((x, i) => page('SH-' + String(i + 1).padStart(2, '0'), 'show', x.title, x.principle + ' card trick ' + x.id + ' ' + x.blurb, `<p><i>${esc(x.blurb)}</i></p><ol>${x.explain.map(s => `<li>${s}</li>`).join('')}</ol>`).practice = { label: '▶ Perform it on me', fn: () => { if (curId !== 'show') openGame('show'); setTimeout(() => GAMES.show._api.perform(i), 80); } });
+</script>
+<script>
+/* =====================================================================
+   20 Questions — the computer guesses yours (and learns), or you guess its
+   ===================================================================== */
+const TQ = (() => {
+  const Q = [
+    ['alive', 'Is it alive?'], ['animal', 'Is it an animal?'], ['mammal', 'Is it a mammal (fur or hair, drinks milk as a baby)?'], ['bird', 'Is it a bird?'], ['bug', 'Is it an insect, bug or spider?'],
+    ['water', 'Does it live or go in water?'], ['fly', 'Can it fly?'], ['big', 'Is it bigger than a person?'], ['huge', 'Is it bigger than a car?'], ['small', 'Would it fit in your hand?'],
+    ['pet', 'Do people keep it as a pet?'], ['legs4', 'Does it have four legs?'], ['legsmany', 'Does it have more than four legs?'], ['fur', 'Does it have fur?'], ['stripes', 'Does it have stripes?'],
+    ['farm', 'Does it live on a farm?'], ['helper', 'Does it work to help people (guarding, carrying, herding)?'], ['night', 'Is it awake mostly at night?'], ['hop', 'Does it hop?'], ['dangerous', 'Could it hurt you?'], ['webhoney', 'Does it make honey or a web?'],
+    ['food', 'Is it a food you eat?'], ['sweet', 'Is it sweet?'], ['fruitveg', 'Is it a fruit or vegetable?'], ['cooked', 'Is it usually cooked or baked?'], ['cold', 'Is it cold?'],
+    ['plant', 'Is it a plant?'], ['desert', 'Does it grow in the desert?'], ['machine', 'Does it use electricity or an engine?'], ['ride', 'Can you ride in it or on it?'], ['screen', 'Does it have a screen?'],
+    ['type', 'Can you type on it?'], ['kitchen', 'Is it found in a kitchen?'], ['metal', 'Is it made mostly of metal?'], ['nature', 'Is it found outdoors in nature?'], ['house', 'Is it usually found inside a house?'],
+    ['toy', 'Is it a toy, or something played for fun?'], ['music', 'Does it make music?'], ['read', 'Do you read or write with it?'], ['pocket', 'Does it fit in a pocket?'], ['wear', 'Do you wear it?'],
+    ['feet', 'Does it go on your feet?'], ['soft', 'Is it soft?'], ['round', 'Is it round?'], ['green', 'Is it green?'], ['red', 'Is it mostly red on the outside?'], ['yellow', 'Is it yellow or golden?']
+  ];
+  const OBJ = [['dog', '🐶'], ['cat', '🐱'], ['horse', '🐴'], ['cow', '🐮'], ['elephant', '🐘'], ['lion', '🦁'], ['tiger', '🐯'], ['mouse', '🐭'], ['rabbit', '🐰'], ['monkey', '🐵'], ['bear', '🐻'], ['giraffe', '🦒'], ['whale', '🐋'], ['dolphin', '🐬'], ['shark', '🦈'], ['goldfish', '🐟'], ['octopus', '🐙'], ['frog', '🐸'], ['snake', '🐍'], ['turtle', '🐢'], ['eagle', '🦅'], ['penguin', '🐧'], ['parrot', '🦜'], ['chicken', '🐔'], ['owl', '🦉'], ['butterfly', '🦋'], ['bee', '🐝'], ['spider', '🕷️'], ['ant', '🐜'], ['crocodile', '🐊'],
+    ['apple', '🍎'], ['banana', '🍌'], ['carrot', '🥕'], ['pizza', '🍕'], ['ice cream', '🍦'], ['chocolate', '🍫'], ['bread', '🍞'], ['cheese', '🧀'], ['egg', '🥚'], ['strawberry', '🍓'], ['broccoli', '🥦'], ['cake', '🎂'], ['tomato', '🍅'], ['watermelon', '🍉'],
+    ['tree', '🌳'], ['rose', '🌹'], ['sunflower', '🌻'], ['cactus', '🌵'], ['grass', '🌿'],
+    ['car', '🚗'], ['bicycle', '🚲'], ['airplane', '✈️'], ['boat', '⛵'], ['train', '🚆'], ['phone', '📱'], ['computer', '💻'], ['television', '📺'], ['refrigerator', '🧊'], ['toaster', '🔌'], ['spoon', '🥄'], ['chair', '🪑'], ['book', '📖'], ['pencil', '✏️'], ['ball', '⚽'], ['teddy bear', '🧸'], ['kite', '🪁'], ['hat', '🎩'], ['shoe', '👟'], ['sock', '🧦'], ['umbrella', '☂️'], ['clock', '⏰'], ['key', '🔑'], ['guitar', '🎸'], ['rock', '🪨']];
+  const L = s => s.split(',').map(x => x.trim());
+  const ANIMALS = OBJ.slice(0, 30).map(o => o[0]), PLANTS = L('tree,rose,sunflower,cactus,grass'), FOODS = L('apple,banana,carrot,pizza,ice cream,chocolate,bread,cheese,egg,strawberry,broccoli,cake,tomato,watermelon');
+  const YES = {
+    alive: [...ANIMALS, ...PLANTS], animal: ANIMALS, mammal: L('dog,cat,horse,cow,elephant,lion,tiger,mouse,rabbit,monkey,bear,giraffe,whale,dolphin'), bird: L('eagle,penguin,parrot,chicken,owl'), bug: L('butterfly,bee,spider,ant'),
+    water: L('whale,dolphin,shark,goldfish,octopus,frog,turtle,crocodile,penguin,boat'), fly: L('eagle,parrot,owl,butterfly,bee,airplane,kite'), big: L('horse,cow,elephant,lion,tiger,bear,giraffe,whale,dolphin,shark,crocodile,tree,car,airplane,boat,train,refrigerator'), huge: L('elephant,whale,giraffe,airplane,train,tree'), small: L('mouse,goldfish,butterfly,bee,spider,ant,egg,strawberry,key'),
+    pet: L('dog,cat,rabbit,goldfish,parrot,turtle,mouse'), legs4: L('dog,cat,horse,cow,elephant,lion,tiger,mouse,rabbit,bear,giraffe,frog,turtle,crocodile,chair'), legsmany: L('octopus,spider,ant,bee,butterfly'), fur: L('dog,cat,horse,cow,lion,tiger,mouse,rabbit,monkey,bear,giraffe,teddy bear'), stripes: L('tiger,bee'),
+    farm: L('cow,horse,chicken'), helper: L('dog,horse'), night: L('owl'), hop: L('rabbit,frog'), dangerous: L('lion,tiger,bear,shark,crocodile,snake'), webhoney: L('bee,spider'),
+    food: FOODS, sweet: L('apple,banana,ice cream,chocolate,strawberry,cake,watermelon'), fruitveg: L('apple,banana,carrot,strawberry,broccoli,tomato,watermelon'), cooked: L('pizza,bread,cake,egg'), cold: L('ice cream,refrigerator,penguin'),
+    plant: PLANTS, desert: L('cactus'), machine: L('car,airplane,train,phone,computer,television,refrigerator,toaster,clock'), ride: L('car,bicycle,airplane,boat,train,horse'), screen: L('phone,computer,television'),
+    type: L('phone,computer'), kitchen: L('refrigerator,toaster,spoon'), metal: L('car,bicycle,airplane,train,toaster,spoon,key,refrigerator'), nature: L('lion,tiger,bear,giraffe,elephant,eagle,owl,butterfly,bee,spider,ant,frog,snake,crocodile,whale,dolphin,shark,octopus,tree,rose,sunflower,cactus,grass,rock,monkey,penguin'),
+    house: L('phone,computer,television,refrigerator,toaster,spoon,chair,book,pencil,teddy bear,clock,sock,shoe,key,umbrella,hat,ball,guitar'), toy: L('ball,teddy bear,kite,guitar,bicycle'), music: L('guitar'), read: L('book,pencil'), pocket: L('phone,key,pencil'),
+    wear: L('hat,shoe,sock'), feet: L('shoe,sock'), soft: L('sock,teddy bear,bread,cake'), round: L('ball,apple,pizza,clock,tomato'), green: L('frog,broccoli,grass,cactus,tree,crocodile,parrot,turtle,watermelon'), red: L('apple,strawberry,tomato,rose'), yellow: L('banana,sunflower,cheese,lion')
+  };
+  const UNSURE = { plant: L('carrot,broccoli,tomato,apple,banana,strawberry,watermelon'), round: L('egg,watermelon'), water: L('snake'), fly: L('chicken'), ride: L('elephant'), cooked: L('broccoli,carrot'), house: [...L('dog,cat,goldfish,mouse,parrot'), ...FOODS], green: L('apple'), small: L('pencil,spoon,sock'), soft: L('rabbit,cat,dog,cheese'), night: L('cat,mouse'), dangerous: L('spider,bee'), pet: L('snake'), helper: L('cow'), machine: L('boat'), pocket: L('sock,egg') };
+  const learned = () => store.get('twenty.learned', { objects: [], questions: [], over: {} });
+  function all() {
+    const Ld = learned(); const qs = [...Q.map(([id, q]) => ({ id, q })), ...Ld.questions];
+    const base = OBJ.map(([name, emoji]) => { const a = {}; for (const [id] of Q) a[id] = (UNSURE[id] || []).includes(name) ? '?' : (YES[id] || []).includes(name) ? 'y' : 'n'; for (const lq of Ld.questions) a[lq.id] = '?'; return { name, emoji, a }; });
+    const objs = [...base, ...Ld.objects.map(o => ({ ...o, a: Object.assign(Object.fromEntries(qs.map(q => [q.id, '?'])), o.a) }))];
+    for (const o of objs) if (Ld.over[o.name]) Object.assign(o.a, Ld.over[o.name]);
+    return { qs, objs };
+  }
+  const contra = (o, ans) => { let c = 0; for (const id in ans) { const x = ans[id], v = o.a[id]; if ((x === 'y' || x === 'n') && (v === 'y' || v === 'n') && x !== v) c++; } return c; };
+  function possible(objs, ans, rejected = []) {
+    const live = objs.filter(o => !rejected.includes(o.name)); if (!live.length) return [];
+    const m = Math.min(...live.map(o => contra(o, ans))); return live.filter(o => contra(o, ans) === m);
+  }
+  function bestQ(qs, cands, ans) {
+    let best = null;
+    for (const q of qs) { if (ans[q.id]) continue; let y = 0, n = 0, u = 0; for (const o of cands) { const v = o.a[q.id]; if (v === 'y') y++; else if (v === 'n') n++; else u++; } if (!y || !n) continue; const score = Math.abs(y - n) + u * .6; if (!best || score < best.score) best = { q, y, n, u, score }; }
+    return best;
+  }
+  function teach(name, question, answers, wrongGuess) {
+    const Ld = learned(); name = name.trim().toLowerCase(); if (!name) return;
+    let qid = null; if (question && question.trim()) { qid = 'L' + (Ld.questions.length + 1) + '_' + Date.now().toString(36); let q = question.trim(); if (!q.endsWith('?')) q += '?'; Ld.questions.push({ id: qid, q: q[0].toUpperCase() + q.slice(1) }); }
+    const known = all().objs.find(o => o.name === name); const a = {}; for (const k in answers) if (answers[k] === 'y' || answers[k] === 'n') a[k] = answers[k]; if (qid) a[qid] = 'y';
+    if (known) Ld.over[name] = Object.assign(Ld.over[name] || {}, a); else Ld.objects.push({ name, emoji: '✨', a });
+    if (qid && wrongGuess) Ld.over[wrongGuess] = Object.assign(Ld.over[wrongGuess] || {}, { [qid]: 'n' });
+    store.set('twenty.learned', Ld);
+  }
+  return { all, possible, bestQ, teach, contra, learned, Q, OBJ };
+})();
+
+registerGame({
+  id: 'twenty', name: '20 Questions', tag: 'Guessing game', desc: 'Think of an animal, food or thing and I’ll guess it — or I think of one and you guess. The teacher shows you the smartest questions.',
+  art: () => `<svg viewBox="0 0 100 100"><path d="M14 18h56a8 8 0 0 1 8 8v26a8 8 0 0 1-8 8H42l-14 12V60H14a8 8 0 0 1-8-8V26a8 8 0 0 1 8-8z" fill="#fff"/><text x="42" y="49" font-family="Bungee,Impact" font-size="26" text-anchor="middle" fill="#ff5c93">20?</text><path d="M58 52h30a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6h-6v10l-10-10H58a6 6 0 0 1-6-6V58a6 6 0 0 1 6-6z" fill="#f2c14e"/><text x="73" y="74" font-size="16" text-anchor="middle">🐘</text></svg>`,
+  how: `<p><b>I guess yours:</b> think of an animal, a food, a plant or an everyday thing. Answer my questions with Yes, No or Not sure. I have 20 questions to guess it. If I get stuck, tell me what it was and I’ll <b>learn</b> it for next time.</p><p><b>You guess mine:</b> I think of something. Tap questions to ask them, then make a guess. The teacher shows which question is smartest — the one that splits what’s left closest to half.</p>`,
+  create(host, opts) {
+    const root = el('div', { class: 'tq' }); host.appendChild(root);
+    const paint = () => { const K = kitVal('twenty'); root.style.setProperty('--bub', K.bubble); root.style.setProperty('--bubink', K.ink); }; paint();
+    let mode = store.get('twenty.mode', 'guess'), ans = {}, asked = 0, rejected = [], cur = null, secret = null, guesses = [], over = false, hintsUsed = 0, showHint = false, lastGuess = null;
+    opts.innerHTML = `<label>Mode</label><div class="seg" id="tqM"><button data-m="guess">I guess yours</button><button data-m="you">You guess mine</button></div><button class="btn sm" id="tqForget">Forget what I learned</button>`;
+    $('#tqM', opts).onclick = e => { const b = e.target.closest('button'); if (b) { mode = b.dataset.m; store.set('twenty.mode', mode); newGame(); } };
+    $('#tqForget', opts).onclick = () => { if (confirm('Forget everything you taught me?')) { store.set('twenty.learned', { objects: [], questions: [], over: {} }); toast('Forgotten'); newGame(); } };
+    function newGame() {
+      $$('#tqM button', opts).forEach(b => b.classList.toggle('on', b.dataset.m === mode)); ans = {}; asked = 0; rejected = []; guesses = []; over = false; hintsUsed = 0; showHint = false; lastGuess = null;
+      if (mode === 'guess') intro(); else { const { objs } = TQ.all(); secret = objs[rnd(objs.length)]; youTurn(); }
+      stats(); coach();
+    }
+    const stats = () => $('#gStats').innerHTML = `<span>Questions <b>${asked}/20</b></span>`;
+    // ---------- I guess yours ----------
+    function intro() {
+      const { objs } = TQ.all();
+      root.innerHTML = `<div class="tqbub big">Think of an <b>animal</b>, a <b>food</b>, a <b>plant</b> or an <b>everyday thing</b>. Keep it secret!<div class="tqsmall">I know about ${objs.length} things so far — and I can learn more.</div></div><div class="tqemo">${objs.slice(0, 40).map(o => o.emoji).join(' ')}</div><div class="tqbtns"><button class="btn primary" data-go>I’ve got one</button></div>`;
+      $('[data-go]', root).onclick = ask;
+    }
+    function ask() {
+      const { qs, objs } = TQ.all(); const cands = TQ.possible(objs, ans, rejected); stats();
+      const bq = asked < 20 ? TQ.bestQ(qs, cands, ans) : null;
+      if (!cands.length) return stumped();
+      if (cands.length === 1 || !bq || asked >= 19) return guess(cands);
+      cur = bq; asked++;
+      root.innerHTML = `<div class="tqcount">Question ${asked} of 20</div><div class="tqbub big">${esc(bq.q.q)}</div><div class="tqbtns"><button class="btn primary" data-a="y">Yes</button><button class="btn" data-a="n">No</button><button class="btn" data-a="d">Not sure</button></div><div class="tqthink"><span class="tqsmall">I’m still thinking about ${cands.length} thing${cands.length > 1 ? 's' : ''}:</span><div class="tqemo">${cands.slice(0, 30).map(o => `<span title="${esc(o.name)}">${o.emoji}</span>`).join(' ')}${cands.length > 30 ? ' …' : ''}</div></div>`;
+      root.querySelector('.tqbtns').onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; ans[bq.q.id] = b.dataset.a; beep('tick'); ask(); };
+      coach();
+    }
+    function guess(cands) {
+      const c = cands.slice().sort((a, b) => Object.values(a.a).filter(v => v === '?').length - Object.values(b.a).filter(v => v === '?').length)[0]; lastGuess = c.name; asked++; stats();
+      root.innerHTML = `<div class="tqcount">Guess ${asked > 20 ? 20 : asked} of 20</div><div class="tqbub big">Is it… <span class="tqbig">${c.emoji}</span> <b>${esc(article(c.name))} ${esc(c.name)}</b>?</div><div class="tqbtns"><button class="btn primary" data-a="y">Yes!</button><button class="btn" data-a="n">No</button></div>`;
+      root.querySelector('.tqbtns').onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return;
+        if (b.dataset.a === 'y') { over = true; beep('win'); const r = award('twenty', 'I guessed', { stars: 1 }); root.innerHTML = `<div class="tqbub big">I got it in <b>${asked}</b> question${asked > 1 ? 's' : ''}! ${c.emoji}</div><div class="tqbtns"><button class="btn primary" data-again>Play again</button><button class="btn" data-sw>Now you guess mine</button></div>`; root.querySelector('[data-again]').onclick = newGame; root.querySelector('[data-sw]').onclick = () => { mode = 'you'; store.set('twenty.mode', mode); newGame(); }; coach(); return; }
+        rejected.push(c.name); if (asked >= 20) return stumped(); ask(); };
+      coach();
+    }
+    function stumped() {
+      over = true; beep('win'); const r = award('twenty', 'Stumped me', { stars: 3 });
+      root.innerHTML = `<div class="tqbub big">You stumped me! 🎉 <span class="tqsmall">+${r.earned} ★</span><br>What were you thinking of?</div><div class="tqform"><input id="tqName" placeholder="e.g. zebra" maxlength="30"><input id="tqQ" placeholder="${lastGuess ? `A yes/no question that’s YES for it but NO for ${esc(article(lastGuess))} ${esc(lastGuess)}` : 'A yes/no question that’s YES for it'}" maxlength="90"><button class="btn primary" id="tqTeach">Teach me</button><button class="btn" data-again>Skip</button></div>`;
+      root.querySelector('[data-again]').onclick = newGame;
+      $('#tqTeach', root).onclick = () => { const n = $('#tqName', root).value; if (!n.trim()) { toast('Type what it was'); return; } TQ.teach(n, $('#tqQ', root).value, ans, lastGuess); T.note(`Learned: <b>${esc(n.trim())}</b>${$('#tqQ', root).value.trim() ? ' and a new question' : ''}. I’ll remember it on this device.`); toast('Thanks — I’ve learned it!'); newGame(); };
+      setTimeout(() => $('#tqName', root)?.focus(), 50); coach();
+    }
+    // ---------- you guess mine ----------
+    function youTurn() {
+      const { qs, objs } = TQ.all(); const cands = TQ.possible(objs, ans, guesses); const bq = TQ.bestQ(qs, cands, ans); const reveal = (S.teacher === 'live' || showHint) && S.teacher !== 'off';
+      root.innerHTML = `<div class="tqcount">You’ve used ${asked} of 20 questions</div><div class="tqbub">I’m thinking of something. Ask me questions, then make your guess!</div>
+        <div class="tqasked">${Object.entries(ans).map(([id, a]) => `<span class="tqa ${a}">${esc(qs.find(q => q.id === id).q)} <b>${a === 'y' ? 'Yes' : a === 'n' ? 'No' : 'Sometimes'}</b></span>`).join('')}${guesses.map(g => `<span class="tqa n">Is it ${esc(g)}? <b>No</b></span>`).join('')}</div>
+        <div class="tqbtns"><button class="btn primary" data-guess>🎯 Make a guess</button></div>
+        <div class="tqqs">${qs.filter(q => !ans[q.id]).sort((a, b) => (reveal && bq ? (b.id === bq.q.id) - (a.id === bq.q.id) : 0)).map(q => `<button class="tqq ${reveal && bq && bq.q.id === q.id ? 'hint' : ''}" data-q="${q.id}">${esc(q.q)}</button>`).join('')}</div>`;
+      root.querySelector('.tqqs').onclick = e => { const b = e.target.closest('[data-q]'); if (!b || over) return; const v = secret.a[b.dataset.q]; ans[b.dataset.q] = v === '?' ? 'd' : v; asked++; beep('tick'); showHint = false; stats(); if (asked >= 20) return reveal20(false); youTurn(); };
+      root.querySelector('[data-guess]').onclick = pick;
+      coach();
+    }
+    function pick() {
+      const { objs } = TQ.all(); const cands = TQ.possible(objs, ans, guesses);
+      root.innerHTML = `<div class="tqbub">Tap your guess. <span class="tqsmall">Things that still fit your answers are bright.</span></div><div class="tqpick">${objs.map(o => `<button data-n="${esc(o.name)}" class="${cands.includes(o) ? '' : 'dim'} ${guesses.includes(o.name) ? 'gone' : ''}"><span>${o.emoji}</span>${esc(o.name)}</button>`).join('')}</div><div class="tqbtns"><button class="btn" data-back>← Back to questions</button></div>`;
+      root.querySelector('[data-back]').onclick = youTurn;
+      root.querySelector('.tqpick').onclick = e => { const b = e.target.closest('[data-n]'); if (!b || guesses.includes(b.dataset.n)) return; asked++; stats(); if (b.dataset.n === secret.name) return reveal20(true); guesses.push(b.dataset.n); beep('bad'); toast(`No, it isn’t ${article(b.dataset.n)} ${b.dataset.n}`); if (asked >= 20) return reveal20(false); youTurn(); };
+    }
+    function reveal20(won) {
+      over = true; if (won) { const r = award('twenty', 'You guessed', { stars: Math.max(1, Math.ceil((21 - asked) / 4)), hints: hintsUsed }); beep('win'); winOverlay(host, { title: 'You got it!', lines: [`It was ${article(secret.name)} ${secret.name} ${secret.emoji}`, `${asked} question${asked > 1 ? 's' : ''} used`], earned: r.earned, again: newGame }); }
+      else { beep('bad'); winOverlay(host, { title: 'Out of questions', lines: [`I was thinking of ${article(secret.name)} ${secret.name} ${secret.emoji}`, 'Tip: ask questions that split the possibilities in half.'], earned: 0, again: newGame }); }
+      coach();
+    }
+    const article = n => /^[aeiou]/i.test(n) ? 'an' : 'a';
+    // ---------- teacher ----------
+    function coach(why) {
+      if (teacherOffMsg(why)) { if (mode === 'you' && !over) youTurn(); return; }
+      const { qs, objs } = TQ.all();
+      if (mode === 'guess') {
+        const cands = TQ.possible(objs, ans, rejected); const bq = cur;
+        T.set({ stage: '20 Questions · I guess yours', steps: null, prog: asked / 20,
+          msg: asked ? `I’m down to <b>${cands.length}</b> possibilities. I always pick the question that splits them <b>closest to half</b>${bq ? ` — “${esc(bq.q.q)}” splits them ${bq.y} yes / ${bq.n} no` : ''}. That way every answer throws away about half, and 20 questions could find one thing in a million.` : 'Think of something and tap <b>I’ve got one</b>. Watch how I choose my questions — it’s the secret to winning when it’s your turn.',
+          next: null, acts: [{ label: '↻ New game', fn: newGame }, { label: '📖 Lessons', fn: () => showLessons('twenty') }] });
+      } else {
+        const cands = TQ.possible(objs, ans, guesses); const bq = TQ.bestQ(qs, cands, ans); const reveal = S.teacher === 'live' || showHint;
+        T.set({ stage: '20 Questions · you guess mine', steps: null, prog: asked / 20,
+          msg: `<b>${cands.length}</b> thing${cands.length > 1 ? 's' : ''} still fit your answers. The best question splits them closest to half.` + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint for the smartest question.</span>'),
+          next: reveal && bq ? { mv: '?', how: `Ask “${esc(bq.q.q)}” — ${bq.y} would say yes, ${bq.n} no.` } : reveal && cands.length <= 3 ? { mv: '🎯', how: `Time to guess! It’s one of: ${cands.map(c => c.emoji + ' ' + esc(c.name)).join(', ')}.` } : null,
+          acts: [{ label: '💡 Best question', fn: hint, primary: true }, { label: '↻ New game', fn: newGame }] });
+      }
+    }
+    function hint() { hintsUsed++; hintOn(); showHint = true; if (mode === 'you' && !over) youTurn(); else coach(); }
+    GAMES.twenty._dbg = { get secret() { return secret; }, get ans() { return ans; }, get asked() { return asked; }, newGame, setMode(m) { mode = m; newGame(); } };
+    setTimeout(newGame, 20);
+    return { hint, newGame, coach, undo() { toast('No take-backs in 20 Questions!'); }, restyle: paint, resize() { }, destroy() { } };
+  }
+});
+page('Q-001', 'twenty', 'How to win 20 Questions', '20 questions twenty guessing strategy split half binary', `<p>The best question splits what’s left <b>in half</b>. If half the things would say yes and half no, every answer throws away half — and 20 halvings can find one thing among a million (2²⁰ = 1,048,576).</p><p>Start broad (“Is it alive?”, “Is it an animal?”), then narrow down. Avoid questions where almost everything says the same answer — they waste a turn. In “You guess mine” the teacher highlights the best question each time.</p>`);
+page('Q-002', 'twenty', 'Teaching the computer', '20 questions learn teach new thing forget', `<p>If I can’t guess your thing, tell me what it was and give me a yes/no question that’s true for it. I remember it on this device and can guess it next time. <b>Forget what I learned</b> clears it.</p>`);
 </script>
 <script>
 /* =====================================================================

@@ -6,8 +6,11 @@ A puzzle lounge in a single HTML file. Walk up to any of ten tables and
 play: a Rubik-style colour cube (2×2 and 3×3), slide puzzles, jigsaws cut from
 your own photos, Lights Out, Tower of Hanoi, Flood, Ball Sort, Maze Runner,
 the Glitters & Sparkles match game and Block Stack (solo, Zen or against the
-computer at five skill levels). Next door, **The Show** is a studio of 20
-mathematical card tricks, performed on you and then explained step by step.
+computer at five skill levels), plus **20 Questions**, where the computer
+guesses what you're thinking (and learns new things) or you guess what it's
+thinking. Next door, **The Show** is a studio of 20 easy card tricks: you
+make one simple choice at a time, the computer does the magic, then it shows
+you how to do it yourself.
 A jukebox plays ten original music tracks while you play. Every table
 has a live teacher, Professor Pip, who watches your moves, shows the next one
 right on the puzzle, and teaches you the method so you can solve it alone.
@@ -44,36 +47,48 @@ jigsaws and slide puzzles never leave your device.
 
 ## The Show
 
-A studio of 20 card tricks that work by mathematics, not sleight of hand. Tap
-**Perform it on me** and the trick is done to you — you think of cards, pick
-piles, cut the deck, deal. Then **How it works** walks through the secret one
-step at a time, so you can do it with a real deck. Every explanation is also a
-page in the lesson book.
+Twenty easy card tricks the computer performs for you. Each one has a step
+tracker at the top ("1 Think of a card · 2 Pick a pile · 3 Reveal"), asks you
+for one simple thing at a time — think of a card, tap a pile, answer yes or
+no — and shows what it is doing. Afterwards **How it works** explains the
+secret in plain words, ending with **Do it yourself** instructions for a real
+deck. Every explanation is also a page in the lesson book.
 
-| # | Act | The mathematics |
+| # | Act | What you do |
 | --- | --- | --- |
-| 1 | The 21-Card Trick (pick a card) | Gergonne's pile trick |
-| 2 | Your Lucky Number (27 cards) | Base three |
-| 3 | The Kruskal Count | Coupling of random walks (works about 85% of the time) |
-| 4 | The Five-Card Trick | Pigeonhole principle (Fitch Cheney) |
-| 5 | The Gilbreath Shuffle | Gilbreath's principle |
-| 6 | The Mind-Reading Boards | Binary numbers |
-| 7 | The Down-Under Deal | The Josephus problem |
-| 8 | Spell It Out | Working backwards |
-| 9 | The Bottom-Card Sum | Counting with algebra |
-| 10 | The 1089 Prediction | Place value |
-| 11 | The Missing Digit | Casting out nines |
-| 12 | The Clock | Counting backwards |
-| 13 | Pick a Card, Any Card | The key card |
-| 14 | Chase the Kings | Cyclic order |
-| 15 | The Si Stebbins Stack | Modular arithmetic |
-| 16 | Mutus Nomen Dedit Cocis | A secret code word |
-| 17 | Out of This World | Conservation of colour |
-| 18 | The Remainder Reader | Chinese remainder theorem |
-| 19 | Perfect Shuffles | Binary and permutations (Elmsley) |
-| 20 | Cut and Turn Over Two | Parity (Hummer's principle) |
+| 1 | The 21-Card Trick | Think of a card, say which pile three times |
+| 2 | Your Lucky Number (27 cards) | Pick a number and a card; it ends up at your number |
+| 3 | Row and Column | Say which row, then which row again |
+| 4 | Yes or No | Four yes/no answers about 16 cards |
+| 5 | The Card Detective | Think of any card in the deck; watch it get found in six questions |
+| 6 | The Missing Card | Take a card away; the computer adds up the rest |
+| 7 | Think of a Number | Four easy sums land you on the predicted card |
+| 8 | The 10–20 Trick | Pick 10–19, deal, add the digits, count back |
+| 9 | Pick a Card, Any Card | Choose a card, cut as often as you like |
+| 10 | I Know the Top Card | Cut the deck; it names the top card |
+| 11 | Twin Cards | Ask for perfect shuffles; top and bottom stay twins |
+| 12 | Chase the Kings | Cut; all four Kings land in one pile |
+| 13 | Red and Black | Deal in pairs; the red and black piles match |
+| 14 | Five and Five | Cut and flip pairs; exactly five end face up |
+| 15 | The 1089 Prediction | Pick three cards, two sums, always 1089 |
+| 16 | Last Card Standing | Deal down, move under — the last card was predicted |
+| 17 | Pick a Pair | Remember a pair, say two rows |
+| 18 | Spell It Out | Spell A-C-E, T-W-O… each card appears on cue |
+| 19 | Around the Clock | Pick an hour; the card at your hour is the prediction |
+| 20 | Spell Your Name | Pick a card, spell your name, it turns up on the last letter |
 
-The Show has its own shop tab too, with card-back kits and dyes.
+The Show has its own shop tab with card-back kits and a dye.
+
+## 20 Questions
+
+- **I guess yours:** think of an animal, food, plant or everyday thing (74 to
+  start with) and answer Yes, No or Not sure. It always asks the question
+  that splits what's left closest to half, and usually guesses in under 8
+  questions. If you stump it, tell it what it was and a yes/no question for
+  it, and it remembers on your device.
+- **You guess mine:** it thinks of something; you tap questions and then
+  guess. The teacher shows how many things still fit and highlights the
+  smartest next question.
 
 Also in the parlour:
 
@@ -144,7 +159,9 @@ and Block Stack solo and against the AI — and the shop (buying, turning kits o
 and off, felts per table, dyes, reset, and reload) driven by real taps.
 The mathematics of all 20 card tricks was checked thousands of times each, and
 every act was performed on screen by an automated spectator who kept a secret
-card and answered honestly. The five Block Stack AI levels were benchmarked
+card and answered honestly — 40 out of 40 performances correct. The 20
+Questions guesser found all 74 things when answered truthfully (7.7 questions
+on average) and 73 of 74 even with one wrong answer. The five Block Stack AI levels were benchmarked
 playing 400 blocks with junk rows: Rookie lasts about 50 blocks, Easy about 80,
 Normal about 220, and Hard and Master survive all 400.
 
