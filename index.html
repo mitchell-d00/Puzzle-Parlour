@@ -189,6 +189,7 @@ select{background:var(--panel);border:1px solid var(--line);border-radius:9px;pa
 .ans{margin-top:10px;padding:10px;border-radius:10px;background:var(--well)}
 .toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:80;background:var(--ink);color:var(--bg);padding:.6rem 1rem;border-radius:12px;font-weight:700;box-shadow:var(--shadow);pointer-events:none;max-width:90vw;text-align:center}
 .win{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);z-index:15;color:#fff;text-align:center;padding:18px}
+.win .btn:not(.primary){color:var(--ink)}
 .win .wb{background:rgba(20,17,28,.92);border:1px solid rgba(242,193,78,.6);border-radius:16px;padding:18px 22px;max-width:360px}
 .win h3{font-family:var(--sign);font-size:2rem;color:#ff7aa8;text-shadow:0 0 14px rgba(255,92,147,.8)}
 .tour{position:fixed;z-index:70;inset:0;pointer-events:none}
@@ -289,6 +290,9 @@ select{background:var(--panel);border:1px solid var(--line);border-radius:9px;pa
 .tqqs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:860px}
 .tqq{background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:.45rem .7rem;font-size:.88rem;text-align:left}
 .tqq:hover{border-color:#f2c14e}.tqq.hint{border-color:#f2c14e;background:rgba(242,193,78,.25);animation:pulse .9s infinite}
+.tqbtns.five .btn{min-width:0;flex:1 1 30%;max-width:170px}
+.tqtop{display:flex;flex-direction:column;gap:4px;width:min(520px,100%);margin-top:6px}.tqtop div{display:grid;grid-template-columns:1fr 2fr 3ch;gap:8px;align-items:center;font-size:.85rem;text-align:left}.tqtop i{height:8px;border-radius:9px;background:linear-gradient(90deg,#f2c14e,#ff5c93);display:block}.tqtop b{font-family:var(--mono);font-size:.8rem}
+.tqsearch{width:min(560px,100%);background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:.55rem .8rem;font-size:1rem}
 .tqpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;width:100%;max-width:900px}
 .tqpick button{display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:6px;font-size:.78rem}
 .tqpick button span{font-size:1.6rem}.tqpick button.dim{opacity:.35}.tqpick button.gone{opacity:.12;text-decoration:line-through}
@@ -3028,163 +3032,1312 @@ TRICKS.forEach((x, i) => page('SH-' + String(i + 1).padStart(2, '0'), 'show', x.
 </script>
 <script>
 /* =====================================================================
-   20 Questions — the computer guesses yours (and learns), or you guess its
+   20 Questions knowledge base: ~1,000 things.
+   Each line: name [emoji] SIZE tags…   (name uses _ for spaces)
+   SIZE: XS smaller than a coin · S fits in your hand · M bigger than a hand, smaller than a person ·
+         L bigger than a person · XL bigger than a house · N not a solid thing
+   A tag means "yes"; -tag removes a category tag; ?tag means "sometimes / not sure". Anything else is "no".
+   ===================================================================== */
+const TQ_ATTRS = {
+  alive: 'Is it a living thing (or was it once)?', animal: 'Is it an animal?', plant: 'Is it a plant?', food: 'Is it something you eat?', drink: 'Is it something you drink?', made: 'Is it made by people?', place: 'Is it a place or a building?', natural: 'Is it a natural thing that isn’t alive (like a rock or the moon)?', job: 'Is it a job someone does?', imaginary: 'Is it imaginary, from stories or legends?',
+  mammal: 'Is it a mammal?', bird: 'Is it a bird?', fish: 'Is it a fish?', reptile: 'Is it a reptile?', amphibian: 'Is it an amphibian, like a frog?', bug: 'Is it an insect, spider or other creepy-crawly?', seacreature: 'Is it a sea creature without a backbone (like a crab or octopus)?', extinct: 'Is it extinct?',
+  fur: 'Does it have fur or hair?', feathers: 'Does it have feathers?', scales: 'Does it have scales?', shell: 'Does it have a shell?', wings: 'Does it have wings?', tail: 'Does it have a tail?', legs4: 'Does it have four legs?', legs2: 'Does it walk on two legs?', nolegs: 'Does it have no legs at all?', manylegs: 'Does it have more than four legs?', horns: 'Does it have horns or antlers?', stripes: 'Does it have stripes?', spots: 'Does it have spots?', longneck: 'Does it have a long neck?', trunk: 'Does it have a trunk?', mane: 'Does it have a mane?', pouch: 'Does it carry its babies in a pouch?', hump: 'Does it have a hump?', tusks: 'Does it have tusks?', spiky: 'Is it spiky or prickly?', long: 'Is it long and thin?', round: 'Is it round?', soft: 'Is it soft?',
+  fly: 'Can it fly?', swim: 'Can it swim (or does it go in water)?', climb: 'Does it climb trees?', dig: 'Does it dig or live underground?', hop: 'Does it hop or jump?', nocturnal: 'Is it awake at night?', venom: 'Is it venomous or poisonous?', dangerous: 'Could it hurt you?', pet: 'Do people keep it as a pet?', farm: 'Is it found on a farm?', carnivore: 'Does it eat other animals?', eggs: 'Does it lay eggs?', ride: 'Can you ride on it?', smell: 'Does it have a strong smell?', loud: 'Is it loud?',
+  ocean: 'Is it found in or by the sea?', fresh: 'Is it found in rivers, lakes or ponds?', desert: 'Is it found in the desert?', jungle: 'Is it found in the jungle or rainforest?', savanna: 'Is it found on the African grasslands (savanna)?', arctic: 'Is it found where it’s icy and snowy?', forest: 'Is it found in forests?', mountain: 'Is it found in the mountains?', city: 'Is it found in towns and cities?', home: 'Is it found inside a home?', garden: 'Is it found in a garden or backyard?', outdoors: 'Is it usually outdoors?', space: 'Is it found in space?', sky: 'Is it found in the sky?',
+  africa: 'Is it from Africa?', asia: 'Is it from Asia?', australia: 'Is it from Australia or New Zealand?', americas: 'Is it from the Americas?', europe: 'Is it from Europe?',
+  red: 'Is it red?', orange: 'Is it orange?', yellow: 'Is it yellow?', green: 'Is it green?', blue: 'Is it blue?', purple: 'Is it purple?', pink: 'Is it pink?', brown: 'Is it brown?', black: 'Is it black?', white: 'Is it white?', grey: 'Is it grey?', shiny: 'Is it shiny, gold or silver?', colourful: 'Is it many different colours?', transparent: 'Can you see through it?',
+  sweet: 'Is it sweet?', salty: 'Is it salty?', sour: 'Is it sour?', spicy: 'Is it spicy?', meat: 'Does it contain meat?', seafood: 'Is it seafood?', dairy: 'Does it contain milk or cheese?', bread: 'Is it made with bread, dough or pastry?', fruit: 'Is it a fruit?', veg: 'Is it a vegetable?', nuts: 'Does it have nuts in it?', grain: 'Is it made from rice, wheat or grain?', cooked: 'Is it usually cooked?', fried: 'Is it fried?', baked: 'Is it baked in an oven?', raw: 'Can you eat it raw, without cooking?', hotfood: 'Is it served hot?', coldfood: 'Is it served cold or frozen?', breakfast: 'Is it eaten for breakfast?', dessert: 'Is it a dessert?', snack: 'Is it a snack?', italian: 'Is it Italian?', mexican: 'Is it Mexican?', fastfood: 'Is it fast food?', soup: 'Is it a soup or stew?', juice: 'Is it a juice?', fizzy: 'Is it fizzy?', caffeine: 'Does it have caffeine?', hotdrink: 'Is it a hot drink?',
+  treegrown: 'Does it grow on a tree?', underground: 'Does it grow underground?', citrus: 'Is it a citrus fruit?', pit: 'Does it have a big stone or pit inside?', tropical: 'Is it tropical?', berry: 'Is it a berry?', leafy: 'Is it leafy?', peel: 'Do you peel it before eating?', seeds: 'Can you see lots of seeds in it?',
+  flower: 'Is it a flower?', tree: 'Is it a tree?', fragrant: 'Does it smell nice?', houseplant: 'Is it kept as a houseplant?', evergreen: 'Does it stay green all year?',
+  electric: 'Does it use electricity or batteries?', screen: 'Does it have a screen?', engine: 'Does it have an engine?', wheels: 'Does it have wheels?', buttons: 'Does it have buttons or keys?', sharp: 'Is it sharp?', metal: 'Is it made of metal?', wood: 'Is it made of wood?', plastic: 'Is it made of plastic?', glass: 'Is it made of glass?', fabric: 'Is it made of cloth or fabric?', paper: 'Is it made of paper or card?', rubber: 'Is it made of rubber?',
+  kitchen: 'Is it found in a kitchen?', bathroom: 'Is it found in a bathroom?', bedroom: 'Is it found in a bedroom?', school: 'Is it found at school?', office: 'Is it found in an office?',
+  wear: 'Do you wear it?', head: 'Does it go on your head?', feet: 'Does it go on your feet?', hands: 'Does it go on your hands or wrists?', jewelry: 'Is it jewellery?', container: 'Do you put things in it?', sit: 'Do you sit or lie on it?', toy: 'Is it a toy or game?', sport: 'Is it used in a sport?', ball: 'Is it a ball?', music: 'Does it make music?', write: 'Do you write or draw with it?', read: 'Do you read it?', clean: 'Is it used for cleaning or washing?', eat: 'Do you eat or drink with it?', cook: 'Is it used for cooking?', medical: 'Is it to do with doctors or medicine?', tool: 'Is it a tool?', military: 'Is it used by the army or navy?',
+  vehicle: 'Is it a vehicle?', water_v: 'Does it travel on water?', air_v: 'Does it fly through the air?', rail: 'Does it run on rails?', road: 'Does it drive on roads?', public: 'Is it public transport?', emergency: 'Is it used in emergencies?', cargo: 'Does it carry heavy loads?',
+  communicate: 'Is it used to talk to people far away?', light: 'Does it give off light?', time: 'Does it tell the time?', heat: 'Does it get hot or make heat?', cold: 'Does it keep things cold or is it icy?', money: 'Is it to do with money?',
+  building: 'Is it a building?', tall: 'Is it very tall?', fun: 'Do people go there for fun?', uniform: 'Do they wear a uniform?', creative: 'Is it an artistic or creative job?', helps: 'Do they help people who are hurt or in danger?', withanimals: 'Do they work with animals?', royal: 'Is it royal?', weather: 'Is it weather?', night: 'Do you see it at night?', old: 'Is it very old or ancient?', famous: 'Is it a famous landmark?',
+  legwear: 'Do you wear it on your legs?', summer: 'Do you wear it when it’s hot?', dressy: 'Is it worn for special occasions?', law: 'Is it to do with the law or catching criminals?',
+  activity: 'Is it a sport, game or activity you do?', team: 'Is it played in teams?', body: 'Is it a part of your body?', inside: 'Is it inside your body?', pair: 'Do you have two of them?',
+  tiny: 'Is it smaller than a coin?', hand: 'Would it fit in your hand?', bigperson: 'Is it bigger than a person?', bighouse: 'Is it bigger than a house?'
+};
+const TQ_CATS = [
+ { e: '🐾', base: 'alive animal mammal fur tail legs4 outdoors', items: `
+lion 🦁 L yellow brown mane carnivore dangerous savanna africa
+tiger 🐯 L orange black stripes carnivore dangerous jungle asia swim
+leopard 🐆 L yellow spots carnivore dangerous climb savanna africa
+cheetah 🐆 L yellow spots carnivore savanna africa
+jaguar L yellow spots carnivore dangerous jungle americas swim
+black_panther L black carnivore dangerous jungle climb
+snow_leopard L white grey spots carnivore mountain asia arctic
+lynx M grey brown spots carnivore forest europe
+bobcat M brown spots carnivore forest americas
+cougar L brown carnivore mountain americas dangerous
+elephant 🐘 XL grey trunk tusks savanna africa asia -fur ride
+rhinoceros 🦏 L grey horns savanna africa -fur dangerous
+hippopotamus 🦛 L grey fresh africa -fur dangerous swim
+giraffe 🦒 L yellow brown spots longneck savanna africa
+zebra 🦓 L black white stripes savanna africa
+gorilla 🦍 L black jungle africa -tail -legs4 legs2
+chimpanzee M black jungle africa climb -tail -legs4 legs2
+orangutan 🦧 L orange jungle asia climb -tail -legs4
+monkey 🐒 M brown jungle climb
+baboon M brown savanna africa
+lemur M grey stripes climb jungle africa
+sloth 🦥 M brown jungle climb americas
+brown_bear 🐻 L brown forest mountain dangerous
+polar_bear 🐻‍❄️ L white arctic carnivore dangerous swim
+panda 🐼 L black white forest asia climb
+koala 🐨 M grey australia climb pouch
+kangaroo 🦘 L brown australia hop pouch
+wallaby M brown australia hop pouch
+wombat M brown australia dig pouch
+platypus M brown australia fresh swim eggs venom
+wolf 🐺 L grey forest carnivore dangerous nocturnal loud
+fox 🦊 M orange forest carnivore nocturnal
+arctic_fox M white arctic carnivore
+coyote M brown desert americas carnivore nocturnal
+hyena M brown spots savanna africa carnivore loud
+deer 🦌 L brown forest horns
+moose L brown forest horns americas
+reindeer L brown arctic horns
+camel 🐫 L yellow brown desert hump ride
+llama 🦙 L white brown mountain americas longneck farm
+alpaca M white brown mountain americas farm
+bison 🦬 L brown americas horns
+yak L black brown mountain asia horns
+gazelle L brown savanna africa horns
+squirrel 🐿️ M brown grey forest climb city garden
+chipmunk S brown stripes forest dig
+raccoon 🦝 M grey black stripes nocturnal city forest
+skunk 🦨 M black white stripes nocturnal smell
+badger 🦡 M grey black white stripes dig forest nocturnal
+otter 🦦 M brown fresh swim
+beaver 🦫 M brown fresh swim forest
+hedgehog 🦔 S brown nocturnal garden spiky europe
+porcupine M brown spiky forest
+armadillo M grey americas dig shell
+mole S black dig garden
+bat 🦇 S black fly wings nocturnal -legs4
+hare M brown hop
+rat 🐀 S grey city
+anteater M brown americas jungle
+meerkat M brown desert africa dig
+tapir L black jungle americas
+warthog M grey savanna africa tusks
+wild_boar M brown forest tusks europe
+seal 🦭 L grey ocean swim arctic -legs4
+sea_lion L brown ocean swim -legs4 loud
+walrus L brown arctic ocean tusks swim -legs4
+okapi L brown stripes jungle africa
+mongoose S brown africa asia
+` },
+ { e: '🐾', base: 'alive animal mammal fur tail legs4', items: `
+dog 🐕 M pet ?brown ?black ?white loud home
+cat 🐈 M pet climb ?nocturnal home
+hamster 🐹 S pet brown orange home
+guinea_pig S pet brown home -tail
+rabbit 🐇 M pet hop white brown garden
+ferret M pet brown white long home
+gerbil S pet brown home
+chinchilla S pet grey soft home
+mouse 🐁 S grey white pet home
+horse 🐎 L farm brown ride
+pony L farm brown ride
+donkey 🫏 L grey farm ride loud
+cow 🐄 L farm black white spots
+bull L farm black horns dangerous
+pig 🐖 M farm pink -fur smell
+goat 🐐 M farm white horns
+sheep 🐑 M farm white soft
+mule L farm brown ride
+` },
+ { e: '🐦', base: 'alive animal bird feathers wings legs2 tail eggs fly outdoors', items: `
+eagle 🦅 L brown white carnivore mountain sky
+hawk M brown carnivore sky
+falcon M brown grey carnivore sky
+owl 🦉 M brown nocturnal forest carnivore
+vulture M black brown desert carnivore
+parrot 🦜 M green red colourful jungle pet loud
+macaw M red blue colourful jungle americas loud
+budgie S green blue pet home
+canary S yellow pet home
+cockatoo M white australia pet loud
+penguin 🐧 M black white arctic ocean swim -fly
+ostrich L brown black savanna africa -fly longneck
+emu L brown australia -fly longneck
+flamingo 🦩 L pink fresh longneck
+peacock 🦚 L blue green colourful
+swan 🦢 L white fresh swim longneck
+duck 🦆 M brown green fresh swim farm
+goose M white grey fresh farm swim loud
+chicken 🐔 M white brown farm ?fly
+rooster M red brown farm loud
+turkey 🦃 L brown farm ?fly
+pigeon M grey city
+crow M black city
+raven M black forest
+robin S red brown garden
+sparrow S brown city garden
+hummingbird XS green colourful jungle americas
+woodpecker S black red forest loud
+kingfisher S blue orange fresh
+pelican L white ocean
+seagull M white grey ocean city
+toucan M black orange jungle americas
+kiwi_bird S brown -fly nocturnal australia
+puffin S black white orange ocean
+heron L grey fresh longneck
+stork L white longneck europe
+dodo M grey extinct -fly
+` },
+ { e: '🐟', base: 'alive animal fish scales tail eggs swim nolegs', items: `
+shark 🦈 L grey ocean carnivore dangerous
+hammerhead_shark L grey ocean carnivore dangerous
+whale_shark XL grey spots ocean
+goldfish 🐟 S orange pet fresh home
+clownfish 🐠 S orange white stripes ocean
+salmon M pink red fresh ocean
+tuna L blue grey ocean
+swordfish L grey blue ocean long
+piranha S grey red fresh dangerous americas carnivore
+catfish M grey fresh
+eel M grey long ocean fresh -scales
+stingray M grey ocean venom
+pufferfish 🐡 S yellow spiky venom ocean
+seahorse S yellow orange ocean
+angelfish S yellow stripes ocean colourful
+carp M orange fresh
+trout M spots fresh
+cod M grey ocean
+sardine S grey ocean
+anglerfish M brown ocean light
+barracuda M grey ocean long dangerous
+betta_fish S colourful pet fresh home
+koi M orange white spots fresh pet
+guppy XS colourful pet fresh home
+` },
+ { e: '🐋', base: 'alive animal mammal swim ocean tail', items: `
+whale 🐋 XL grey blue
+blue_whale XL blue
+killer_whale XL black white carnivore dangerous
+dolphin 🐬 L grey
+narwhal L grey white tusks arctic
+manatee L grey fresh
+` },
+ { e: '🦀', base: 'alive animal seacreature swim ocean', items: `
+octopus 🐙 M orange red manylegs
+squid 🦑 M white manylegs
+jellyfish 🪼 M pink transparent venom nolegs
+starfish S orange
+sea_urchin S purple black spiky
+crab 🦀 S red shell manylegs
+lobster 🦞 M red shell manylegs
+shrimp 🦐 S pink manylegs
+oyster S grey shell
+clam S grey shell
+coral M pink orange colourful
+sea_anemone S colourful venom
+` },
+ { e: '🦎', base: 'alive animal reptile scales eggs tail outdoors', items: `
+snake 🐍 M green nolegs long ?venom ?dangerous
+cobra M brown nolegs long venom dangerous asia
+python L brown nolegs long jungle dangerous
+rattlesnake M brown nolegs long venom dangerous desert americas loud
+crocodile 🐊 L green legs4 fresh dangerous carnivore swim
+alligator L green black legs4 fresh americas dangerous carnivore swim
+lizard 🦎 S green legs4 desert
+gecko S green legs4 climb home
+iguana M green legs4 jungle americas
+chameleon S green colourful legs4 climb
+komodo_dragon L brown legs4 asia dangerous carnivore
+turtle 🐢 M green shell legs4 swim pet fresh
+tortoise M brown shell legs4
+sea_turtle L green shell ocean swim legs4
+` },
+ { e: '🐸', base: 'alive animal amphibian eggs fresh swim legs4', items: `
+frog 🐸 S green hop
+toad S brown hop
+tree_frog S green colourful climb jungle venom
+salamander S black orange spots tail
+newt S orange tail
+axolotl S pink tail
+` },
+ { e: '🐞', base: 'alive animal bug manylegs eggs outdoors', items: `
+ant 🐜 XS black red dig
+bee 🐝 S yellow black stripes fly wings venom garden
+wasp S yellow black stripes fly wings venom dangerous
+hornet S yellow brown fly wings venom dangerous
+butterfly 🦋 S colourful fly wings garden
+moth S brown grey fly wings nocturnal
+ladybug 🐞 XS red black spots fly wings garden
+beetle 🪲 S black shell
+dragonfly S blue green fly wings fresh long
+grasshopper S green hop
+cricket 🦗 S brown hop nocturnal loud
+fly 🪰 XS black fly wings home
+mosquito 🦟 XS black fly wings nocturnal
+spider 🕷️ S black ?venom home
+tarantula S black brown fur venom dangerous
+scorpion 🦂 S brown venom dangerous desert tail
+caterpillar 🐛 S green long garden
+worm 🪱 S pink nolegs dig long garden -manylegs
+snail 🐌 S brown shell garden nolegs -manylegs
+slug S brown nolegs garden -manylegs
+centipede S brown long
+termite XS white dig
+firefly XS yellow light fly wings nocturnal
+cockroach S brown home
+flea XS black hop
+stick_insect S brown green long
+praying_mantis S green carnivore
+` },
+ { e: '🦖', base: 'alive animal extinct', items: `
+tyrannosaurus 🦖 XL green brown carnivore dangerous legs2 tail scales reptile
+triceratops 🦕 XL green horns legs4 tail scales reptile
+stegosaurus XL green spiky legs4 tail scales reptile
+brachiosaurus XL green longneck legs4 tail scales reptile
+velociraptor M brown carnivore legs2 tail feathers dangerous
+pterodactyl L brown fly wings reptile
+mammoth L brown fur tusks trunk arctic mammal legs4
+sabre_tooth_tiger L brown carnivore mammal fur legs4 dangerous
+megalodon XL grey fish ocean dangerous swim carnivore
+` },
+ { e: '✨', base: 'imaginary', items: `
+dragon 🐉 XL green red fly wings tail dangerous scales legs4
+unicorn 🦄 L white horns legs4 tail
+mermaid 🧜 M ocean swim tail
+fairy 🧚 XS fly wings
+ghost 👻 M white fly nocturnal
+vampire 🧛 M black nocturnal dangerous legs2
+zombie 🧟 M green dangerous legs2
+troll L green legs2 dangerous
+giant XL legs2
+wizard 🧙 M legs2 old
+phoenix L red orange fly wings feathers
+yeti L white arctic mountain fur legs2
+loch_ness_monster XL fresh swim europe longneck
+goblin S green legs2
+pegasus L white fly wings legs4
+kraken XL ocean manylegs dangerous
+griffin L fly wings legs4
+alien 👽 M green space
+santa_claus 🎅 M red white legs2 night
+tooth_fairy XS fly wings night
+leprechaun S green legs2 europe
+` },
+ { e: '🍎', base: 'food fruit sweet raw', items: `
+apple 🍎 S red green treegrown round
+banana 🍌 S yellow peel tropical long
+orange 🍊 S orange citrus peel round treegrown
+lemon 🍋 S yellow citrus sour -sweet treegrown
+lime S green citrus sour -sweet treegrown
+grapefruit S yellow pink citrus sour treegrown
+grape 🍇 XS purple green round
+strawberry 🍓 XS red berry seeds
+blueberry 🫐 XS blue berry round
+raspberry XS red berry
+blackberry XS black purple berry
+cherry 🍒 XS red pit treegrown round
+peach 🍑 S orange pink pit treegrown soft
+plum S purple pit treegrown
+apricot S orange pit treegrown
+mango 🥭 S orange yellow pit tropical treegrown peel
+pineapple 🍍 M yellow brown spiky tropical peel
+watermelon 🍉 M green red seeds
+melon 🍈 M orange green
+kiwi_fruit 🥝 S brown green peel seeds
+pear 🍐 S green treegrown
+coconut 🥥 M brown treegrown tropical round
+papaya M orange tropical seeds treegrown
+fig S purple
+pomegranate S red seeds round
+avocado 🥑 S green pit treegrown -sweet
+olive XS green black pit treegrown -sweet salty
+date S brown pit treegrown
+passion_fruit S purple tropical sour seeds
+dragon_fruit S pink tropical seeds
+lychee XS red pink tropical peel
+cranberry XS red sour berry
+raisin XS brown snack
+` },
+ { e: '🥕', base: 'food veg', items: `
+carrot 🥕 S orange underground long raw
+potato 🥔 S brown underground cooked
+sweet_potato S orange underground cooked sweet
+onion 🧅 S white underground smell ?raw
+garlic 🧄 S white underground smell
+broccoli 🥦 S green cooked
+cauliflower M white cooked
+cabbage M green leafy round
+lettuce M green leafy raw
+spinach S green leafy
+celery M green long raw
+cucumber 🥒 S green long raw
+tomato 🍅 S red round raw
+bell_pepper 🫑 S green red raw
+chili_pepper 🌶️ S red spicy
+corn 🌽 S yellow cooked long
+peas XS green cooked round
+green_beans S green long cooked
+pumpkin 🎃 M orange round cooked
+zucchini S green long cooked
+eggplant 🍆 S purple cooked
+mushroom 🍄 S white brown cooked
+radish S red underground raw round
+beetroot S purple red underground
+asparagus S green long cooked
+brussels_sprout XS green cooked round
+leek M green white long cooked
+ginger S brown underground spicy
+turnip S white purple underground round
+` },
+ { e: '🍽️', base: 'food made cooked hotfood', items: `
+pizza 🍕 M italian dairy baked bread round fastfood
+spaghetti 🍝 M italian grain long
+lasagna M italian baked dairy meat
+hamburger 🍔 S fastfood meat bread americas
+hot_dog 🌭 S fastfood meat bread americas long
+french_fries 🍟 S fastfood fried salty yellow
+sandwich 🥪 S bread -cooked -hotfood
+taco 🌮 S mexican meat
+burrito 🌯 S mexican meat long
+nachos M mexican salty snack
+quesadilla S mexican dairy
+sushi 🍣 S asia seafood raw coldfood -cooked -hotfood grain
+ramen 🍜 M asia soup grain
+fried_rice 🍚 M asia fried grain
+dumplings 🥟 S asia
+spring_roll S asia fried long
+curry 🍛 M asia spicy
+steak 🥩 M meat brown
+fried_chicken 🍗 S meat fried
+roast_chicken M meat baked
+bacon 🥓 S meat breakfast salty fried
+sausage S meat long
+meatballs S meat italian round
+chicken_nuggets S fastfood fried meat
+fish_and_chips M seafood fried europe
+tomato_soup 🥣 M red soup
+chicken_soup M soup meat
+chili_con_carne M spicy meat mexican soup
+salad 🥗 M green raw coldfood veg -cooked -hotfood
+omelette M breakfast yellow
+pancakes 🥞 M breakfast sweet round
+waffles 🧇 M breakfast sweet
+french_toast M breakfast sweet bread
+cereal M breakfast coldfood dairy grain -cooked -hotfood
+porridge M breakfast grain
+scrambled_eggs M breakfast yellow
+toast S breakfast bread brown
+egg 🥚 S white breakfast round
+rice 🍚 M white asia grain
+noodles M asia grain long
+mac_and_cheese M dairy americas grain yellow
+grilled_cheese S dairy bread
+kebab M meat
+falafel S fried round
+paella M seafood grain europe
+tofu S white asia -hotfood
+` },
+ { e: '🍞', base: 'food made', items: `
+bread 🍞 M bread baked brown grain
+bagel 🥯 S bread breakfast round baked
+croissant 🥐 S bread baked breakfast europe
+pretzel 🥨 S bread salty baked snack brown
+cheese 🧀 S dairy yellow
+butter S dairy yellow
+popcorn 🍿 S snack salty white
+potato_chips S snack salty fried
+crackers S snack salty baked
+peanut_butter S brown nuts
+jam S sweet red fruit
+honey 🍯 S sweet yellow
+salt XS white salty
+sugar XS white sweet
+ketchup S red sour sweet
+yogurt S dairy white coldfood breakfast
+hummus S cooked
+guacamole S green mexican coldfood
+peanuts 🥜 XS brown nuts snack salty
+almonds XS brown nuts snack
+` },
+ { e: '🍰', base: 'food made sweet dessert', items: `
+cake 🍰 M baked bread
+birthday_cake 🎂 M baked bread colourful
+cupcake 🧁 S baked bread
+cookie 🍪 S baked brown round snack
+brownie S baked brown
+donut 🍩 S fried round bread
+ice_cream 🍦 S coldfood dairy
+popsicle S coldfood colourful
+chocolate 🍫 S brown snack
+candy 🍬 XS colourful snack
+lollipop 🍭 S colourful round
+cotton_candy M pink soft
+gummy_bears XS colourful snack
+marshmallow S white soft
+apple_pie 🥧 M baked bread
+muffin S baked breakfast bread
+cheesecake M dairy
+jelly S colourful coldfood
+candy_cane S red white stripes long
+chewing_gum XS pink
+caramel S brown
+macaron S colourful round
+churros S mexican fried long
+tiramisu M italian dairy
+toffee S brown
+` },
+ { e: '🥤', base: 'drink', items: `
+water 💧 N transparent
+milk 🥛 N white dairy
+orange_juice N orange juice sweet
+apple_juice N yellow juice sweet
+lemonade N yellow sour sweet coldfood
+hot_chocolate N brown sweet hotdrink dairy
+tea 🍵 N brown hotdrink caffeine
+coffee ☕ N brown hotdrink caffeine
+cola 🥤 N brown fizzy sweet caffeine
+milkshake N dairy sweet coldfood
+smoothie N fruit sweet coldfood colourful
+iced_tea N brown coldfood caffeine
+sparkling_water N fizzy transparent
+coconut_water N white tropical
+energy_drink N caffeine fizzy
+` },
+ { e: '🌸', base: 'alive plant outdoors', items: `
+rose 🌹 S flower red fragrant spiky garden
+tulip 🌷 S flower red colourful garden europe
+sunflower 🌻 M flower yellow tall garden
+daisy 🌼 S flower white yellow garden
+lily S flower white fragrant
+orchid S flower purple pink white houseplant tropical home
+lavender S flower purple fragrant garden
+daffodil S flower yellow garden
+dandelion S flower yellow garden
+lotus S flower pink fresh asia
+poppy S flower red
+violet S flower purple
+cherry_blossom 🌸 L flower pink tree asia
+carnation S flower pink
+marigold S flower orange
+hibiscus S flower red tropical
+venus_flytrap S green carnivore houseplant
+cactus 🌵 M green spiky desert
+aloe_vera S green spiky houseplant
+fern M green forest
+moss XS green forest soft
+grass 🌿 XS green garden
+bamboo L green tall asia long
+ivy M green climb
+seaweed M green ocean
+water_lily S flower white fresh
+oak_tree 🌳 XL brown green tree forest
+pine_tree 🌲 XL green tree forest evergreen spiky mountain
+palm_tree 🌴 XL green tree tropical ocean
+maple_tree XL red orange tree forest americas
+christmas_tree 🎄 L green tree evergreen home colourful
+willow_tree XL green tree fresh
+birch_tree XL white tree forest
+baobab_tree XL brown tree africa savanna
+redwood_tree XL brown tree tall americas forest
+bonsai_tree S green tree houseplant asia home
+clover XS green garden
+tumbleweed M brown desert round
+` },
+ { e: '🚗', base: 'made vehicle', items: `
+car 🚗 L road wheels engine
+taxi 🚕 L yellow road wheels engine public city
+bus 🚌 XL yellow road wheels engine public city
+school_bus XL yellow road wheels engine school
+fire_truck 🚒 XL red emergency road wheels engine loud
+ambulance 🚑 L white emergency road wheels engine medical loud
+police_car 🚓 L black white emergency road wheels engine loud law
+truck 🚚 XL cargo road wheels engine
+tractor 🚜 L green farm wheels engine
+motorcycle 🏍️ L road wheels engine loud
+bicycle 🚲 L wheels metal -engine
+scooter 🛴 M wheels metal toy
+train 🚆 XL rail engine public cargo long
+steam_train 🚂 XL rail engine black old
+subway 🚇 XL rail electric public city
+tram 🚊 XL rail electric public city
+airplane ✈️ XL air_v fly engine wings sky public
+helicopter 🚁 XL air_v fly engine sky emergency loud
+jet_fighter XL air_v fly engine military grey loud
+hot_air_balloon 🎈 XL air_v fly colourful sky round
+rocket 🚀 XL air_v fly space engine loud
+space_shuttle XL air_v fly space engine
+blimp XL air_v fly sky grey
+glider L air_v fly sky wings
+sailboat ⛵ L water_v swim ocean
+canoe L water_v swim wood fresh long
+kayak L water_v swim fresh long plastic
+rowboat L water_v swim wood fresh
+speedboat 🚤 L water_v swim engine ocean
+ship 🚢 XL water_v swim ocean cargo engine
+cruise_ship XL water_v swim ocean engine fun white
+battleship XL water_v swim ocean military grey metal engine
+submarine XL water_v swim ocean military engine metal
+aircraft_carrier XL water_v swim ocean military grey metal engine
+tank L military metal engine green dangerous
+jeep L road wheels engine green
+limousine L road wheels engine black long
+race_car 🏎️ L road wheels engine red sport loud
+golf_cart L wheels electric sport
+snowmobile L engine arctic
+cable_car XL mountain public
+ferry XL water_v swim public ocean engine
+yacht XL water_v swim ocean white
+pirate_ship XL water_v swim ocean wood old
+tugboat L water_v swim engine
+fishing_boat L water_v swim ocean engine
+garbage_truck XL road wheels engine cargo green city smell
+cement_mixer XL road wheels engine cargo
+forklift L wheels engine cargo
+bulldozer XL yellow engine cargo
+crane_truck XL yellow engine cargo tall
+monster_truck XL wheels engine loud fun
+camper_van XL road wheels engine
+horse_cart L wheels wood old
+sleigh L wood arctic
+raft M water_v swim wood
+jet_ski L water_v swim engine fun
+unicycle M wheels
+tricycle M wheels toy
+` },
+ { e: '🍴', base: 'made kitchen home', items: `
+spoon 🥄 S metal eat shiny
+fork 🍴 S metal sharp eat shiny
+knife 🔪 S metal sharp shiny dangerous
+chopsticks 🥢 S wood eat asia long
+plate 🍽️ M round eat white
+bowl 🥣 M round container eat
+cup S container eat
+mug ☕ S container eat hotdrink
+drinking_glass S glass transparent container eat
+teapot M container hotdrink
+kettle M electric heat container
+toaster M electric heat metal
+microwave M electric heat buttons
+oven L heat metal cook
+stove L heat metal cook
+refrigerator L cold electric white container
+freezer L cold electric container
+blender M electric sharp
+frying_pan M metal cook heat
+saucepan M metal cook container
+whisk S metal cook
+rolling_pin M wood cook long
+spatula S cook
+ladle S cook metal
+grater S metal sharp cook
+can_opener S metal tool
+cutting_board M wood cook
+oven_glove M fabric hands wear soft
+apron M fabric wear
+napkin S paper clean
+straw S plastic long eat
+lunchbox M container plastic school
+jar S glass container transparent
+bottle S container plastic
+dishwasher L electric clean
+kitchen_sink L metal clean
+coffee_maker M electric heat
+rice_cooker M electric heat cook
+colander M metal cook
+tongs S metal cook
+vegetable_peeler S metal sharp cook
+salt_shaker S container
+ice_cube_tray S cold plastic
+thermos S container metal
+` },
+ { e: '🛋️', base: 'made home', items: `
+chair 🪑 M sit legs4 wood
+sofa 🛋️ L sit soft fabric
+bed 🛏️ L sit soft bedroom
+table L legs4 wood
+desk L wood office school legs4
+bookshelf L wood container
+wardrobe L wood bedroom container
+lamp M light electric
+light_bulb 💡 S glass light electric
+candle 🕯️ S light heat
+alarm_clock ⏰ S time electric bedroom loud
+wall_clock M time round
+mirror M glass bathroom shiny
+window L glass transparent
+door L wood
+rug M fabric soft
+curtains L fabric
+pillow M soft fabric bedroom
+blanket L soft fabric bedroom
+towel M fabric bathroom soft clean
+toothbrush 🪥 S bathroom clean plastic long
+toothpaste S bathroom clean
+soap 🧼 S bathroom clean
+shampoo S bathroom clean container
+bathtub 🛁 L bathroom clean container
+shower L bathroom clean
+toilet 🚽 L bathroom white
+comb S plastic bathroom
+hairbrush S plastic bathroom
+hair_dryer M electric heat bathroom loud
+vacuum_cleaner M electric clean loud
+broom 🧹 M clean long wood
+mop M clean long
+bucket 🪣 M container plastic
+trash_can M container smell
+washing_machine L electric clean
+clothes_iron M electric heat metal
+electric_fan M electric cold
+air_conditioner L electric cold
+heater M electric heat
+fireplace L heat
+key 🔑 XS metal shiny
+padlock 🔒 S metal
+umbrella ☂️ M outdoors long fabric
+vase S glass container
+picture_frame M wood
+basket M container
+cardboard_box 📦 M container paper brown
+suitcase L container fabric
+backpack 🎒 M container school fabric
+wallet S container money
+coin 🪙 XS metal round money shiny
+banknote 💵 S paper money green
+piggy_bank S container money pink
+flashlight 🔦 S light electric
+rope M long
+ladder L metal tall
+hammock L fabric sit garden
+flower_pot S container garden
+watering_can M container garden
+lawn_mower M garden engine wheels loud
+wheelbarrow M garden wheels metal
+garden_hose M garden long rubber
+swing L garden toy
+fence L wood garden outdoors
+mailbox M outdoors container
+doormat M -home outdoors
+` },
+ { e: '👕', base: 'made wear fabric', items: `
+top_hat 🎩 S head black
+baseball_cap 🧢 S head
+crown 👑 S head jewelry shiny metal royal -fabric
+helmet ⛑️ S head plastic sport
+scarf 🧣 M long soft
+gloves 🧤 S hands
+mittens S hands soft
+socks 🧦 S feet soft
+sneakers 👟 S feet rubber sport
+boots 🥾 S feet
+sandals 🩴 S feet summer
+high_heels 👠 S feet dressy
+slippers S feet soft bedroom
+t_shirt 👕 M summer
+sweater M soft
+hoodie M soft
+jacket 🧥 M
+raincoat M yellow
+dress 👗 M dressy
+skirt M legwear
+jeans 👖 M blue legwear
+shorts M legwear summer
+pajamas M bedroom soft
+swimsuit 👙 M swim summer
+necktie 👔 M long dressy
+belt M long
+glasses 👓 S glass -fabric
+sunglasses 🕶️ S black -fabric summer
+wristwatch ⌚ S time hands metal -fabric
+ring 💍 XS jewelry shiny metal round hands -fabric
+necklace 📿 S jewelry shiny -fabric
+earrings XS jewelry shiny -fabric
+bracelet S jewelry hands -fabric
+mask 🎭 S head
+handbag 👜 M container
+bow_tie S dressy
+beanie S head soft
+wedding_dress L white dressy
+tutu M pink
+kimono M asia
+overalls M blue legwear
+uniform M uniform
+diaper S soft
+` },
+ { e: '🎵', base: 'made music', items: `
+piano 🎹 L buttons wood black white
+guitar 🎸 M wood
+electric_guitar M electric loud
+violin 🎻 M wood
+cello L wood
+harp L wood shiny
+drum 🥁 M round loud
+drum_kit L loud
+trumpet 🎺 M shiny metal loud
+trombone M shiny metal long loud
+saxophone 🎷 M shiny metal
+flute M shiny metal long
+clarinet M black long
+recorder S plastic long school
+harmonica S metal
+accordion M buttons
+ukulele S wood
+banjo M wood round
+xylophone M colourful
+triangle_instrument S metal shiny
+tambourine S round
+maracas S mexican
+bagpipes M loud europe
+tuba L shiny metal loud
+bell 🔔 S metal shiny loud
+whistle S plastic loud
+cymbals M metal shiny round loud
+didgeridoo M australia long wood
+microphone 🎤 S electric
+` },
+ { e: '⚽', base: 'made', items: `
+soccer_ball ⚽ M round ball sport black white toy
+basketball 🏀 M orange round ball sport
+baseball ⚾ S white round ball sport
+tennis_ball 🎾 S yellow round ball sport
+american_football 🏈 M brown ball sport
+volleyball 🏐 M white round ball sport
+golf_ball S white round ball sport
+bowling_ball 🎳 M round ball sport
+beach_ball M colourful round ball toy rubber
+tennis_racket M sport long
+baseball_bat M wood long sport
+golf_club M metal long sport
+hockey_stick M long sport wood
+skateboard 🛹 M wheels sport toy wood
+roller_skates S wheels feet wear sport
+ice_skates S feet wear sport sharp arctic
+skis L feet sport long arctic
+snowboard L sport arctic
+surfboard L sport ocean long
+frisbee 🥏 S round plastic toy
+kite 🪁 M toy fly sky colourful
+yo_yo 🪀 S round toy
+teddy_bear 🧸 M soft brown toy fabric
+doll 🪆 M toy
+puppet M toy fabric
+toy_car S wheels toy
+toy_train M wheels toy
+building_blocks 🧱 S plastic colourful toy
+jigsaw_puzzle 🧩 S paper toy
+rubiks_cube S colourful toy plastic
+chess_set ♟️ M toy wood black white
+dice 🎲 XS white toy
+playing_cards 🃏 S paper toy
+balloon 🎈 M rubber colourful round toy
+jump_rope M long toy sport
+trampoline L toy hop garden
+slide L toy outdoors
+seesaw L toy outdoors
+marbles XS glass round toy
+water_gun S plastic toy
+spinning_top S toy round
+boomerang M australia wood toy
+medal 🏅 S shiny round sport metal
+trophy 🏆 M shiny sport metal
+dumbbell M metal sport
+boxing_gloves 🥊 M red hands sport wear
+fishing_rod L long tool
+bow_and_arrow L sharp sport long
+dartboard M round sport
+video_game_console 🎮 S electric toy buttons
+` },
+ { e: '📱', base: 'made electric', items: `
+phone 📱 S screen buttons communicate
+computer 💻 M screen buttons office
+tablet S screen
+television 📺 L screen home
+radio 📻 M music communicate
+camera 📷 S buttons
+headphones 🎧 S music head wear
+speaker M music loud
+remote_control S buttons home
+printer M paper office
+computer_keyboard ⌨️ M buttons office
+computer_mouse 🖱️ S office
+calculator 🧮 S buttons school
+robot 🤖 M metal toy
+drone M fly air_v toy
+smartwatch S time hands screen wear
+battery 🔋 S
+telephone ☎️ M communicate buttons home
+walkie_talkie S communicate buttons
+satellite 🛰️ XL space metal sky
+` },
+ { e: '🔧', base: 'made', items: `
+hammer 🔨 S tool metal wood
+screwdriver 🪛 S tool metal long
+wrench 🔧 S tool metal
+saw 🪚 M tool sharp metal
+power_drill M tool electric loud
+axe 🪓 M tool sharp wood metal
+shovel M tool long garden metal
+rake M garden long tool
+pliers S tool metal
+tape_measure S tool
+nail XS metal sharp
+screw XS metal
+sticky_tape S office school
+glue S school
+scissors ✂️ S sharp metal school
+pencil ✏️ S write school wood long
+pen 🖊️ S write school office long
+crayon 🖍️ S colourful write school
+marker S write school
+paintbrush 🖌️ S write long
+ruler 📏 S long school
+eraser XS school rubber
+pencil_sharpener S school
+notebook 📓 S paper school write
+book 📖 S paper read school
+newspaper 📰 M paper read
+magazine M paper read colourful
+dictionary S paper read school
+map 🗺️ M paper read
+envelope ✉️ S paper office
+postage_stamp XS paper
+paperclip 📎 XS metal office
+stapler S metal office
+calendar 📅 M paper time
+globe 🌍 M round school
+chalk XS white write school
+blackboard L school black write
+magnifying_glass 🔍 S glass
+telescope 🔭 M glass long night
+microscope 🔬 M glass school
+compass 🧭 S round metal outdoors
+thermometer 🌡️ S medical
+stethoscope 🩺 S medical
+bandage 🩹 XS medical
+syringe 💉 S medical sharp
+wheelchair 🦽 L wheels medical sit
+crutches L medical long
+pill 💊 XS medical
+first_aid_kit M medical container
+magnet 🧲 S metal
+chain ⛓️ M metal long
+toolbox M container tool
+matchstick XS wood heat
+lighter S heat plastic light dangerous
+` },
+ { e: '🏠', base: 'place XL', items: `
+house 🏠 XL building home
+school_building 🏫 XL building school
+hospital 🏥 XL building medical
+library XL building read
+castle 🏰 XL building old royal
+palace XL building royal shiny
+church ⛪ XL building old
+museum XL building old fun
+zoo XL fun outdoors withanimals
+farm 🌾 XL outdoors farm withanimals
+beach 🏖️ XL ocean outdoors fun yellow
+park XL outdoors fun green
+playground XL outdoors fun toy
+airport ✈️ XL building air_v
+train_station XL building rail
+supermarket XL building food
+restaurant XL building food
+bakery XL building food
+cinema 🎦 XL building fun
+stadium 🏟️ XL fun sport loud
+swimming_pool XL swim fun
+lighthouse XL building tall ocean light
+bridge 🌉 XL outdoors long fresh
+skyscraper 🏙️ XL building tall city
+pyramid XL old desert africa famous
+eiffel_tower 🗼 XL tall metal europe famous
+statue_of_liberty 🗽 XL green americas famous
+great_wall_of_china XL long old asia famous
+igloo XL building arctic white cold
+tent ⛺ L fabric outdoors
+barn XL building farm red wood
+garage XL building
+bank XL building money
+post_office XL building
+police_station XL building emergency law
+fire_station XL building emergency
+space_station XL space
+amusement_park 🎢 XL fun outdoors
+aquarium XL fun fresh ocean
+hotel 🏨 XL building tall
+theater 🎭 XL building fun
+` },
+ { e: '🌍', base: 'natural', items: `
+sun ☀️ XL space yellow light round sky heat
+moon 🌙 XL space white grey round sky night
+star ⭐ XL space sky light night
+earth 🌍 XL space round blue green
+mars XL space red round
+jupiter XL space round orange
+saturn 🪐 XL space round yellow
+comet ☄️ XL space sky night
+black_hole XL space black dangerous
+galaxy XL space colourful
+cloud ☁️ XL white sky weather soft
+rain 🌧️ N sky weather fresh
+snow ❄️ N white cold weather arctic
+snowflake XS white cold weather
+rainbow 🌈 XL colourful sky weather
+lightning ⚡ XL sky light dangerous weather loud
+tornado 🌪️ XL dangerous weather sky
+wind 🌬️ N weather
+fog 🌫️ N grey weather
+ice 🧊 S cold transparent
+fire 🔥 M heat red orange dangerous light
+smoke N grey sky
+rock 🪨 S grey outdoors
+sand XS yellow ocean desert
+mud N brown outdoors
+diamond 💎 XS shiny transparent jewelry
+gold_nugget S shiny yellow metal money
+crystal S transparent shiny
+pearl XS white round ocean jewelry shiny
+seashell 🐚 S ocean
+leaf 🍂 S green
+feather 🪶 S soft
+bone 🦴 M white
+snowman ☃️ L white cold made arctic
+icicle S cold transparent long
+iceberg XL arctic ocean white cold
+volcano 🌋 XL mountain dangerous heat
+mountain 🏔️ XL tall outdoors
+island 🏝️ XL ocean outdoors
+desert_dunes 🏜️ XL desert yellow heat
+forest XL green outdoors
+cave XL outdoors mountain
+waterfall XL fresh outdoors loud
+river XL fresh outdoors long
+lake XL fresh outdoors
+ocean 🌊 XL ocean blue outdoors
+wave 🌊 L ocean
+coal S black heat
+` },
+ { e: '🧑', base: 'job M legs2', items: `
+doctor 🧑‍⚕️ medical helps
+nurse medical helps uniform
+dentist medical
+vet withanimals medical
+teacher 🧑‍🏫 school
+firefighter 🧑‍🚒 emergency uniform helps
+police_officer 👮 uniform emergency helps law
+pilot 🧑‍✈️ air_v uniform fly
+astronaut 🧑‍🚀 space uniform
+chef 🧑‍🍳 food kitchen uniform cook
+baker food bread
+farmer 🧑‍🌾 farm withanimals outdoors
+fisherman ocean outdoors
+builder uniform outdoors tool
+carpenter wood tool
+plumber tool
+electrician electric tool
+mechanic tool vehicle
+scientist 🧑‍🔬
+artist 🧑‍🎨 creative write
+musician music creative
+singer 🎤 music creative
+actor creative fun
+dancer creative
+author creative write read
+librarian read
+mail_carrier uniform
+bus_driver vehicle road public
+taxi_driver vehicle road
+soldier 💂 military uniform
+sailor water_v uniform ocean military
+lifeguard swim ocean helps
+zookeeper withanimals
+gardener garden outdoors
+hairdresser sharp creative
+cashier money buttons food
+photographer creative
+judge law old
+programmer electric office
+waiter food
+clown 🤡 fun colourful
+magician 🧙 fun
+athlete sport
+football_player sport ball
+ballerina creative pink
+cowboy 🤠 farm withanimals ride americas
+king 🤴 royal
+queen 👸 royal
+detective law
+` },
+  { e: '🏅', base: 'activity N', items: `
+soccer team ball outdoors sport
+tennis ball sport outdoors
+golf ball sport outdoors
+swimming swim sport water_v
+running sport outdoors
+cycling sport wheels outdoors
+skiing sport arctic mountain
+ice_skating sport arctic cold
+surfing sport ocean
+skateboarding sport wheels
+boxing sport dangerous hands
+karate sport asia
+gymnastics sport hop
+chess black white toy
+checkers black red toy
+hide_and_seek toy outdoors
+hopscotch toy outdoors hop
+bowling sport ball
+basketball_game team ball sport
+volleyball_game team ball sport
+baseball_game team ball sport americas
+rugby team ball sport
+cricket_game team ball sport europe
+ice_hockey team sport arctic cold
+fishing outdoors fresh
+camping outdoors forest
+dancing music fun
+painting creative colourful
+`},
+  { e: '🫀', base: 'body alive', items: `
+hand ✋ S pair hands
+foot 🦶 S pair feet
+eye 👁️ XS pair head round
+ear 👂 S pair head
+nose 👃 S head
+mouth 👄 S head eat red
+teeth 🦷 XS head white eat
+tongue 👅 S head pink eat
+hair S head long soft
+heart 🫀 S inside red
+brain 🧠 S inside head pink
+skin N soft
+finger S long hands
+toe XS feet
+knee S pair
+elbow S pair
+shoulder S pair
+stomach S inside food
+lungs S inside pair pink
+blood N inside red
+arm M pair long
+leg M pair long
+fingernail XS hands
+lips S head red pink pair
+`}
+];
+</script>
+<script>
+/* =====================================================================
+   20 Questions — a probabilistic guesser over ~1,000 things.
+   • Every thing has a probability of "yes" for every question.
+   • Answers (Yes / Probably / Don't know / Probably not / No) update a Bayesian
+     belief over all things, so a wrong answer lowers a thing's odds instead of ruling it out.
+   • Each question is chosen for maximum expected information gain (in bits).
+   • Every finished game is learned from: answers nudge the probabilities, and
+     new things and new questions can be taught.
    ===================================================================== */
 const TQ = (() => {
-  const Q = [
-    ['alive', 'Is it alive?'], ['animal', 'Is it an animal?'], ['mammal', 'Is it a mammal (fur or hair, drinks milk as a baby)?'], ['bird', 'Is it a bird?'], ['bug', 'Is it an insect, bug or spider?'],
-    ['water', 'Does it live or go in water?'], ['fly', 'Can it fly?'], ['big', 'Is it bigger than a person?'], ['huge', 'Is it bigger than a car?'], ['small', 'Would it fit in your hand?'],
-    ['pet', 'Do people keep it as a pet?'], ['legs4', 'Does it have four legs?'], ['legsmany', 'Does it have more than four legs?'], ['fur', 'Does it have fur?'], ['stripes', 'Does it have stripes?'],
-    ['farm', 'Does it live on a farm?'], ['helper', 'Does it work to help people (guarding, carrying, herding)?'], ['night', 'Is it awake mostly at night?'], ['hop', 'Does it hop?'], ['dangerous', 'Could it hurt you?'], ['webhoney', 'Does it make honey or a web?'],
-    ['food', 'Is it a food you eat?'], ['sweet', 'Is it sweet?'], ['fruitveg', 'Is it a fruit or vegetable?'], ['cooked', 'Is it usually cooked or baked?'], ['cold', 'Is it cold?'],
-    ['plant', 'Is it a plant?'], ['desert', 'Does it grow in the desert?'], ['machine', 'Does it use electricity or an engine?'], ['ride', 'Can you ride in it or on it?'], ['screen', 'Does it have a screen?'],
-    ['type', 'Can you type on it?'], ['kitchen', 'Is it found in a kitchen?'], ['metal', 'Is it made mostly of metal?'], ['nature', 'Is it found outdoors in nature?'], ['house', 'Is it usually found inside a house?'],
-    ['toy', 'Is it a toy, or something played for fun?'], ['music', 'Does it make music?'], ['read', 'Do you read or write with it?'], ['pocket', 'Does it fit in a pocket?'], ['wear', 'Do you wear it?'],
-    ['feet', 'Does it go on your feet?'], ['soft', 'Is it soft?'], ['round', 'Is it round?'], ['green', 'Is it green?'], ['red', 'Is it mostly red on the outside?'], ['yellow', 'Is it yellow or golden?']
-  ];
-  const OBJ = [['dog', '🐶'], ['cat', '🐱'], ['horse', '🐴'], ['cow', '🐮'], ['elephant', '🐘'], ['lion', '🦁'], ['tiger', '🐯'], ['mouse', '🐭'], ['rabbit', '🐰'], ['monkey', '🐵'], ['bear', '🐻'], ['giraffe', '🦒'], ['whale', '🐋'], ['dolphin', '🐬'], ['shark', '🦈'], ['goldfish', '🐟'], ['octopus', '🐙'], ['frog', '🐸'], ['snake', '🐍'], ['turtle', '🐢'], ['eagle', '🦅'], ['penguin', '🐧'], ['parrot', '🦜'], ['chicken', '🐔'], ['owl', '🦉'], ['butterfly', '🦋'], ['bee', '🐝'], ['spider', '🕷️'], ['ant', '🐜'], ['crocodile', '🐊'],
-    ['apple', '🍎'], ['banana', '🍌'], ['carrot', '🥕'], ['pizza', '🍕'], ['ice cream', '🍦'], ['chocolate', '🍫'], ['bread', '🍞'], ['cheese', '🧀'], ['egg', '🥚'], ['strawberry', '🍓'], ['broccoli', '🥦'], ['cake', '🎂'], ['tomato', '🍅'], ['watermelon', '🍉'],
-    ['tree', '🌳'], ['rose', '🌹'], ['sunflower', '🌻'], ['cactus', '🌵'], ['grass', '🌿'],
-    ['car', '🚗'], ['bicycle', '🚲'], ['airplane', '✈️'], ['boat', '⛵'], ['train', '🚆'], ['phone', '📱'], ['computer', '💻'], ['television', '📺'], ['refrigerator', '🧊'], ['toaster', '🔌'], ['spoon', '🥄'], ['chair', '🪑'], ['book', '📖'], ['pencil', '✏️'], ['ball', '⚽'], ['teddy bear', '🧸'], ['kite', '🪁'], ['hat', '🎩'], ['shoe', '👟'], ['sock', '🧦'], ['umbrella', '☂️'], ['clock', '⏰'], ['key', '🔑'], ['guitar', '🎸'], ['rock', '🪨']];
-  const L = s => s.split(',').map(x => x.trim());
-  const ANIMALS = OBJ.slice(0, 30).map(o => o[0]), PLANTS = L('tree,rose,sunflower,cactus,grass'), FOODS = L('apple,banana,carrot,pizza,ice cream,chocolate,bread,cheese,egg,strawberry,broccoli,cake,tomato,watermelon');
-  const YES = {
-    alive: [...ANIMALS, ...PLANTS], animal: ANIMALS, mammal: L('dog,cat,horse,cow,elephant,lion,tiger,mouse,rabbit,monkey,bear,giraffe,whale,dolphin'), bird: L('eagle,penguin,parrot,chicken,owl'), bug: L('butterfly,bee,spider,ant'),
-    water: L('whale,dolphin,shark,goldfish,octopus,frog,turtle,crocodile,penguin,boat'), fly: L('eagle,parrot,owl,butterfly,bee,airplane,kite'), big: L('horse,cow,elephant,lion,tiger,bear,giraffe,whale,dolphin,shark,crocodile,tree,car,airplane,boat,train,refrigerator'), huge: L('elephant,whale,giraffe,airplane,train,tree'), small: L('mouse,goldfish,butterfly,bee,spider,ant,egg,strawberry,key'),
-    pet: L('dog,cat,rabbit,goldfish,parrot,turtle,mouse'), legs4: L('dog,cat,horse,cow,elephant,lion,tiger,mouse,rabbit,bear,giraffe,frog,turtle,crocodile,chair'), legsmany: L('octopus,spider,ant,bee,butterfly'), fur: L('dog,cat,horse,cow,lion,tiger,mouse,rabbit,monkey,bear,giraffe,teddy bear'), stripes: L('tiger,bee'),
-    farm: L('cow,horse,chicken'), helper: L('dog,horse'), night: L('owl'), hop: L('rabbit,frog'), dangerous: L('lion,tiger,bear,shark,crocodile,snake'), webhoney: L('bee,spider'),
-    food: FOODS, sweet: L('apple,banana,ice cream,chocolate,strawberry,cake,watermelon'), fruitveg: L('apple,banana,carrot,strawberry,broccoli,tomato,watermelon'), cooked: L('pizza,bread,cake,egg'), cold: L('ice cream,refrigerator,penguin'),
-    plant: PLANTS, desert: L('cactus'), machine: L('car,airplane,train,phone,computer,television,refrigerator,toaster,clock'), ride: L('car,bicycle,airplane,boat,train,horse'), screen: L('phone,computer,television'),
-    type: L('phone,computer'), kitchen: L('refrigerator,toaster,spoon'), metal: L('car,bicycle,airplane,train,toaster,spoon,key,refrigerator'), nature: L('lion,tiger,bear,giraffe,elephant,eagle,owl,butterfly,bee,spider,ant,frog,snake,crocodile,whale,dolphin,shark,octopus,tree,rose,sunflower,cactus,grass,rock,monkey,penguin'),
-    house: L('phone,computer,television,refrigerator,toaster,spoon,chair,book,pencil,teddy bear,clock,sock,shoe,key,umbrella,hat,ball,guitar'), toy: L('ball,teddy bear,kite,guitar,bicycle'), music: L('guitar'), read: L('book,pencil'), pocket: L('phone,key,pencil'),
-    wear: L('hat,shoe,sock'), feet: L('shoe,sock'), soft: L('sock,teddy bear,bread,cake'), round: L('ball,apple,pizza,clock,tomato'), green: L('frog,broccoli,grass,cactus,tree,crocodile,parrot,turtle,watermelon'), red: L('apple,strawberry,tomato,rose'), yellow: L('banana,sunflower,cheese,lion')
-  };
-  const UNSURE = { plant: L('carrot,broccoli,tomato,apple,banana,strawberry,watermelon'), round: L('egg,watermelon'), water: L('snake'), fly: L('chicken'), ride: L('elephant'), cooked: L('broccoli,carrot'), house: [...L('dog,cat,goldfish,mouse,parrot'), ...FOODS], green: L('apple'), small: L('pencil,spoon,sock'), soft: L('rabbit,cat,dog,cheese'), night: L('cat,mouse'), dangerous: L('spider,bee'), pet: L('snake'), helper: L('cow'), machine: L('boat'), pocket: L('sock,egg') };
-  const learned = () => store.get('twenty.learned', { objects: [], questions: [], over: {} });
-  function all() {
-    const Ld = learned(); const qs = [...Q.map(([id, q]) => ({ id, q })), ...Ld.questions];
-    const base = OBJ.map(([name, emoji]) => { const a = {}; for (const [id] of Q) a[id] = (UNSURE[id] || []).includes(name) ? '?' : (YES[id] || []).includes(name) ? 'y' : 'n'; for (const lq of Ld.questions) a[lq.id] = '?'; return { name, emoji, a }; });
-    const objs = [...base, ...Ld.objects.map(o => ({ ...o, a: Object.assign(Object.fromEntries(qs.map(q => [q.id, '?'])), o.a) }))];
-    for (const o of objs) if (Ld.over[o.name]) Object.assign(o.a, Ld.over[o.name]);
+  const SIZE = { XS: { tiny: 1, hand: 1, bigperson: 0, bighouse: 0 }, S: { tiny: 0, hand: 1, bigperson: 0, bighouse: 0 }, M: { tiny: 0, hand: 0, bigperson: 0, bighouse: 0 }, L: { tiny: 0, hand: 0, bigperson: 1, bighouse: 0 }, XL: { tiny: 0, hand: 0, bigperson: 1, bighouse: 1 } };
+  const YES = .94, NO = .05, MAYBE = .5, K = 3, EPS = .08; // EPS: how much a single answer can be wrong without ruling a thing out
+  let base = null;
+  function parse() {
+    if (base) return base;
+    const qs = Object.entries(TQ_ATTRS).map(([id, q]) => ({ id, q }));
+    const objs = [];
+    for (const c of TQ_CATS) {
+      const bt = c.base.split(/\s+/).filter(Boolean); const bsize = bt.find(t => SIZE[t] || t === 'N');
+      for (const line of c.items.split('\n').map(x => x.trim()).filter(Boolean)) {
+        const t = line.split(/\s+/); const name = t[0].replace(/_/g, ' ');
+        let i = 1, emoji = c.e; if (t[1] && /[^\x00-\x7F]/.test(t[1])) { emoji = t[1]; i = 2; }
+        const rest = t.slice(i); const size = rest.find(x => SIZE[x] || x === 'N') || bsize || 'M';
+        const yes = new Set(), maybe = new Set();
+        for (const tok of [...bt, ...rest]) { if (SIZE[tok] || tok === 'N') continue; if (tok[0] === '-') { yes.delete(tok.slice(1)); maybe.delete(tok.slice(1)); } else if (tok[0] === '?') { yes.delete(tok.slice(1)); maybe.add(tok.slice(1)); } else yes.add(tok); }
+        const p = {}; for (const { id } of qs) p[id] = SIZE[size] && SIZE[size][id] != null ? (SIZE[size][id] ? YES : NO) : (size === 'N' && ['tiny', 'hand', 'bigperson', 'bighouse'].includes(id)) ? MAYBE : yes.has(id) ? YES : maybe.has(id) ? MAYBE : NO;
+        objs.push({ name, emoji, p });
+      }
+    }
+    return base = { qs, objs };
+  }
+  const brain = () => store.get('twenty.brain', { objects: [], questions: [], stats: {}, plays: {} });
+  const saveBrain = b => store.set('twenty.brain', b);
+  // the knowledge base with everything learned so far mixed in
+  function kb() {
+    const B = brain(), { qs: q0, objs: o0 } = parse();
+    const qs = [...q0, ...B.questions];
+    const objs = [...o0.map(o => ({ name: o.name, emoji: o.emoji, p: Object.assign({}, o.p) })), ...B.objects.map(o => ({ name: o.name, emoji: o.emoji || '✨', p: Object.assign({}, o.base || {}), learned: true }))];
+    for (const o of objs) { for (const q of qs) if (o.p[q.id] == null) o.p[q.id] = MAYBE; const st = B.stats[o.name]; const k = o.learned ? 1 : K; if (st) for (const id in st) { const [sum, n] = st[id]; o.p[id] = (o.p[id] * k + sum) / (k + n); } o.prior = 1 + .25 * Math.log1p((B.plays || {})[o.name] || 0); }
     return { qs, objs };
   }
-  const contra = (o, ans) => { let c = 0; for (const id in ans) { const x = ans[id], v = o.a[id]; if ((x === 'y' || x === 'n') && (v === 'y' || v === 'n') && x !== v) c++; } return c; };
-  function possible(objs, ans, rejected = []) {
-    const live = objs.filter(o => !rejected.includes(o.name)); if (!live.length) return [];
-    const m = Math.min(...live.map(o => contra(o, ans))); return live.filter(o => contra(o, ans) === m);
+  const ANS = { y: 1, py: .78, d: .5, pn: .22, n: 0 };
+  function session(K2 = kb()) {
+    const { qs, objs } = K2; const n = objs.length; let w = new Float64Array(n);
+    const reset = () => { let s = 0; for (let i = 0; i < n; i++) { w[i] = objs[i].prior; s += w[i]; } for (let i = 0; i < n; i++) w[i] /= s; };
+    reset(); const answers = [], rejected = new Set();
+    const norm = () => { let s = 0; for (let i = 0; i < n; i++) s += w[i]; if (s <= 0) { reset(); return; } for (let i = 0; i < n; i++) w[i] /= s; };
+    function apply(qid, a) { const v = ANS[a]; for (let i = 0; i < n; i++) { const p = objs[i].p[qid]; w[i] *= EPS + (1 - 2 * EPS) * (v * p + (1 - v) * (1 - p)); } norm(); }
+    function answer(qid, a) { answers.push([qid, a]); apply(qid, a); }
+    function reject(name) { rejected.add(name); const i = objs.findIndex(o => o.name === name); if (i >= 0) { w[i] = 0; norm(); } }
+    function undo() { answers.pop(); reset(); for (const nm of rejected) { const i = objs.findIndex(o => o.name === nm); if (i >= 0) w[i] = 0; } norm(); for (const [q, a] of answers) apply(q, a); }
+    function entropy() { let h = 0; for (let i = 0; i < n; i++) if (w[i] > 0) h -= w[i] * Math.log2(w[i]); return h; }
+    function best(k = 1) { // expected information gain for every unasked question
+      const asked = new Set(answers.map(x => x[0])); const live = []; for (let i = 0; i < n; i++) if (w[i] > 1e-7) live.push(i);
+      const H = entropy(), res = [];
+      for (const q of qs) {
+        if (asked.has(q.id)) continue; let Sy = 0, Ly = 0, Ln = 0;
+        for (const i of live) { const p = EPS + (1 - 2 * EPS) * objs[i].p[q.id], a = w[i] * p, b = w[i] * (1 - p); Sy += a; if (a > 0) Ly += a * Math.log2(a); if (b > 0) Ln += b * Math.log2(b); }
+        const Sn = 1 - Sy; if (Sy < 1e-6 || Sn < 1e-6) continue;
+        const Hy = -(Ly / Sy) + Math.log2(Sy), Hn = -(Ln / Sn) + Math.log2(Sn);
+        res.push({ q, gain: H - (Sy * Hy + Sn * Hn), py: Sy });
+      }
+      res.sort((a, b) => b.gain - a.gain); return k === 1 ? res[0] : res.slice(0, k);
+    }
+    function top(k = 5) { const idx = [...Array(n).keys()].sort((a, b) => w[b] - w[a]).slice(0, k); return idx.map(i => ({ o: objs[i], pr: w[i] })); }
+    function fitting(th = .02) { const m = Math.max(...w); let c = 0; for (let i = 0; i < n; i++) if (w[i] >= m * th) c++; return c; }
+    return { answer, reject, undo, best, top, entropy, fitting, answers, rejected, objs, qs, get w() { return w; } };
   }
-  function bestQ(qs, cands, ans) {
-    let best = null;
-    for (const q of qs) { if (ans[q.id]) continue; let y = 0, n = 0, u = 0; for (const o of cands) { const v = o.a[q.id]; if (v === 'y') y++; else if (v === 'n') n++; else u++; } if (!y || !n) continue; const score = Math.abs(y - n) + u * .6; if (!best || score < best.score) best = { q, y, n, u, score }; }
-    return best;
+  // learning
+  function learn(name, answers, opts = {}) {
+    const B = brain(); name = name.trim().toLowerCase(); if (!name) return;
+    const { objs } = parse(); const known = objs.some(o => o.name === name) || B.objects.some(o => o.name === name);
+    if (!known) { // start a new thing from the things it most resembles ("like a guinea pig, but…")
+      const base0 = {}; const like = (opts.like || []).filter(t => t.pr > 0); const tot = like.reduce((a, t) => a + t.pr, 0);
+      if (tot > 0) for (const id in like[0].o.p) base0[id] = +(like.reduce((a, t) => a + t.pr * t.o.p[id], 0) / tot).toFixed(3);
+      B.objects.push({ name, emoji: opts.emoji || '✨', base: base0, like: like.slice(0, 3).map(t => t.o.name) });
+    }
+    const st = B.stats[name] = B.stats[name] || {};
+    for (const [q, a] of answers) { if (a === 'd') continue; const v = ANS[a]; const cur = st[q] || [0, 0]; st[q] = [cur[0] + v, cur[1] + 1]; }
+    if (opts.question && opts.question.trim()) {
+      let q = opts.question.trim(); if (!q.endsWith('?')) q += '?'; q = q[0].toUpperCase() + q.slice(1);
+      const id = 'L' + Date.now().toString(36); B.questions.push({ id, q }); st[id] = [1, 1];
+      if (opts.notFor) { const s2 = B.stats[opts.notFor] = B.stats[opts.notFor] || {}; s2[id] = [0, 1]; }
+    }
+    B.plays = B.plays || {}; B.plays[name] = (B.plays[name] || 0) + 1; saveBrain(B);
   }
-  function teach(name, question, answers, wrongGuess) {
-    const Ld = learned(); name = name.trim().toLowerCase(); if (!name) return;
-    let qid = null; if (question && question.trim()) { qid = 'L' + (Ld.questions.length + 1) + '_' + Date.now().toString(36); let q = question.trim(); if (!q.endsWith('?')) q += '?'; Ld.questions.push({ id: qid, q: q[0].toUpperCase() + q.slice(1) }); }
-    const known = all().objs.find(o => o.name === name); const a = {}; for (const k in answers) if (answers[k] === 'y' || answers[k] === 'n') a[k] = answers[k]; if (qid) a[qid] = 'y';
-    if (known) Ld.over[name] = Object.assign(Ld.over[name] || {}, a); else Ld.objects.push({ name, emoji: '✨', a });
-    if (qid && wrongGuess) Ld.over[wrongGuess] = Object.assign(Ld.over[wrongGuess] || {}, { [qid]: 'n' });
-    store.set('twenty.learned', Ld);
-  }
-  return { all, possible, bestQ, teach, contra, learned, Q, OBJ };
+  // what a thing would say to a question (for "you guess mine")
+  const reply = (o, qid) => { const p = o.p[qid]; return p >= .7 ? 'y' : p <= .3 ? 'n' : 'd'; };
+  return { parse, kb, session, learn, reply, brain, ANS, reset() { store.set('twenty.brain', { objects: [], questions: [], stats: {}, plays: {} }); } };
 })();
 
 registerGame({
-  id: 'twenty', name: '20 Questions', tag: 'Guessing game', desc: 'Think of an animal, food or thing and I’ll guess it — or I think of one and you guess. The teacher shows you the smartest questions.',
-  art: () => `<svg viewBox="0 0 100 100"><path d="M14 18h56a8 8 0 0 1 8 8v26a8 8 0 0 1-8 8H42l-14 12V60H14a8 8 0 0 1-8-8V26a8 8 0 0 1 8-8z" fill="#fff"/><text x="42" y="49" font-family="Bungee,Impact" font-size="26" text-anchor="middle" fill="#ff5c93">20?</text><path d="M58 52h30a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6h-6v10l-10-10H58a6 6 0 0 1-6-6V58a6 6 0 0 1 6-6z" fill="#f2c14e"/><text x="73" y="74" font-size="16" text-anchor="middle">🐘</text></svg>`,
-  how: `<p><b>I guess yours:</b> think of an animal, a food, a plant or an everyday thing. Answer my questions with Yes, No or Not sure. I have 20 questions to guess it. If I get stuck, tell me what it was and I’ll <b>learn</b> it for next time.</p><p><b>You guess mine:</b> I think of something. Tap questions to ask them, then make a guess. The teacher shows which question is smartest — the one that splits what’s left closest to half.</p>`,
+  id: 'twenty', name: '20 Questions', tag: '1,000 things', desc: 'Think of almost anything — an orchid, a ferret, a battleship — and I’ll guess it. Or I think of one and you guess. I learn from every game.',
+  art: () => `<svg viewBox="0 0 100 100"><path d="M14 18h56a8 8 0 0 1 8 8v26a8 8 0 0 1-8 8H42l-14 12V60H14a8 8 0 0 1-8-8V26a8 8 0 0 1 8-8z" fill="#fff"/><text x="42" y="49" font-family="Bungee,Impact" font-size="26" text-anchor="middle" fill="#ff5c93">20?</text><path d="M58 52h30a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6h-6v10l-10-10H58a6 6 0 0 1-6-6V58a6 6 0 0 1 6-6z" fill="#f2c14e"/><text x="73" y="74" font-size="16" text-anchor="middle">🚢</text></svg>`,
+  how: `<p><b>I guess yours:</b> think of almost anything — an animal, food, plant, object, vehicle, place, job, body part or something from a story. I know about 1,000 things. Answer <b>Yes</b>, <b>Probably</b>, <b>Don’t know</b>, <b>Probably not</b> or <b>No</b>. It’s fine to be unsure — or even a bit wrong — I weigh the evidence rather than ruling things out. I get 20 questions and 3 guesses. If you stump me, teach me and I’ll remember.</p><p><b>You guess mine:</b> I think of something. Search for questions to ask, then make a guess. The teacher shows the smartest question — the one that gives the most information.</p>`,
   create(host, opts) {
     const root = el('div', { class: 'tq' }); host.appendChild(root);
     const paint = () => { const K = kitVal('twenty'); root.style.setProperty('--bub', K.bubble); root.style.setProperty('--bubink', K.ink); }; paint();
-    let mode = store.get('twenty.mode', 'guess'), ans = {}, asked = 0, rejected = [], cur = null, secret = null, guesses = [], over = false, hintsUsed = 0, showHint = false, lastGuess = null;
+    let mode = store.get('twenty.mode', 'guess'), limit = 20, S2 = null, cur = null, wrong = 0, over = false, hintsUsed = 0, showHint = false, lastGuess = null, secret = null, asked = 0, guessed = [], qFilter = '';
     opts.innerHTML = `<label>Mode</label><div class="seg" id="tqM"><button data-m="guess">I guess yours</button><button data-m="you">You guess mine</button></div><button class="btn sm" id="tqForget">Forget what I learned</button>`;
     $('#tqM', opts).onclick = e => { const b = e.target.closest('button'); if (b) { mode = b.dataset.m; store.set('twenty.mode', mode); newGame(); } };
-    $('#tqForget', opts).onclick = () => { if (confirm('Forget everything you taught me?')) { store.set('twenty.learned', { objects: [], questions: [], over: {} }); toast('Forgotten'); newGame(); } };
+    $('#tqForget', opts).onclick = () => { if (confirm('Forget everything I’ve learned from your games?')) { TQ.reset(); toast('Forgotten'); newGame(); } };
+    const article = n => /^[aeiou]/i.test(n) ? 'an' : 'a';
+    const nq = () => S2 ? S2.answers.length : 0;
     function newGame() {
-      $$('#tqM button', opts).forEach(b => b.classList.toggle('on', b.dataset.m === mode)); ans = {}; asked = 0; rejected = []; guesses = []; over = false; hintsUsed = 0; showHint = false; lastGuess = null;
-      if (mode === 'guess') intro(); else { const { objs } = TQ.all(); secret = objs[rnd(objs.length)]; youTurn(); }
+      $$('#tqM button', opts).forEach(b => b.classList.toggle('on', b.dataset.m === mode)); $$('.win', host).forEach(w => w.remove());
+      S2 = TQ.session(); limit = 20; wrong = 0; over = false; hintsUsed = 0; showHint = false; lastGuess = null; asked = 0; guessed = []; qFilter = '';
+      if (mode === 'guess') intro(); else { const pool = S2.objs.filter(o => !o.learned); secret = pool[rnd(pool.length)]; youTurn(); }
       stats(); coach();
     }
-    const stats = () => $('#gStats').innerHTML = `<span>Questions <b>${asked}/20</b></span>`;
+    const stats = () => $('#gStats').innerHTML = mode === 'guess' ? `<span>Questions <b>${nq()}/${limit}</b></span><span>Guesses <b>${wrong}/${limit > 20 ? 5 : 3}</b></span>` : `<span>Questions <b>${asked}/20</b></span>`;
     // ---------- I guess yours ----------
     function intro() {
-      const { objs } = TQ.all();
-      root.innerHTML = `<div class="tqbub big">Think of an <b>animal</b>, a <b>food</b>, a <b>plant</b> or an <b>everyday thing</b>. Keep it secret!<div class="tqsmall">I know about ${objs.length} things so far — and I can learn more.</div></div><div class="tqemo">${objs.slice(0, 40).map(o => o.emoji).join(' ')}</div><div class="tqbtns"><button class="btn primary" data-go>I’ve got one</button></div>`;
+      const n = S2.objs.length;
+      root.innerHTML = `<div class="tqbub big">Think of <b>almost anything</b> — an animal, a food, a plant, an object, a vehicle, a place, a job, a body part, or something from a story. Keep it secret!<div class="tqsmall">I know about ${n.toLocaleString()} things — orchids, ferrets, battleships… and I learn from every game.</div></div><div class="tqemo">${shuffle(S2.objs.slice()).slice(0, 36).map(o => o.emoji).join(' ')}</div><div class="tqbtns"><button class="btn primary" data-go>I’ve got one</button></div>`;
       $('[data-go]', root).onclick = ask;
     }
+    function decide() {
+      const tp = S2.top(2), b = S2.best();
+      if (tp[0].pr >= .85 || nq() >= limit || !b || b.gain < .02 || (tp[0].pr > .55 && tp[0].pr > tp[1].pr * 6)) return { guess: tp[0].o };
+      return { q: b };
+    }
+    function thinking() {
+      const tp = S2.top(6);
+      return `<div class="tqthink"><span class="tqsmall">What I’m thinking (${S2.fitting().toLocaleString()} still possible):</span><div class="tqtop">${tp.map(t => `<div><span>${t.o.emoji} ${esc(t.o.name)}</span><i style="width:${Math.max(2, Math.round(t.pr * 100))}%"></i><b>${Math.round(t.pr * 100)}%</b></div>`).join('')}</div></div>`;
+    }
     function ask() {
-      const { qs, objs } = TQ.all(); const cands = TQ.possible(objs, ans, rejected); stats();
-      const bq = asked < 20 ? TQ.bestQ(qs, cands, ans) : null;
-      if (!cands.length) return stumped();
-      if (cands.length === 1 || !bq || asked >= 19) return guess(cands);
-      cur = bq; asked++;
-      root.innerHTML = `<div class="tqcount">Question ${asked} of 20</div><div class="tqbub big">${esc(bq.q.q)}</div><div class="tqbtns"><button class="btn primary" data-a="y">Yes</button><button class="btn" data-a="n">No</button><button class="btn" data-a="d">Not sure</button></div><div class="tqthink"><span class="tqsmall">I’m still thinking about ${cands.length} thing${cands.length > 1 ? 's' : ''}:</span><div class="tqemo">${cands.slice(0, 30).map(o => `<span title="${esc(o.name)}">${o.emoji}</span>`).join(' ')}${cands.length > 30 ? ' …' : ''}</div></div>`;
-      root.querySelector('.tqbtns').onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; ans[bq.q.id] = b.dataset.a; beep('tick'); ask(); };
+      stats(); const d = decide(); if (d.guess) return guess(d.guess);
+      cur = d.q;
+      root.innerHTML = `<div class="tqcount">Question ${nq() + 1} of ${limit}${limit > 20 ? ' (bonus round)' : ''}</div><div class="tqbub big">${esc(cur.q.q)}</div>
+        <div class="tqbtns five"><button class="btn primary" data-a="y">Yes</button><button class="btn" data-a="py">Probably</button><button class="btn" data-a="d">Don’t know</button><button class="btn" data-a="pn">Probably not</button><button class="btn" data-a="n">No</button></div>
+        ${nq() ? '<div class="tqbtns"><button class="btn sm" data-undo>↶ Change my last answer</button></div>' : ''}${thinking()}`;
+      root.querySelector('.five').onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; S2.answer(cur.q.id, b.dataset.a); beep('tick'); ask(); };
+      root.querySelector('[data-undo]')?.addEventListener('click', () => { S2.undo(); ask(); });
       coach();
     }
-    function guess(cands) {
-      const c = cands.slice().sort((a, b) => Object.values(a.a).filter(v => v === '?').length - Object.values(b.a).filter(v => v === '?').length)[0]; lastGuess = c.name; asked++; stats();
-      root.innerHTML = `<div class="tqcount">Guess ${asked > 20 ? 20 : asked} of 20</div><div class="tqbub big">Is it… <span class="tqbig">${c.emoji}</span> <b>${esc(article(c.name))} ${esc(c.name)}</b>?</div><div class="tqbtns"><button class="btn primary" data-a="y">Yes!</button><button class="btn" data-a="n">No</button></div>`;
+    function guess(o) {
+      lastGuess = o.name; stats();
+      root.innerHTML = `<div class="tqcount">Guess ${wrong + 1} of ${limit > 20 ? 5 : 3} · after ${nq()} question${nq() === 1 ? '' : 's'}</div><div class="tqbub big">Is it… <span class="tqbig">${o.emoji}</span> <b>${esc(article(o.name))} ${esc(o.name)}</b>?</div><div class="tqbtns"><button class="btn primary" data-a="y">Yes!</button><button class="btn" data-a="n">No</button></div>${thinking()}`;
       root.querySelector('.tqbtns').onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return;
-        if (b.dataset.a === 'y') { over = true; beep('win'); const r = award('twenty', 'I guessed', { stars: 1 }); root.innerHTML = `<div class="tqbub big">I got it in <b>${asked}</b> question${asked > 1 ? 's' : ''}! ${c.emoji}</div><div class="tqbtns"><button class="btn primary" data-again>Play again</button><button class="btn" data-sw>Now you guess mine</button></div>`; root.querySelector('[data-again]').onclick = newGame; root.querySelector('[data-sw]').onclick = () => { mode = 'you'; store.set('twenty.mode', mode); newGame(); }; coach(); return; }
-        rejected.push(c.name); if (asked >= 20) return stumped(); ask(); };
+        if (b.dataset.a === 'y') { over = true; TQ.learn(o.name, S2.answers); beep('win'); award('twenty', 'I guessed', { stars: 1 }); root.innerHTML = `<div class="tqbub big">Got it in <b>${nq()}</b> question${nq() === 1 ? '' : 's'}! ${o.emoji}<div class="tqsmall">I’ve updated what I know about ${esc(o.name)}s from your answers.</div></div><div class="tqbtns"><button class="btn primary" data-again>Play again</button><button class="btn" data-sw>Now you guess mine</button></div>`; root.querySelector('[data-again]').onclick = newGame; root.querySelector('[data-sw]').onclick = () => { mode = 'you'; store.set('twenty.mode', mode); newGame(); }; coach(); return; }
+        wrong++; S2.reject(o.name); stats(); if (wrong >= (limit > 20 ? 5 : 3)) return stumped(); ask(); };
       coach();
     }
     function stumped() {
       over = true; beep('win'); const r = award('twenty', 'Stumped me', { stars: 3 });
-      root.innerHTML = `<div class="tqbub big">You stumped me! 🎉 <span class="tqsmall">+${r.earned} ★</span><br>What were you thinking of?</div><div class="tqform"><input id="tqName" placeholder="e.g. zebra" maxlength="30"><input id="tqQ" placeholder="${lastGuess ? `A yes/no question that’s YES for it but NO for ${esc(article(lastGuess))} ${esc(lastGuess)}` : 'A yes/no question that’s YES for it'}" maxlength="90"><button class="btn primary" id="tqTeach">Teach me</button><button class="btn" data-again>Skip</button></div>`;
+      const names = S2.objs.map(o => o.name);
+      root.innerHTML = `<div class="tqbub big">You stumped me! 🎉 <span class="tqsmall">+${r.earned} ★</span>What were you thinking of?</div><div class="tqform"><input id="tqName" list="tqNames" placeholder="e.g. zebra" maxlength="40"><datalist id="tqNames">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist><input id="tqQ" placeholder="Optional: a yes/no question that’s YES for it but NO for ${esc(article(lastGuess || ''))} ${esc(lastGuess || '')}" maxlength="90"><button class="btn primary" id="tqTeach">Teach me</button><button class="btn" data-again>Skip</button></div>${limit === 20 ? '<div class="tqbtns"><button class="btn" data-more>Or give me 5 more questions and 2 more guesses</button></div>' : ''}`;
+      root.querySelector('[data-more]')?.addEventListener('click', () => { over = false; limit = 25; ask(); });
       root.querySelector('[data-again]').onclick = newGame;
-      $('#tqTeach', root).onclick = () => { const n = $('#tqName', root).value; if (!n.trim()) { toast('Type what it was'); return; } TQ.teach(n, $('#tqQ', root).value, ans, lastGuess); T.note(`Learned: <b>${esc(n.trim())}</b>${$('#tqQ', root).value.trim() ? ' and a new question' : ''}. I’ll remember it on this device.`); toast('Thanks — I’ve learned it!'); newGame(); };
+      $('#tqTeach', root).onclick = () => { const n = $('#tqName', root).value; if (!n.trim()) { toast('Type what it was'); return; } const known = names.includes(n.trim().toLowerCase()); TQ.learn(n, S2.answers, { question: $('#tqQ', root).value, notFor: lastGuess, like: S2.top(5) }); T.note(known ? `Thanks! I already knew <b>${esc(n.trim())}</b>, but I’ve corrected what I know about it from your answers.` : `Learned something new: <b>${esc(n.trim())}</b>${$('#tqQ', root).value.trim() ? ', plus a new question' : ''}. I’ll remember it on this device.`); toast('Thanks — I’ve learned it!'); newGame(); };
       setTimeout(() => $('#tqName', root)?.focus(), 50); coach();
     }
     // ---------- you guess mine ----------
+    const ANSWORD = { y: 'Yes', n: 'No', d: 'Sometimes / it depends' };
     function youTurn() {
-      const { qs, objs } = TQ.all(); const cands = TQ.possible(objs, ans, guesses); const bq = TQ.bestQ(qs, cands, ans); const reveal = (S.teacher === 'live' || showHint) && S.teacher !== 'off';
+      const reveal = (S.teacher === 'live' || showHint) && S.teacher !== 'off'; const sug = S2.best(6) || [];
+      const askedIds = new Set(S2.answers.map(a => a[0]));
+      const f = qFilter.toLowerCase(); let list = S2.qs.filter(q => !askedIds.has(q.id) && (!f || q.q.toLowerCase().includes(f)));
+      if (!f) list = [...sug.map(s => s.q), ...list.filter(q => !sug.some(s => s.q.id === q.id))];
       root.innerHTML = `<div class="tqcount">You’ve used ${asked} of 20 questions</div><div class="tqbub">I’m thinking of something. Ask me questions, then make your guess!</div>
-        <div class="tqasked">${Object.entries(ans).map(([id, a]) => `<span class="tqa ${a}">${esc(qs.find(q => q.id === id).q)} <b>${a === 'y' ? 'Yes' : a === 'n' ? 'No' : 'Sometimes'}</b></span>`).join('')}${guesses.map(g => `<span class="tqa n">Is it ${esc(g)}? <b>No</b></span>`).join('')}</div>
+        <div class="tqasked">${S2.answers.map(([id, a]) => `<span class="tqa ${a}">${esc(S2.qs.find(q => q.id === id).q)} <b>${ANSWORD[a]}</b></span>`).join('')}${guessed.map(g => `<span class="tqa n">Is it ${esc(g)}? <b>No</b></span>`).join('')}</div>
         <div class="tqbtns"><button class="btn primary" data-guess>🎯 Make a guess</button></div>
-        <div class="tqqs">${qs.filter(q => !ans[q.id]).sort((a, b) => (reveal && bq ? (b.id === bq.q.id) - (a.id === bq.q.id) : 0)).map(q => `<button class="tqq ${reveal && bq && bq.q.id === q.id ? 'hint' : ''}" data-q="${q.id}">${esc(q.q)}</button>`).join('')}</div>`;
-      root.querySelector('.tqqs').onclick = e => { const b = e.target.closest('[data-q]'); if (!b || over) return; const v = secret.a[b.dataset.q]; ans[b.dataset.q] = v === '?' ? 'd' : v; asked++; beep('tick'); showHint = false; stats(); if (asked >= 20) return reveal20(false); youTurn(); };
-      root.querySelector('[data-guess]').onclick = pick;
+        <input class="tqsearch" id="tqSearch" placeholder="Search ${S2.qs.length} questions… (e.g. colour, legs, sea)" value="${esc(qFilter)}">
+        <div class="tqqs">${list.slice(0, f ? 80 : 30).map(q => `<button class="tqq ${reveal && sug[0] && sug[0].q.id === q.id ? 'hint' : ''}" data-q="${q.id}">${esc(q.q)}</button>`).join('')}</div>`;
+      root.querySelector('.tqqs').onclick = e => { const b = e.target.closest('[data-q]'); if (!b || over) return; const a = TQ.reply(secret, b.dataset.q); S2.answer(b.dataset.q, a); asked++; qFilter = ''; beep('tick'); showHint = false; stats(); if (asked >= 20) return reveal20(false); youTurn(); };
+      root.querySelector('[data-guess]').onclick = () => pick();
+      const si = $('#tqSearch', root); si.oninput = () => { qFilter = si.value; const pos = si.selectionStart; youTurn(); const s3 = $('#tqSearch', root); s3.focus(); s3.setSelectionRange(pos, pos); };
       coach();
     }
-    function pick() {
-      const { objs } = TQ.all(); const cands = TQ.possible(objs, ans, guesses);
-      root.innerHTML = `<div class="tqbub">Tap your guess. <span class="tqsmall">Things that still fit your answers are bright.</span></div><div class="tqpick">${objs.map(o => `<button data-n="${esc(o.name)}" class="${cands.includes(o) ? '' : 'dim'} ${guesses.includes(o.name) ? 'gone' : ''}"><span>${o.emoji}</span>${esc(o.name)}</button>`).join('')}</div><div class="tqbtns"><button class="btn" data-back>← Back to questions</button></div>`;
+    function pick(filter = '') {
+      const tp = S2.top(S2.objs.length); const f = filter.toLowerCase();
+      const list = (f ? tp.filter(t => t.o.name.includes(f)) : tp.slice(0, 48)).slice(0, 60);
+      root.innerHTML = `<div class="tqbub">Tap your guess. <span class="tqsmall">${f ? 'Search results' : 'The things that fit your answers best are first'} — or search all ${S2.objs.length.toLocaleString()}.</span></div><input class="tqsearch" id="tqFind" placeholder="Type a name…" value="${esc(filter)}"><div class="tqpick">${list.map(t => `<button data-n="${esc(t.o.name)}" class="${guessed.includes(t.o.name) ? 'gone' : ''}"><span>${t.o.emoji}</span>${esc(t.o.name)}</button>`).join('')}</div><div class="tqbtns"><button class="btn" data-back>← Back to questions</button></div>`;
       root.querySelector('[data-back]').onclick = youTurn;
-      root.querySelector('.tqpick').onclick = e => { const b = e.target.closest('[data-n]'); if (!b || guesses.includes(b.dataset.n)) return; asked++; stats(); if (b.dataset.n === secret.name) return reveal20(true); guesses.push(b.dataset.n); beep('bad'); toast(`No, it isn’t ${article(b.dataset.n)} ${b.dataset.n}`); if (asked >= 20) return reveal20(false); youTurn(); };
+      const fi = $('#tqFind', root); fi.oninput = () => { const v = fi.value, pos = fi.selectionStart; pick(v); const f2 = $('#tqFind', root); f2.focus(); f2.setSelectionRange(pos, pos); };
+      root.querySelector('.tqpick').onclick = e => { const b = e.target.closest('[data-n]'); if (!b || guessed.includes(b.dataset.n)) return; asked++; stats(); if (b.dataset.n === secret.name) return reveal20(true); guessed.push(b.dataset.n); S2.reject(b.dataset.n); beep('bad'); toast(`No, it isn’t ${article(b.dataset.n)} ${b.dataset.n}`); if (asked >= 20) return reveal20(false); youTurn(); };
     }
     function reveal20(won) {
-      over = true; if (won) { const r = award('twenty', 'You guessed', { stars: Math.max(1, Math.ceil((21 - asked) / 4)), hints: hintsUsed }); beep('win'); winOverlay(host, { title: 'You got it!', lines: [`It was ${article(secret.name)} ${secret.name} ${secret.emoji}`, `${asked} question${asked > 1 ? 's' : ''} used`], earned: r.earned, again: newGame }); }
-      else { beep('bad'); winOverlay(host, { title: 'Out of questions', lines: [`I was thinking of ${article(secret.name)} ${secret.name} ${secret.emoji}`, 'Tip: ask questions that split the possibilities in half.'], earned: 0, again: newGame }); }
+      over = true;
+      if (won) { const r = award('twenty', 'You guessed', { stars: Math.max(1, Math.ceil((21 - asked) / 4)), hints: hintsUsed }); beep('win'); winOverlay(host, { title: 'You got it!', lines: [`It was ${article(secret.name)} ${secret.name} ${secret.emoji}`, `${asked} question${asked > 1 ? 's' : ''} used`], earned: r.earned, again: newGame }); }
+      else { beep('bad'); winOverlay(host, { title: 'Out of questions', lines: [`I was thinking of ${article(secret.name)} ${secret.name} ${secret.emoji}`, 'Tip: ask the questions that split what’s left in half.'], earned: 0, again: newGame }); }
       coach();
     }
-    const article = n => /^[aeiou]/i.test(n) ? 'an' : 'a';
     // ---------- teacher ----------
     function coach(why) {
       if (teacherOffMsg(why)) { if (mode === 'you' && !over) youTurn(); return; }
-      const { qs, objs } = TQ.all();
+      if (!S2) return; const tp = S2.top(2);
       if (mode === 'guess') {
-        const cands = TQ.possible(objs, ans, rejected); const bq = cur;
-        T.set({ stage: '20 Questions · I guess yours', steps: null, prog: asked / 20,
-          msg: asked ? `I’m down to <b>${cands.length}</b> possibilities. I always pick the question that splits them <b>closest to half</b>${bq ? ` — “${esc(bq.q.q)}” splits them ${bq.y} yes / ${bq.n} no` : ''}. That way every answer throws away about half, and 20 questions could find one thing in a million.` : 'Think of something and tap <b>I’ve got one</b>. Watch how I choose my questions — it’s the secret to winning when it’s your turn.',
+        const g = cur && !over ? cur.gain : null;
+        T.set({ stage: '20 Questions · I guess yours', steps: null, prog: nq() / 20,
+          msg: nq() ? `My best idea is <b>${tp[0].o.emoji} ${esc(tp[0].o.name)}</b> at ${Math.round(tp[0].pr * 100)}%. Each answer shifts the odds for every one of the ${S2.objs.length.toLocaleString()} things — a wrong answer only lowers the odds, it doesn’t rule anything out.${g != null ? ` I picked this question because it gives the most information: <b>${g.toFixed(2)} bits</b> (1 bit = a perfect half-and-half split).` : ''}` : `Think of something and tap <b>I’ve got one</b>. I choose each question to learn as much as possible — 20 perfect questions could tell apart a million things.`,
           next: null, acts: [{ label: '↻ New game', fn: newGame }, { label: '📖 Lessons', fn: () => showLessons('twenty') }] });
       } else {
-        const cands = TQ.possible(objs, ans, guesses); const bq = TQ.bestQ(qs, cands, ans); const reveal = S.teacher === 'live' || showHint;
+        const b = S2.best(); const reveal = S.teacher === 'live' || showHint; const fit = S2.fitting();
         T.set({ stage: '20 Questions · you guess mine', steps: null, prog: asked / 20,
-          msg: `<b>${cands.length}</b> thing${cands.length > 1 ? 's' : ''} still fit your answers. The best question splits them closest to half.` + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint for the smartest question.</span>'),
-          next: reveal && bq ? { mv: '?', how: `Ask “${esc(bq.q.q)}” — ${bq.y} would say yes, ${bq.n} no.` } : reveal && cands.length <= 3 ? { mv: '🎯', how: `Time to guess! It’s one of: ${cands.map(c => c.emoji + ' ' + esc(c.name)).join(', ')}.` } : null,
+          msg: `About <b>${fit.toLocaleString()}</b> thing${fit > 1 ? 's' : ''} still fit your answers. The smartest question is the one that splits them closest to half.` + (reveal ? '' : '<br><span class="muted">Tap 💡 Hint for the smartest question.</span>'),
+          next: reveal ? (tp[0].pr > .6 ? { mv: '🎯', how: `Time to guess — it’s probably ${tp[0].o.emoji} <b>${esc(tp[0].o.name)}</b>.` } : b ? { mv: '?', how: `Ask “${esc(b.q.q)}” — worth ${b.gain.toFixed(2)} bits of information.` } : null) : null,
           acts: [{ label: '💡 Best question', fn: hint, primary: true }, { label: '↻ New game', fn: newGame }] });
       }
     }
     function hint() { hintsUsed++; hintOn(); showHint = true; if (mode === 'you' && !over) youTurn(); else coach(); }
-    GAMES.twenty._dbg = { get secret() { return secret; }, get ans() { return ans; }, get asked() { return asked; }, newGame, setMode(m) { mode = m; newGame(); } };
+    GAMES.twenty._dbg = { get S2() { return S2; }, get secret() { return secret; }, get asked() { return asked; }, newGame, setMode(m) { mode = m; newGame(); } };
     setTimeout(newGame, 20);
-    return { hint, newGame, coach, undo() { toast('No take-backs in 20 Questions!'); }, restyle: paint, resize() { }, destroy() { } };
+    return { hint, newGame, coach, undo() { if (mode === 'guess' && S2 && nq() && !over) { S2.undo(); ask(); } else toast('Nothing to undo'); }, restyle: paint, resize() { }, destroy() { } };
   }
 });
-page('Q-001', 'twenty', 'How to win 20 Questions', '20 questions twenty guessing strategy split half binary', `<p>The best question splits what’s left <b>in half</b>. If half the things would say yes and half no, every answer throws away half — and 20 halvings can find one thing among a million (2²⁰ = 1,048,576).</p><p>Start broad (“Is it alive?”, “Is it an animal?”), then narrow down. Avoid questions where almost everything says the same answer — they waste a turn. In “You guess mine” the teacher highlights the best question each time.</p>`);
-page('Q-002', 'twenty', 'Teaching the computer', '20 questions learn teach new thing forget', `<p>If I can’t guess your thing, tell me what it was and give me a yes/no question that’s true for it. I remember it on this device and can guess it next time. <b>Forget what I learned</b> clears it.</p>`);
+page('Q-001', 'twenty', 'How to win 20 Questions', '20 questions twenty guessing strategy split half binary bits information', `<p>The best question splits what’s left <b>in half</b>. If half the things would say yes and half no, every answer throws away half — and 20 halvings can tell apart a million things (2²⁰ = 1,048,576). That perfect split is worth <b>1 bit</b> of information.</p><p>Start broad (“Is it alive?”, “Is it made by people?”), then narrow down. Avoid questions where almost everything gives the same answer. In “You guess mine”, the teacher highlights the question worth the most bits.</p>`);
+page('Q-002', 'twenty', 'How the computer guesses', '20 questions probability bayes learn teach probably dont know wrong answer', `<p>I know about 1,000 things, and for each one I store how likely it is to get a “yes” to every question. Each answer — Yes, Probably, Don’t know, Probably not, No — updates my confidence in every thing at once (this is <b>Bayes’ rule</b>). A wrong answer just lowers the odds, so one mistake won’t ruin the game.</p><p>I choose each question for the most <b>information gain</b>, and I guess when one thing is far more likely than the rest. After every game I adjust my numbers from your answers, and if you stump me you can teach me something new.</p>`);
 </script>
 <script>
 /* =====================================================================

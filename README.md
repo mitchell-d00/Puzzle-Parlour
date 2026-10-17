@@ -7,8 +7,8 @@ play: a Rubik-style colour cube (2×2 and 3×3), slide puzzles, jigsaws cut from
 your own photos, Lights Out, Tower of Hanoi, Flood, Ball Sort, Maze Runner,
 the Glitters & Sparkles match game and Block Stack (solo, Zen or against the
 computer at five skill levels), plus **20 Questions**, where the computer
-guesses what you're thinking (and learns new things) or you guess what it's
-thinking. Next door, **The Show** is a studio of 20 easy card tricks: you
+guesses what you're thinking from 1,004 things (and learns new ones) or you
+guess what it's thinking. Next door, **The Show** is a studio of 20 easy card tricks: you
 make one simple choice at a time, the computer does the magic, then it shows
 you how to do it yourself.
 A jukebox plays ten original music tracks while you play. Every table
@@ -81,14 +81,39 @@ The Show has its own shop tab with card-back kits and a dye.
 
 ## 20 Questions
 
-- **I guess yours:** think of an animal, food, plant or everyday thing (74 to
-  start with) and answer Yes, No or Not sure. It always asks the question
-  that splits what's left closest to half, and usually guesses in under 8
-  questions. If you stump it, tell it what it was and a yes/no question for
-  it, and it remembers on your device.
-- **You guess mine:** it thinks of something; you tap questions and then
-  guess. The teacher shows how many things still fit and highlights the
-  smartest next question.
+The computer knows **1,004 things** across 30 groups — animals (from ferrets
+to axolotls), birds, fish, bugs, dinosaurs, fruit and vegetables, meals,
+sweets, drinks, flowers and trees (orchids included), vehicles (battleships
+included), kitchen things, furniture, clothes, instruments, sports kit, toys,
+gadgets, tools, places and landmarks, space and weather, jobs, sports and
+games, body parts and creatures from stories — described by **208 yes/no
+questions**.
+
+- **I guess yours:** answer *Yes, Probably, Don't know, Probably not* or *No*.
+  The brain is probabilistic: every thing has a chance of "yes" for every
+  question, and each answer updates its confidence in all 1,004 at once
+  (Bayes' rule), so a wrong answer lowers the odds instead of ruling the right
+  thing out. Each question is the one with the most expected **information
+  gain**, and a live chart shows its top guesses and their odds. You can
+  change your last answer. It gets 20 questions and 3 guesses, and can ask for
+  a bonus round of 5 more.
+- **It learns:** every finished game nudges its numbers toward your answers.
+  If you stump it, tell it what you were thinking of (and optionally a new
+  question) — a brand-new thing starts from the things it most resembles, then
+  your answers take over.
+- **You guess mine:** search 208 questions, guess by searching 1,004 things.
+  The teacher shows how many things still fit and which question is worth the
+  most bits.
+
+**How well it plays** (tested on every one of the 1,004 things):
+
+| Player's answers | Found within 20 questions | With the bonus round |
+| --- | --- | --- |
+| All honest | 100% (about 14 questions on average) | — |
+| 1 in 20 answers wrong | 87% | 95% |
+
+Teaching it 10 brand-new things: it found all 10 in the next game. In the
+browser each question takes about 20 ms to choose.
 
 Also in the parlour:
 
@@ -160,8 +185,7 @@ and off, felts per table, dyes, reset, and reload) driven by real taps.
 The mathematics of all 20 card tricks was checked thousands of times each, and
 every act was performed on screen by an automated spectator who kept a secret
 card and answered honestly — 40 out of 40 performances correct. The 20
-Questions guesser found all 74 things when answered truthfully (7.7 questions
-on average) and 73 of 74 even with one wrong answer. The five Block Stack AI levels were benchmarked
+Questions brain was played against all 1,004 things it knows (see above). The five Block Stack AI levels were benchmarked
 playing 400 blocks with junk rows: Rookie lasts about 50 blocks, Easy about 80,
 Normal about 220, and Hard and Master survive all 400.
 
