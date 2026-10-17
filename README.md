@@ -7,11 +7,11 @@ play: a Rubik-style colour cube (2×2 and 3×3), slide puzzles, jigsaws cut from
 your own photos, Lights Out, Tower of Hanoi, Flood, Ball Sort, Maze Runner,
 the Glitters & Sparkles match game and Block Stack (solo, Zen or against the
 computer at five skill levels), plus **20 Questions**, where the computer
-guesses what you're thinking from 1,004 things (and learns new ones) or you
-guess what it's thinking. Next door, **The Show** is a studio of 20 easy card tricks: you
+guesses what you're thinking from 1,102 things (and learns new ones), you
+guess what it's thinking, or it coaches a real game with friends. Next door, **The Show** is a studio of 20 easy card tricks: you
 make one simple choice at a time, the computer does the magic, then it shows
 you how to do it yourself. And in the workshop, **Machines & Mechanics**, you
-build Rube Goldberg machines from 54 parts with real physics — dominoes, gears,
+build Rube Goldberg machines from 53 parts with real physics — dominoes, gears,
 springs, motors, rockets, cars, fairground rides and musical instruments — then
 sell your inventions to collectors to buy more parts and tools.
 A jukebox plays ten original music tracks while you play. Every table
@@ -84,39 +84,75 @@ The Show has its own shop tab with card-back kits and a dye.
 
 ## 20 Questions
 
-The computer knows **1,004 things** across 30 groups — animals (from ferrets
+The computer knows **1,102 things** across 30 groups — animals (from ferrets
 to axolotls), birds, fish, bugs, dinosaurs, fruit and vegetables, meals,
 sweets, drinks, flowers and trees (orchids included), vehicles (battleships
 included), kitchen things, furniture, clothes, instruments, sports kit, toys,
-gadgets, tools, places and landmarks, space and weather, jobs, sports and
-games, body parts and creatures from stories — described by **208 yes/no
+gadgets, tools, places and landmarks, space and weather, **147 jobs**, sports
+and games, body parts and creatures from stories — described by **243 yes/no
 questions**.
 
 - **I guess yours:** answer *Yes, Probably, Don't know, Probably not* or *No*.
   The brain is probabilistic: every thing has a chance of "yes" for every
-  question, and each answer updates its confidence in all 1,004 at once
+  question, and each answer updates its confidence in all of them at once
   (Bayes' rule), so a wrong answer lowers the odds instead of ruling the right
   thing out. Each question is the one with the most expected **information
   gain**, and a live chart shows its top guesses and their odds. You can
   change your last answer. It gets 20 questions and 3 guesses, and can ask for
   a bonus round of 5 more.
+- **You guess mine:** search the questions in everyday words ("work outside",
+  "kids", "car"), and guess by name or nickname ("cop", "physician", "binman").
+  The teacher rates every question you ask: what share of the remaining
+  things would say yes, how many bits it was worth, and a better question if
+  there was one. At the end you get your average bits per question.
+- **Play with friends:** a coach for the real, spoken game. One person thinks
+  of something, everyone else asks out loud; the app counts, logs each answer
+  (or a question typed in your own words), suggests the smartest next
+  questions and rates the ones you ask.
 - **It learns:** every finished game nudges its numbers toward your answers.
-  If you stump it, tell it what you were thinking of (and optionally a new
-  question) — a brand-new thing starts from the things it most resembles, then
-  your answers take over.
-- **You guess mine:** search 208 questions, guess by searching 1,004 things.
-  The teacher shows how many things still fit and which question is worth the
-  most bits.
+  If you stump it, tell it what you were thinking of (nicknames work) and
+  optionally a new question — a brand-new thing starts from the things it most
+  resembles, then your answers take over.
+- **Lessons on playing in real life:** the rules, the best first questions,
+  halving (why 20 questions is enough: 2²⁰ ≈ a million), how to guess jobs and
+  people, being a fair thinker, when to guess, and variations to try.
 
-**How well it plays** (tested on every one of the 1,004 things):
+**Jobs, rebuilt.**
+- **Questions that fit people:** 35 job-specific questions (degree, outdoors,
+  children, hands-on, fixes things, drives or flies, performs, government,
+  night shifts, dangerous, uniform, hospital, food, money and more), instead
+  of object questions like "Is it made of metal?".
+- **Categories from WordNet:** each job's category comes from the
+  [WordNet 3.1](https://wordnet.princeton.edu/) lexical database (Princeton
+  University). Its "is a kind of" chains (nurse → health professional;
+  plumber → craftsman → skilled worker; cop → policeman → lawman) add facts
+  like medical, hands-on or keeps people safe. WordNet also supplies the
+  synonyms used to recognise names.
+- **Logic rules:** facts that follow from other facts fill the gaps. A job is
+  done by a living person with two legs and hair, isn't made in a factory,
+  can't be eaten; anything with a screen gives off light; working in a
+  hospital means medical. For a job, a fact the data doesn't mention counts as
+  a soft "probably not" rather than a hard no.
 
-| Player's answers | Found within 20 questions | With the bonus round |
+**How well it plays.**
+
+The new tests use **independent answer sheets**: how an ordinary person
+answers, written separately from the game's data, for 50 jobs and 30
+everyday things.
+
+| Test | Before | Now |
 | --- | --- | --- |
-| All honest | 100% (about 14 questions on average) | — |
-| 1 in 20 answers wrong | 87% | 95% |
+| 50 jobs, honest human answers | 40% (20/50) | **100%** (50/50) |
+| 30 everyday things, honest human answers | 87% | **100%** (30/30) |
+| Jobs, 1 in 20 answers wrong | — | 83%, **95%** with the bonus round |
+| Everyday things, 1 in 20 answers wrong | — | 78%, **92%** with the bonus round |
+| Self-play on all 1,102 things, honest | 100% | **100%** (about 14 questions) |
 
-Teaching it 10 brand-new things: it found all 10 in the next game. In the
-browser each question takes about 20 ms to choose.
+While writing the everyday sheet, a few of my own answers were factually
+wrong (a bee does fit in your hand); those were corrected. Three real data
+bugs were fixed too: the TV was "bigger than a person" and gave no light, and
+dogs "couldn't swim". Teaching it 10 brand-new things: it found all 10 in the
+next game.
 
 Also in the parlour:
 
@@ -160,8 +196,8 @@ A physics workshop. Build a machine, press **▶ Play**, and real physics takes
 over. Everything is in real units: one big grid square is 1 metre, gravity is
 9.8 m/s², masses are in kilograms, and a ruler runs along the floor.
 
-**Parts (54, in 9 categories).** Basics (marbles, rubber, steel, bowling and
-beach balls, a 25 kg anvil, dominoes, crates, planks, beams, ramps, buckets); mechanisms
+**Parts (53, in 9 categories).** Basics (marbles, rubber, steel, bowling and
+beach balls, dominoes, crates, planks, beams, ramps, buckets); mechanisms
 (pivots, seesaws, pendulums, ropes, springs, trampolines, gears, wheels,
 conveyor belts); engines (electric motor, steam engine, fan); jets & rockets
 (rocket, jet engine, cannon, balloons, spikes, fireworks); vehicles (toy car,
@@ -172,22 +208,6 @@ laser tripwire, lamp, finish flag, star, trapdoor, wires); and art (pinwheel,
 confetti popper, paint).
 
 **Building.**
-- **Part brush:** tap a part in the shelf and it becomes your brush: every tap
-  on the bench places one (a row of dominoes is tap, tap, tap) until you tap
-  **✋ Done** or pick a different part. Free parts settle onto the floor, plank
-  or ramp just below where you tap. A brush only clicks onto axles, hooks and
-  gear teeth, so it never welds parts by accident.
-- **Edit while it plays:** during ▶ Play you can tap any part for its wheel,
-  drag fixed parts to new spots, change settings, add or remove parts, and grab
-  moving parts to throw them. The running machine is rebuilt live, and
-  everything already moving keeps its place, speed and spin.
-- **🧹 Clear:** one button in the bottom bar (and ↻ New) clears the bench. It
-  always asks whether to save the machine as a blueprint first, and so does
-  loading another design over it. ↶ Undo brings a cleared bench back.
-- **🎥 View:** switch between flat 2D and **3D graphics** (every part gets real
-  depth, the wall sits behind and the floor becomes a stage), and move the
-  camera: straight on, **look up** (like lying on the floor watching balls
-  drop), look down, or from the left or right. You can build from any camera.
 - **Snapping:** drop a part near another and their snap points click together,
   as a **pin** (turns freely) or a **weld** (rigid); tap the marker to switch.
   Gears click into mesh when their rims touch.
@@ -198,10 +218,6 @@ confetti popper, paint).
   and turning the whole machine. A long press pulls a single part out.
 - **Like the cube:** drag the background to look around, pinch to zoom, and
   twist a selected part with two fingers; the view stays put.
-- **🔍 Zoom lock:** the button at the top of every table freezes the zoom, so a
-  stray pinch or scroll can't zoom the puzzle (or the page itself); dragging
-  still moves the view. It works in the workshop, the jigsaw and everywhere
-  else, and is remembered.
 - **Parts list:** a bill of materials for your machine, with each part's value.
 
 **Physics.** Matter.js handles rigid bodies, with these upgrades so it behaves
@@ -279,7 +295,7 @@ and off, felts per table, dyes, reset, and reload) driven by real taps.
 The mathematics of all 20 card tricks was checked thousands of times each, and
 every act was performed on screen by an automated spectator who kept a secret
 card and answered honestly — 40 out of 40 performances correct. The 20
-Questions brain was played against all 1,004 things it knows (see above). The five Block Stack AI levels were benchmarked
+Questions brain was played against all 1,102 things it knows, plus independent human-style answer sheets for 50 jobs and 30 everyday things (see above). The five Block Stack AI levels were benchmarked
 playing 400 blocks with junk rows: Rookie lasts about 50 blocks, Easy about 80,
 Normal about 220, and Hard and Master survive all 400.
 
@@ -317,4 +333,6 @@ The challenges and showcases were checked the same way:
 
 MIT. See `LICENSE`. Machines & Mechanics embeds
 [Matter.js](https://github.com/liabru/matter-js) 0.19.0 (MIT, © Liam Brummitt
-and contributors).
+and contributors). 20 Questions uses category and synonym data from
+[WordNet 3.1](https://wordnet.princeton.edu/) (© Princeton University,
+WordNet licence).
