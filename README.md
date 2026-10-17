@@ -5,8 +5,10 @@
 A puzzle lounge in a single HTML file. Walk up to any of ten tables and
 play: a Rubik-style colour cube (2×2 and 3×3), slide puzzles, jigsaws cut from
 your own photos, Lights Out, Tower of Hanoi, Flood, Ball Sort, Maze Runner,
-the Arcade Puzzle match game and Block Stack (solo, Zen or against the
-computer). A jukebox plays ten original music tracks while you play. Every table
+the Glitters & Sparkles match game and Block Stack (solo, Zen or against the
+computer at five skill levels). Next door, **The Show** is a studio of 20
+mathematical card tricks, performed on you and then explained step by step.
+A jukebox plays ten original music tracks while you play. Every table
 has a live teacher, Professor Pip, who watches your moves, shows the next one
 right on the puzzle, and teaches you the method so you can solve it alone.
 
@@ -37,8 +39,41 @@ jigsaws and slide puzzles never leave your device.
 | Flood | 10×10, 14×14, 18×18 | Head for the centre, then grow; two-move lookahead. The move limit comes from the teacher's own solution plus a few spare, and it warns you (with a rewind) when you can no longer finish in time |
 | Ball Sort | 4–9 colours | Keep spare tubes empty; a solver plans the route and replans if you go your own way. If your own moves trap the rack, it works out exactly how many moves to rewind |
 | Maze Runner | A new random maze every game at 5 skill levels: Stroll, Easy, Medium, Hard and Expert (big, branching, looped and foggy). Trace the path with your finger (the dot follows you; drag back along your trail to back up), junctions are hexagons that become tap-to-return save spots once you pass them, swipe to run to the next junction, tap to step, arrow keys | The right-hand rule and dead-end spotting; gold dots light up the shortest way out |
-| Arcade Puzzle | Match-3 with six colour-and-shape gems. 4 in a line makes a Blaster, an L or T makes a Bomb, 5 in a line makes a Prism. Number gems (×2, ×3, ×5) multiply the match; two numbers in one match set off a Number Storm. Cascades build combos, and swapping two specials makes mega effects. Levels, 90-second and Zen modes | Points out the best swap and why (which special it makes) |
-| Block Stack | Falling-block stacking with hold, next queue and ghost piece. **Solo** speeds up every 10 lines, **Zen** never ends, **Vs AI** (easy/normal/hard) trades junk rows when you clear 2+ lines | Shows the spot its own AI would choose for your block, with tips on holes and height |
+| Glitters & Sparkles | Match-3 with six colour-and-shape gems. The shape of a match makes magic: 4 in a line makes a Blaster, a T makes a Bomb, an **L sends out 4 gnomes** that smash 4 helpful gems (specials to set off, gems whose fall makes a new match, number gems), a **2×2 square makes a Wild gem** that counts as any colour when you swap it in, and 5 in a line makes a Prism. Number gems (×2, ×3, ×5) multiply the match; two numbers in one match set off a Number Storm. Cascades build combos, and swapping two specials makes mega effects. Levels, 90-second and Zen modes | Points out the best swap and why (which shape and special it makes) |
+| Block Stack | Falling-block stacking with hold, next queue and ghost piece. **Solo** speeds up every 10 lines, **Zen** never ends, **Vs AI** trades junk rows when you clear 2+ lines. The AI has five skill settings: Rookie (slow, blunders), Easy, Normal, Hard (uses Hold) and Master (fastest, uses Hold and plans a block ahead) | Shows the spot its own AI would choose for your block, with tips on holes and height |
+
+## The Show
+
+A studio of 20 card tricks that work by mathematics, not sleight of hand. Tap
+**Perform it on me** and the trick is done to you — you think of cards, pick
+piles, cut the deck, deal. Then **How it works** walks through the secret one
+step at a time, so you can do it with a real deck. Every explanation is also a
+page in the lesson book.
+
+| # | Act | The mathematics |
+| --- | --- | --- |
+| 1 | The 21-Card Trick (pick a card) | Gergonne's pile trick |
+| 2 | Your Lucky Number (27 cards) | Base three |
+| 3 | The Kruskal Count | Coupling of random walks (works about 85% of the time) |
+| 4 | The Five-Card Trick | Pigeonhole principle (Fitch Cheney) |
+| 5 | The Gilbreath Shuffle | Gilbreath's principle |
+| 6 | The Mind-Reading Boards | Binary numbers |
+| 7 | The Down-Under Deal | The Josephus problem |
+| 8 | Spell It Out | Working backwards |
+| 9 | The Bottom-Card Sum | Counting with algebra |
+| 10 | The 1089 Prediction | Place value |
+| 11 | The Missing Digit | Casting out nines |
+| 12 | The Clock | Counting backwards |
+| 13 | Pick a Card, Any Card | The key card |
+| 14 | Chase the Kings | Cyclic order |
+| 15 | The Si Stebbins Stack | Modular arithmetic |
+| 16 | Mutus Nomen Dedit Cocis | A secret code word |
+| 17 | Out of This World | Conservation of colour |
+| 18 | The Remainder Reader | Chinese remainder theorem |
+| 19 | Perfect Shuffles | Binary and permutations (Elmsley) |
+| 20 | Cut and Turn Over Two | Parity (Hummer's principle) |
+
+The Show has its own shop tab too, with card-back kits and dyes.
 
 Also in the parlour:
 
@@ -107,6 +142,11 @@ shortest), 240 Ball Sort racks, 300 mazes, plus full in-browser playthroughs of
 every table — jigsaws of 50, 100 and 500 pieces with rotation, Flood, Arcade,
 and Block Stack solo and against the AI — and the shop (buying, turning kits on
 and off, felts per table, dyes, reset, and reload) driven by real taps.
+The mathematics of all 20 card tricks was checked thousands of times each, and
+every act was performed on screen by an automated spectator who kept a secret
+card and answered honestly. The five Block Stack AI levels were benchmarked
+playing 400 blocks with junk rows: Rookie lasts about 50 blocks, Easy about 80,
+Normal about 220, and Hard and Master survive all 400.
 
 ## Files
 

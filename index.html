@@ -231,6 +231,45 @@ select{background:var(--panel);border:1px solid var(--line);border-radius:9px;pa
 .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .thumbs button{width:72px;height:54px;border-radius:8px;border:2px solid var(--line);background-size:cover;background-position:center;padding:0}
 .thumbs button.on{border-color:var(--accent)}
+/* ---- the show ---- */
+.show{position:absolute;inset:0;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px;color:#fff;--cw:64px;--back:#b3202a;--trim:#fff}
+.show .patter{background:rgba(0,0,0,.35);border:1px solid rgba(242,193,78,.45);border-radius:12px;padding:10px 12px;font-size:1rem;line-height:1.45}
+.show .ctable{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px}
+.show .ctrl{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding-bottom:4px}
+.show .ctrl .btn:not(.primary){background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.3)}
+.crow{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.pc{width:var(--cw);aspect-ratio:5/7;border-radius:calc(var(--cw)*.1);position:relative;flex:none;box-shadow:0 2px 5px rgba(0,0,0,.35);user-select:none}
+.pc.face{background:#fffdf8;color:#1d1a24;border:1px solid #d8d2c4}
+.pc.face.red{color:#c41e3a}
+.pc .cr{position:absolute;left:7%;top:4%;font:700 calc(var(--cw)*.24)/1 Georgia,serif;text-align:center}
+.pc .cbig{position:absolute;inset:0;display:grid;place-items:center;font-size:calc(var(--cw)*.5);padding-top:12%}
+.pc.num-only{background:#f1ede6;color:#1d1a24}.pc.num-only .cbig{font:700 calc(var(--cw)*.5) Georgia,serif;padding:0}
+.pc.down{background:repeating-linear-gradient(45deg,var(--back) 0 6px,color-mix(in srgb,var(--back) 75%,#000) 6px 12px);border:3px solid var(--trim)}
+.pc.blank{background:transparent;box-shadow:none}
+.pc.hl{outline:4px solid #f2c14e;outline-offset:2px;animation:pulse .9s infinite}
+.pc.pickable{cursor:pointer}.pc.pickable:hover{transform:translateY(-4px)}
+.pc.pairA{box-shadow:0 0 0 3px #4fd6ff}.pc.pairB{box-shadow:0 0 0 3px #f2c14e}
+.cpiles{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%}
+.cpile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px;border-radius:12px;border:2px dashed transparent}
+.cpile.pickable{cursor:pointer;border-color:rgba(255,255,255,.35)}.cpile.pickable:hover,.cpile.hl{border-color:#f2c14e;background:rgba(242,193,78,.12)}
+.cpile .plabel{font-size:.8rem;font-weight:700;opacity:.85}.cpile .pcount{font-size:.75rem;opacity:.75}
+.pstack{display:flex;flex-direction:column}.pstack .pc+.pc{margin-top:calc(var(--cw)*-1.05)}
+.pstack.squared .pc+.pc{margin-top:calc(var(--cw)*-1.36)}
+.cnote{margin-top:8px;opacity:.85;text-align:center}
+.creveal{display:flex;flex-direction:column;align-items:center;gap:10px;--cw:110px}.creveal .pc{--cw:110px;width:110px;animation:flipin .5s ease-out}
+@keyframes flipin{from{transform:rotateY(90deg) scale(.8)}to{transform:none}}
+.sealed{font:400 3rem var(--sign);color:#ff7aa8;text-shadow:0 0 14px rgba(255,92,147,.8);background:rgba(0,0,0,.35);border:2px solid #f2c14e;border-radius:14px;padding:10px 26px}
+.sum{font:600 2rem var(--mono);text-align:right;background:rgba(0,0,0,.3);border-radius:12px;padding:10px 20px}.sum .eq{border-top:3px solid #fff;margin-top:4px;color:#f2c14e}
+.numpick{display:flex;align-items:center;gap:8px}.numpick b{font-size:1.6rem;min-width:2ch;text-align:center}
+.clock{position:relative;width:min(92vw,420px);aspect-ratio:1;--cw:44px}.clock .ch{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;font-weight:700;font-size:.8rem}.clock .ch .pc{width:44px}
+.clock .cmid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;background:rgba(0,0,0,.35);border-radius:10px;padding:8px}
+.mgrid{display:flex;flex-direction:column;gap:6px}.mrow{display:flex;gap:6px;align-items:center}.mrow .eyebrow{color:#fff;width:46px}
+.show.programme .acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
+.act{display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:10px}
+.act.done{border-color:rgba(242,193,78,.6)}.act .anum{font:400 1.4rem var(--sign);color:#f2c14e;min-width:2ch}.act .muted{color:rgba(255,255,255,.75);font-size:.85rem}.act .aprin{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#7fe3ff;margin-top:2px}
+.act .abtn{display:flex;flex-direction:column;gap:4px}.act .abtn .btn:not(.primary){background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.3)}
+.show.explain .estep{flex:1;background:rgba(0,0,0,.3);border-radius:14px;padding:18px;font-size:1.15rem;line-height:1.55;display:flex;flex-direction:column;gap:12px;justify-content:center}
+.estep .enum{font:400 .9rem var(--display);color:#f2c14e}.edots{display:flex;gap:6px}.edots i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25)}.edots i.on{background:#f2c14e}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -379,6 +418,11 @@ const KITS = {
     candy: { name: 'Sugar candy', price: 30, v: ['#ff70a6', '#ff9770', '#ffd670', '#70d6ff', '#a0e7a0', '#c792ea'] },
     jewel: { name: 'Crown jewels', price: 40, v: ['#9b1d20', '#d97706', '#d4af37', '#047857', '#1d4ed8', '#6d28d9'] },
     neon: { name: 'Neon arcade', price: 35, v: ['#ff2079', '#ff8d00', '#e8ff00', '#00ff9f', '#00b8ff', '#bd00ff'] } } },
+  show: { icon: '🎩', def: 'red', slots: ['back', 'trim'], slotName: { back: 'Card back', trim: 'Back pattern' }, items: {
+    red: { name: 'Lounge red', price: 0, v: { back: '#b3202a', trim: '#ffffff' } },
+    blue: { name: 'Bicycle blue', price: 15, v: { back: '#1f4fb4', trim: '#ffffff' } },
+    noir: { name: 'Noir & gold', price: 25, v: { back: '#14111c', trim: '#f2c14e' } },
+    emerald: { name: 'Emerald', price: 20, v: { back: '#0f6b4f', trim: '#e9c46a' } } } },
   stack: { icon: '🧱', def: 'classic', slots: IDX(7), slotName: { 0: 'I', 1: 'O', 2: 'T', 3: 'S', 4: 'Z', 5: 'J', 6: 'L' }, items: {
     classic: { name: 'Lounge blocks', price: 0, v: ['#4fd6ff', '#f2c14e', '#b15cff', '#5fd08f', '#ff4d6d', '#3a86ff', '#ff8a3d'] },
     pastel: { name: 'Pastel stack', price: 25, v: ['#a0e7e5', '#fbe7c6', '#d5aaff', '#b4f8c8', '#ffaebc', '#a0c4ff', '#ffd6a5'] },
@@ -593,7 +637,7 @@ window.addEventListener('resize', () => cur?.resize?.());
 function renderLounge() {
   const L = $('#lounge');
   const total = Object.values(P.stats).reduce((a, s) => a + s.solves, 0);
-  L.innerHTML = `<div class="marquee" id="mq"><h1>PUZZLE PARLOUR</h1><div class="sub">CUBES · MAZES · JIGSAWS · ARCADE · AND A TEACHER ON EVERY TABLE</div>
+  L.innerHTML = `<div class="marquee" id="mq"><h1>PUZZLE PARLOUR</h1><div class="sub">CUBES · MAZES · JIGSAWS · GLITTERS & SPARKLES · CARD TRICKS · AND A TEACHER ON EVERY TABLE</div>
    <p>Walk up to any table. Every puzzle comes with Professor Pip, a live teacher who watches your moves and shows the next one, plus lessons that teach you the method so you can solve it alone.</p>
    <div class="row"><button class="btn primary" id="lCube">Learn the cube</button><button class="btn" id="lJig">Make a jigsaw from a photo</button><button class="btn" id="lTour">Tour the lounge</button></div></div>
    <div class="floor-h"><h2>The floor</h2><span class="muted">${total ? total + ' puzzles solved so far' : 'Tap a table to sit down'}</span></div>
@@ -2070,15 +2114,15 @@ registerGame({
 </script>
 <script>
 /* =====================================================================
-   Arcade Puzzle — match lines of colour; shapes of matches make
+   Glitters & Sparkles — match lines of colour; shapes of matches make
    special gems, number gems multiply, cascades build combos
    ===================================================================== */
 registerGame({
-  id: 'arcade', name: 'Arcade Puzzle', tag: 'Match & combo', desc: 'Swap gems to line up three or more. Lines of 4, L and T shapes and lines of 5 make blasters, bombs and prisms; number gems multiply your score.',
+  id: 'arcade', name: 'Glitters & Sparkles', tag: 'Match & combo', desc: 'Swap gems to line up three or more. Match shapes make magic: blasters, bombs, prisms, wild gems and a team of gem-smashing gnomes.',
   art: () => { const C = gemPal(); const sh = ['<circle cx="0" cy="0" r="7"/>', '<rect x="-6.5" y="-6.5" width="13" height="13" rx="3"/>', '<path d="M0-8L7.5 6H-7.5z"/>', '<path d="M-7 0l3.5-6h7L7 0l-3.5 6h-7z"/>', '<path d="M0-8L7 0 0 8-7 0z"/>', '<path d="M0-8l2.4 5 5.4.6-4 3.7 1.1 5.4L0 9.9l-4.9 2.8 1.1-5.4-4-3.7 5.4-.6z"/>']; let s = ''; const g = [[0, 1, 2, 3, 4], [1, 0, 0, 0, 5], [2, 3, 4, 1, 2], [4, 5, 1, 2, 0], [3, 2, 5, 4, 1]]; g.forEach((r, y) => r.forEach((c, x) => s += `<g transform="translate(${18 + x * 16} ${18 + y * 16})" fill="${C[c]}">${sh[c]}</g>`)); return `<svg viewBox="0 0 100 100"><rect x="8" y="8" width="84" height="84" rx="10" fill="rgba(0,0,0,.3)"/>${s}<g transform="translate(50 34)"><circle r="9" fill="none" stroke="#fff" stroke-width="2"/></g><text x="66" y="38" font-family="Bungee,Impact" font-size="9" fill="#fff">×3</text></svg>`; },
   how: `<p><b>Swipe</b> a gem toward a neighbour to swap them (or tap one, then the other). Line up <b>three or more</b> of the same colour and shape to clear them.</p>
-   <p><b>Match shapes make specials:</b></p><ul><li><b>4 in a line</b> → a <b>Blaster</b> (striped). When cleared it wipes its whole row or column.</li><li><b>L or T shape</b> → a <b>Bomb</b>. Clears everything around it.</li><li><b>5 in a line</b> → a <b>Prism</b>. Swap it with any gem to clear every gem of that colour.</li></ul>
-   <p><b>Number gems</b> (×2, ×3, ×5) multiply the points for their match. Two or more numbers in the same match set off a <b>Number Storm</b> that zaps extra gems. Gems that fall and match again make <b>combos</b> — each one is worth more.</p><p>Swap two specials together for a mega effect!</p>`,
+   <p><b>The shape of a match makes magic:</b></p><ul><li><b>4 in a line</b> → a <b>Blaster</b> (striped). When cleared it wipes its whole row or column.</li><li><b>T shape</b> → a <b>Bomb</b>. Clears everything around it.</li><li><b>L shape</b> → <b>4 gnomes</b> run out and smash 4 gems — they pick ones that help you: specials to set off, or gems that make new matches when they fall.</li><li><b>2×2 square</b> → a <b>Wild gem</b> ✦. It counts as <i>any</i> colour, so it can finish any match.</li><li><b>5 in a line</b> → a <b>Prism</b>. Swap it with any gem to clear every gem of that colour.</li></ul>
+   <p><b>Number gems</b> (×2, ×3, ×5) multiply the points for their match. Two or more numbers in the same match set off a <b>Number Storm</b>. Gems that fall and match again make <b>combos</b>. Swap two specials together for a mega effect!</p>`,
   create(host, opts, o) {
     const N = 8, K = 6; let mode = store.get('arc.mode', 'moves'), level = store.get('arc.level', 1);
     let grid, score = 0, movesLeft = 25, target = 0, timeLeft = 90, busy = false, over = false, comboMax = 0, hintsUsed = 0, hintMv = null, idleT = null, sel = null, tickI = null, alive = true, uid = 0, shake = 0;
@@ -2089,13 +2133,45 @@ registerGame({
     const gem = (c, sp = null, num = 0) => ({ c, sp, num, id: uid++, x: 0, y: 0, s: 1, a: 1 });
     const rndGem = () => gem(rnd(K), null, Math.random() < .08 ? (Math.random() < .15 ? 5 : Math.random() < .5 ? 3 : 2) : 0);
     const at = (x, y) => (x >= 0 && y >= 0 && x < N && y < N) ? grid[y][x] : null;
-    const col = (x, y) => { const q = at(x, y); return q && q.sp !== 'prism' ? q.c : -1; };
-    function fill() { grid = [...Array(N)].map(() => Array(N).fill(null)); for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { let q; do q = rndGem(); while ((x > 1 && grid[y][x - 1].c === q.c && grid[y][x - 2].c === q.c) || (y > 1 && grid[y - 1][x].c === q.c && grid[y - 2][x].c === q.c)); q.x = x; q.y = y; grid[y][x] = q; } if (!bestMove()) fill(); }
-    function runs() {
-      const out = [];
-      for (let y = 0; y < N; y++) for (let x = 0; x < N;) { const c = col(x, y); let e = x + 1; while (c >= 0 && col(e, y) === c) e++; if (c >= 0 && e - x >= 3) out.push({ c, dir: 'h', cells: [...Array(e - x)].map((_, i) => [x + i, y]) }); x = e; }
-      for (let x = 0; x < N; x++) for (let y = 0; y < N;) { const c = col(x, y); let e = y + 1; while (c >= 0 && col(x, e) === c) e++; if (c >= 0 && e - y >= 3) out.push({ c, dir: 'v', cells: [...Array(e - y)].map((_, i) => [x, y + i]) }); y = e; }
+    // what a cell counts as when matching: a colour 0..5, 'W' for a wild gem (joins any colour), or -1 (prism / empty)
+    const kind = q => !q ? -1 : q.sp === 'prism' ? -1 : q.sp === 'wild' ? (q.armed ? 'W' : -1) : q.c; // a wild gem only joins a line when you swap it in
+    function runs(G = grid) {
+      const out = [], kd = (x, y) => (x >= 0 && y >= 0 && x < N && y < N) ? kind(G[y][x]) : -1;
+      for (let k = 0; k < K; k++) {
+        const fits = (x, y) => { const v = kd(x, y); return v === k || v === 'W'; };
+        for (let y = 0; y < N; y++) for (let x = 0; x < N;) { if (!fits(x, y)) { x++; continue; } let e = x, real = 0; while (e < N && fits(e, y)) { if (kd(e, y) === k) real++; e++; } if (e - x >= 3 && real) out.push({ c: k, dir: 'h', cells: [...Array(e - x)].map((_, i) => [x + i, y]) }); x = e; }
+        for (let x = 0; x < N; x++) for (let y = 0; y < N;) { if (!fits(x, y)) { y++; continue; } let e = y, real = 0; while (e < N && fits(x, e)) { if (kd(x, e) === k) real++; e++; } if (e - y >= 3 && real) out.push({ c: k, dir: 'v', cells: [...Array(e - y)].map((_, i) => [x, y + i]) }); y = e; }
+        for (let y = 0; y < N - 1; y++) for (let x = 0; x < N - 1; x++) { const cs = [[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]]; if (cs.every(([a, b]) => fits(a, b)) && cs.filter(([a, b]) => kd(a, b) === k).length >= 2) out.push({ c: k, dir: 'sq', cells: cs }); }
+      }
       return out;
+    }
+    function fill() {
+      grid = [...Array(N)].map((_, y) => [...Array(N)].map((_, x) => { const q = rndGem(); q.x = x; q.y = y; return q; }));
+      for (let guard = 0; guard < 500; guard++) { const rs = runs(); if (!rs.length) break; const [x, y] = rs[0].cells[rnd(rs[0].cells.length)]; const q = rndGem(); q.x = x; q.y = y; grid[y][x] = q; }
+      if (runs().length || !bestMove()) fill();
+    }
+    // what a matched group turns into: 5 in a line → prism, L → gnomes, T/+ → bomb, 2×2 → wild, 4 in a line → blaster
+    function shapeOf(G) {
+      const lines = G.runs.filter(r => r.dir !== 'sq'), maxLen = Math.max(0, ...lines.map(r => r.cells.length));
+      const H = lines.filter(r => r.dir === 'h'), V = lines.filter(r => r.dir === 'v');
+      if (maxLen >= 5) return { sp: 'prism' };
+      for (const h of H) for (const v of V) { const hk = h.cells.map(([x, y]) => y * N + x), vk = v.cells.map(([x, y]) => y * N + x); const k = hk.find(q => vk.includes(q)); if (k == null) continue; const endH = k === hk[0] || k === hk[hk.length - 1], endV = k === vk[0] || k === vk[vk.length - 1]; return endH && endV ? { sp: 'gnomes', at: [k % N, k / N | 0] } : { sp: 'bomb', at: [k % N, k / N | 0] }; }
+      if (G.runs.some(r => r.dir === 'sq')) return { sp: 'wild' };
+      if (maxLen === 4) return { sp: lines[0].dir === 'h' ? 'v' : 'h' };
+      return { sp: null };
+    }
+    // gnomes pick gems that help you: specials to set off, gems whose removal makes a new match, number gems
+    function gnomeTargets(clear, n) {
+      const cand = []; for (let k = 0; k < N * N; k++) if (!clear.has(k) && grid[k / N | 0][k % N]) cand.push(k);
+      const scored = cand.map(k => {
+        const q = grid[k / N | 0][k % N]; let v = Math.random() * 5;
+        if (q.sp) v += 60; if (q.num) v += 25;
+        const G2 = [...Array(N)].map(() => Array(N).fill(null)); // board after this clear + gravity, no refill
+        for (let x = 0; x < N; x++) { let w = N - 1; for (let y = N - 1; y >= 0; y--) { const kk = y * N + x; if (clear.has(kk) || kk === k) continue; G2[w--][x] = grid[y][x]; } }
+        if (runs(G2).length) v += 40;
+        return [v, k];
+      }).sort((a, b) => b[0] - a[0]);
+      return scored.slice(0, n).map(x => x[1]);
     }
     function groupsOf(rs) { const gs = []; for (const r of rs) { const k = new Set(r.cells.map(([x, y]) => y * N + x)); const hit = gs.filter(G => G.c === r.c && [...k].some(v => G.set.has(v))); const G = hit[0] || { c: r.c, set: new Set(), runs: [] }; if (!hit[0]) gs.push(G); for (const h of hit.slice(1)) { h.set.forEach(v => G.set.add(v)); G.runs.push(...h.runs); gs.splice(gs.indexOf(h), 1); } k.forEach(v => G.set.add(v)); G.runs.push(r); } return gs; }
     const tween = (d, f) => new Promise(res => { const t0 = performance.now(), D = d * SPEED(); const st = n => { const u = Math.min(1, (n - t0) / D); f(u); u < 1 ? requestAnimationFrame(st) : res(); }; requestAnimationFrame(st); });
@@ -2125,7 +2201,7 @@ registerGame({
       beep(combo > 1 ? 'snap' : 'tick'); if (clear.size > 8) buzz(25);
       // pop
       const popping = [...clear].map(k => grid[k / N | 0][k % N]).filter(Boolean);
-      for (const p of popping) for (let i = 0; i < 5; i++) fx.push({ t: 'p', x: p.x, y: p.y, vx: (Math.random() - .5) * .12, vy: (Math.random() - .8) * .12, c: p.sp === 'prism' ? '#fff' : gemPal()[p.c], life: 1 });
+      for (const p of popping) for (let i = 0; i < 5; i++) fx.push({ t: 'p', x: p.x, y: p.y, vx: (Math.random() - .5) * .12, vy: (Math.random() - .8) * .12, c: p.c < 0 ? '#fff' : gemPal()[p.c], life: 1 });
       await tween(200, u => popping.forEach(p => { p.s = 1 - u; }));
       for (const k of clear) grid[k / N | 0][k % N] = null;
       for (const cr of create) { const q2 = gem(cr.c, cr.sp, 0); q2.x = cr.x; q2.y = cr.y; q2.s = 0; grid[cr.y][cr.x] = q2; tween(220, u => q2.s = u); fx.push({ t: 'ring', x: cr.x, y: cr.y, r: .9, life: 1 }); }
@@ -2141,23 +2217,28 @@ registerGame({
     async function cascade(swapA, swapB, combo = 0) {
       for (; ;) {
         const rs = runs(); if (!rs.length) break; combo++; comboMax = Math.max(comboMax, combo);
-        const clear = new Set(), create = []; let mult = 1, storm = 0, label = combo > 1 ? `Combo ×${combo}!` : '';
+        const clear = new Set(), create = [], gnomes = []; let mult = 1, storm = 0, label = combo > 1 ? `Combo ×${combo}!` : '';
         for (const G of groupsOf(rs)) {
-          const maxLen = Math.max(...G.runs.map(r => r.cells.length)), hasH = G.runs.some(r => r.dir === 'h'), hasV = G.runs.some(r => r.dir === 'v');
-          const sp = maxLen >= 5 ? 'prism' : hasH && hasV ? 'bomb' : maxLen === 4 ? (G.runs[0].dir === 'h' ? 'v' : 'h') : null;
+          const shp = shapeOf(G), sp = shp.sp;
           const cells = [...G.set];
-          if (sp) {
+          if (sp === 'gnomes') { gnomes.push(shp.at); label = 'Gnomes!' + (combo > 1 ? `  Combo ×${combo}` : ''); }
+          else if (sp) {
             let pos = [swapB, swapA].find(p => p && G.set.has(p[1] * N + p[0]));
-            if (!pos && sp === 'bomb') { const h = G.runs.find(r => r.dir === 'h'), v = G.runs.find(r => r.dir === 'v'); const k = h.cells.map(([x, y]) => y * N + x).find(k2 => v.cells.some(([x, y]) => y * N + x === k2)); if (k != null) pos = [k % N, k / N | 0]; }
+            if (!pos && shp.at) pos = shp.at;
             if (!pos) { const k = cells[cells.length >> 1]; pos = [k % N, k / N | 0]; }
-            create.push({ x: pos[0], y: pos[1], sp, c: sp === 'prism' ? -1 : G.c });
-            label = { prism: 'Prism!', bomb: 'Bomb!', h: 'Blaster!', v: 'Blaster!' }[sp] + (combo > 1 ? `  Combo ×${combo}` : '');
+            if (!create.some(c => c.x === pos[0] && c.y === pos[1])) create.push({ x: pos[0], y: pos[1], sp, c: sp === 'prism' ? -1 : sp === 'wild' ? -2 : G.c });
+            label = { prism: 'Prism!', bomb: 'Bomb!', h: 'Blaster!', v: 'Blaster!', wild: 'Wild gem!' }[sp] + (combo > 1 ? `  Combo ×${combo}` : '');
           }
           const nums = cells.map(k => grid[k / N | 0][k % N]).filter(q => q && q.num);
           nums.forEach(q => mult *= q.num); if (nums.length >= 2) storm += nums.reduce((a, q) => a + q.num, 0);
           cells.forEach(k => clear.add(k));
         }
         mult = Math.min(mult, 30);
+        if (gnomes.length) { // four gnomes per L shape run out and smash helpful gems
+          const tg = gnomeTargets(clear, 4 * gnomes.length);
+          tg.forEach((k, i) => fx.push({ t: 'gnome', x1: gnomes[i % gnomes.length][0], y1: gnomes[i % gnomes.length][1], x2: k % N, y2: k / N | 0, p: 0, life: 1.6 }));
+          beep('pick'); await wait(520); tg.forEach(k => { clear.add(k); fx.push({ t: 'ring', x: k % N, y: k / N | 0, r: .7, life: 1 }); }); shake = 6;
+        }
         if (storm) { const pool = []; for (let k = 0; k < N * N; k++) if (!clear.has(k)) pool.push(k); shuffle(pool).slice(0, storm).forEach(k => { clear.add(k); fx.push({ t: 'zap', x1: N / 2, y1: -1, x2: k % N, y2: k / N | 0, life: 1 }); }); label = `Number Storm ×${mult}!`; shake = 10; }
         else if (mult > 1 && !label) label = `×${mult}`;
         // gems turning into specials shouldn't fire as they're made
@@ -2172,15 +2253,17 @@ registerGame({
       busy = true; clearHint(); sel = null;
       const swapAnim = () => tween(170, u => { A.x = a[0] + (b[0] - a[0]) * u; A.y = a[1] + (b[1] - a[1]) * u; B.x = b[0] + (a[0] - b[0]) * u; B.y = b[1] + (a[1] - b[1]) * u; });
       await swapAnim(); grid[a[1]][a[0]] = B; grid[b[1]][b[0]] = A;
+      [A, B].forEach(q => { if (q.sp === 'wild') q.armed = true; });
       // special + special or prism swaps fire straight away
       const sps = [A.sp, B.sp];
-      if (A.sp === 'prism' || B.sp === 'prism' || (A.sp && B.sp)) {
+      if (A.sp === 'prism' || B.sp === 'prism' || (A.sp && B.sp && A.sp !== 'wild' && B.sp !== 'wild')) {
         useMove(); const clear = new Set(); let label = '';
         if (A.sp === 'prism' && B.sp === 'prism') { for (let k = 0; k < N * N; k++) clear.add(k); label = 'PRISM STORM!'; shake = 14; }
         else if (A.sp === 'prism' || B.sp === 'prism') {
           const P2 = A.sp === 'prism' ? A : B, O = P2 === A ? B : A; clear.add(P2.y * N + P2.x); P2.fired = true;
-          grid.flat().forEach(q => { if (q && q.c === O.c && q.sp !== 'prism') { if (O.sp) { q.sp = O.sp === 'bomb' ? 'bomb' : Math.random() < .5 ? 'h' : 'v'; } clear.add(q.y * N + q.x); fx.push({ t: 'zap', x1: P2.x, y1: P2.y, x2: q.x, y2: q.y, life: 1 }); } });
-          label = O.sp ? 'Prism + ' + (O.sp === 'bomb' ? 'Bomb' : 'Blaster') + '!' : 'Prism!';
+          let oc = O.c; if (O.sp === 'wild') { const cnt = Array(K).fill(0); grid.flat().forEach(q => q && q.c >= 0 && cnt[q.c]++); oc = cnt.indexOf(Math.max(...cnt)); clear.add(O.y * N + O.x); }
+          grid.flat().forEach(q => { if (q && q.c === oc && q.sp !== 'prism') { if (O.sp && O.sp !== 'wild') { q.sp = O.sp === 'bomb' ? 'bomb' : Math.random() < .5 ? 'h' : 'v'; } clear.add(q.y * N + q.x); fx.push({ t: 'zap', x1: P2.x, y1: P2.y, x2: q.x, y2: q.y, life: 1 }); } });
+          label = O.sp === 'wild' ? 'Prism + Wild!' : O.sp ? 'Prism + ' + (O.sp === 'bomb' ? 'Bomb' : 'Blaster') + '!' : 'Prism!';
         } else {
           const [x, y] = b; A.fired = B.fired = true; clear.add(y * N + x); clear.add(a[1] * N + a[0]);
           const lines = sps.filter(s => s === 'h' || s === 'v').length, bombs = sps.filter(s => s === 'bomb').length;
@@ -2191,8 +2274,8 @@ registerGame({
         }
         await blast(clear, [], 1, 1, label); await cascade(null, null, 1); return end();
       }
-      if (!runs().length) { beep('bad'); grid[a[1]][a[0]] = A; grid[b[1]][b[0]] = B; await tween(170, u => { A.x = b[0] + (a[0] - b[0]) * u; A.y = b[1] + (a[1] - b[1]) * u; B.x = a[0] + (b[0] - a[0]) * u; B.y = a[1] + (b[1] - a[1]) * u; }); A.x = a[0]; A.y = a[1]; B.x = b[0]; B.y = b[1]; busy = false; idle(); return; }
-      useMove(); await cascade(a, b); end();
+      if (!runs().length) { [A, B].forEach(q => q.armed = false); beep('bad'); grid[a[1]][a[0]] = A; grid[b[1]][b[0]] = B; await tween(170, u => { A.x = b[0] + (a[0] - b[0]) * u; A.y = b[1] + (a[1] - b[1]) * u; B.x = a[0] + (b[0] - a[0]) * u; B.y = a[1] + (b[1] - a[1]) * u; }); A.x = a[0]; A.y = a[1]; B.x = b[0]; B.y = b[1]; busy = false; idle(); return; }
+      useMove(); await cascade(a, b); grid.flat().forEach(q => { if (q) q.armed = false; }); end();
     }
     function useMove() { if (mode === 'moves') movesLeft--; stats(); }
     async function end() {
@@ -2221,14 +2304,15 @@ registerGame({
         const A = at(x, y), B = at(x + dx, y + dy); if (!A || !B) continue;
         let val = 0, why = '';
         if (A.sp === 'prism' || B.sp === 'prism') { val = 40 + ((A.sp && B.sp) ? 30 : 0); why = 'Swap the prism to clear a whole colour'; }
-        else if (A.sp && B.sp) { val = 35; why = 'Swap two specials together for a mega blast'; }
+        else if (A.sp && B.sp && A.sp !== 'wild' && B.sp !== 'wild') { val = 35; why = 'Swap two specials together for a mega blast'; }
         else {
-          grid[y][x] = B; grid[y + dy][x + dx] = A; const rs = runs(); grid[y][x] = A; grid[y + dy][x + dx] = B;
-          if (!rs.length) continue; const G = groupsOf(rs); const mx = Math.max(...rs.map(r => r.cells.length)); const lt = G.some(gg => gg.runs.some(r => r.dir === 'h') && gg.runs.some(r => r.dir === 'v'));
+          grid[y][x] = B; grid[y + dy][x + dx] = A; const arm = [A, B].filter(q => q.sp === 'wild'); arm.forEach(q => q.armed = true); const rs = runs(); arm.forEach(q => q.armed = false); grid[y][x] = A; grid[y + dy][x + dx] = B;
+          if (!rs.length) continue; const G = groupsOf(rs); const shapes = G.map(gg => shapeOf(gg).sp);
           const cells = G.reduce((a, gg) => a + gg.set.size, 0); const nums = G.reduce((a, gg) => a + [...gg.set].filter(k => grid[k / N | 0][k % N]?.num).length, 0);
           const spIn = G.some(gg => [...gg.set].some(k => grid[k / N | 0][k % N]?.sp));
-          val = cells + (mx >= 5 ? 25 : lt ? 15 : mx === 4 ? 8 : 0) + nums * 4 + (spIn ? 10 : 0) + (N - y) * .02;
-          why = mx >= 5 ? 'Five in a line makes a Prism' : lt ? 'An L or T shape makes a Bomb' : mx === 4 ? 'Four in a line makes a Blaster' : spIn ? 'This match sets off a special' : nums ? 'This match includes a number gem — bigger score' : 'Make a match of three';
+          const has = s2 => shapes.includes(s2);
+          val = cells + (has('prism') ? 25 : has('gnomes') ? 18 : has('bomb') ? 15 : has('wild') ? 12 : has('h') || has('v') ? 8 : 0) + nums * 4 + (spIn ? 10 : 0) + (N - y) * .02;
+          why = has('prism') ? 'Five in a line makes a Prism' : has('gnomes') ? 'An L shape sends out 4 gnomes' : has('bomb') ? 'A T shape makes a Bomb' : has('wild') ? 'A 2×2 square makes a Wild gem' : has('h') || has('v') ? 'Four in a line makes a Blaster' : spIn ? 'This match sets off a special' : nums ? 'This match includes a number gem — bigger score' : 'Make a match of three';
         }
         if (!best || val > best.val) best = { a: [x, y], b: [x + dx, y + dy], val, why };
       }
@@ -2239,8 +2323,8 @@ registerGame({
     function coach(why) {
       if (teacherOffMsg(why)) return; const b = bestMove();
       const tips = mode === 'moves' ? `Goal: ${target.toLocaleString()} points in ${movesLeft} moves left.` : mode === 'timed' ? `${timeLeft}s left — big combos beat lots of small matches.` : 'Zen: no clock, no limits.';
-      T.set({ stage: 'Arcade Puzzle · ' + (mode === 'moves' ? 'Level ' + level : mode === 'timed' ? '90 seconds' : 'Zen'), steps: ['Match 3', 'Make specials', 'Chain combos'], cur: comboMax >= 3 ? 2 : score > 0 ? 1 : 0, prog: mode === 'moves' ? score / target : mode === 'timed' ? 1 - timeLeft / 90 : null,
-        msg: `${tips} Look for matches near the <b>bottom</b>: falling gems can set off free combos. Shapes matter — 4 in a line, L/T shapes and 5 in a line make specials.` + (S.teacher === 'live' ? ' <span class="muted">If you pause, I’ll point out a good swap.</span>' : '<br><span class="muted">Tap 💡 Hint for a good swap.</span>'),
+      T.set({ stage: 'Glitters & Sparkles · ' + (mode === 'moves' ? 'Level ' + level : mode === 'timed' ? '90 seconds' : 'Zen'), steps: ['Match 3', 'Make shapes', 'Chain combos'], cur: comboMax >= 3 ? 2 : score > 0 ? 1 : 0, prog: mode === 'moves' ? score / target : mode === 'timed' ? 1 - timeLeft / 90 : null,
+        msg: `${tips} Look for matches near the <b>bottom</b>: falling gems can set off free combos. Shapes matter — 4 in a line, T and L shapes, 2×2 squares and 5 in a line all make something special.` + (S.teacher === 'live' ? ' <span class="muted">If you pause, I’ll point out a good swap.</span>' : '<br><span class="muted">Tap 💡 Hint for a good swap.</span>'),
         next: hintMv && b ? { mv: '⇄', how: `${b.why}. Swap the glowing pair.` } : null, acts: [{ label: '💡 Best swap', fn: hint, primary: true }, { label: '▶ Show me', fn: showMe }, { label: '📖 Lessons', fn: () => showLessons('arcade') }] });
     }
     function hint() { hintsUsed++; hintOn(); hintMv = bestMove(); coach(); }
@@ -2270,6 +2354,7 @@ registerGame({
     function drawGem(q, now) {
       const r = cs * .38 * q.s; if (r <= 0.5) return; const C = gemPal(); g.save(); g.translate(ox + (q.x + .5) * cs, oy + (q.y + .5) * cs);
       if (q.sp === 'prism') { const gr = g.createConicGradient ? g.createConicGradient(now / 600, 0, 0) : null; if (gr) { ['#ff4d6d', '#ffd60a', '#38d17a', '#3a86ff', '#b15cff', '#ff4d6d'].forEach((c, i) => gr.addColorStop(i / 5, c)); g.fillStyle = gr; } else g.fillStyle = '#fff'; g.beginPath(); g.arc(0, 0, r * 1.05, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.75)'; g.beginPath(); g.arc(-r * .3, -r * .35, r * .3, 0, 7); g.fill(); g.restore(); return; }
+      if (q.sp === 'wild') { const tw = .85 + .15 * Math.sin(now / 160 + q.id); const gr2 = g.createConicGradient ? g.createConicGradient(-now / 900, 0, 0) : null; if (gr2) { ['#fff', '#ffd6f5', '#bdf3ff', '#fff6b0', '#fff'].forEach((c2, i) => gr2.addColorStop(i / 4, c2)); g.fillStyle = gr2; } else g.fillStyle = '#fff'; g.shadowColor = '#fff'; g.shadowBlur = 12; g.beginPath(); for (let k = 0; k < 8; k++) { const a = -Math.PI / 2 + k * Math.PI / 4, rr = (k % 2 ? r * .38 : r * 1.08) * tw; g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } g.closePath(); g.fill(); g.shadowBlur = 0; g.fillStyle = '#fff'; for (let k = 0; k < 3; k++) { const a = now / 400 + k * 2.1; g.beginPath(); g.arc(Math.cos(a) * r * .9, Math.sin(a) * r * .9, r * .09, 0, 7); g.fill(); } g.restore(); return; }
       const c = C[q.c]; const gr = g.createRadialGradient(-r * .35, -r * .4, r * .1, 0, 0, r * 1.2); gr.addColorStop(0, '#ffffffcc'); gr.addColorStop(.35, c); gr.addColorStop(1, c);
       g.fillStyle = gr; g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 4; g.shadowOffsetY = 2; shape(q.c, r); g.fill(); g.shadowColor = 'transparent';
       if (q.sp === 'h' || q.sp === 'v') { g.save(); shape(q.c, r); g.clip(); g.fillStyle = 'rgba(255,255,255,.8)'; for (let k = -1; k <= 1; k++) q.sp === 'h' ? g.fillRect(-r * 1.2, k * r * .45 - r * .08, r * 2.4, r * .16) : g.fillRect(k * r * .45 - r * .08, -r * 1.2, r * .16, r * 2.4); g.restore(); }
@@ -2295,6 +2380,7 @@ registerGame({
         if (f.t === 'p') { f.x += f.vx; f.y += f.vy; f.vy += .006; g.fillStyle = f.c; g.beginPath(); g.arc(ox + (f.x + .5) * cs, oy + (f.y + .5) * cs, cs * .07 * (f.life + .3), 0, 7); g.fill(); }
         if (f.t === 'beam') { g.fillStyle = '#fff'; const th = cs * .5 * f.life; f.h ? g.fillRect(ox, oy + (f.y + .5) * cs - th / 2, cs * N, th) : g.fillRect(ox + (f.x + .5) * cs - th / 2, oy, th, cs * N); }
         if (f.t === 'ring') { g.strokeStyle = '#fff'; g.lineWidth = 4 * f.life; g.beginPath(); g.arc(ox + (f.x + .5) * cs, oy + (f.y + .5) * cs, cs * f.r * (1.4 - f.life), 0, 7); g.stroke(); }
+        if (f.t === 'gnome') { f.p = Math.min(1, f.p + .035); const e = f.p < 1 ? f.p * f.p * (3 - 2 * f.p) : 1, X = ox + (f.x1 + (f.x2 - f.x1) * e + .5) * cs, Y = oy + (f.y1 + (f.y2 - f.y1) * e + .5) * cs - Math.sin(e * Math.PI) * cs * .8, s2 = cs * .32; g.globalAlpha = Math.min(1, f.life); g.fillStyle = '#e63946'; g.beginPath(); g.moveTo(X - s2 * .6, Y - s2 * .1); g.lineTo(X + s2 * .6, Y - s2 * .1); g.lineTo(X + s2 * .1, Y - s2 * 1.4); g.fill(); g.fillStyle = '#f2d3b4'; g.beginPath(); g.arc(X, Y + s2 * .15, s2 * .35, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.moveTo(X - s2 * .45, Y + s2 * .2); g.quadraticCurveTo(X, Y + s2 * 1.3, X + s2 * .45, Y + s2 * .2); g.fill(); g.fillStyle = '#3a86ff'; g.fillRect(X - s2 * .4, Y + s2 * .85, s2 * .8, s2 * .4); continue; }
         if (f.t === 'zap') { g.strokeStyle = '#e8f7ff'; g.lineWidth = 2.5; g.beginPath(); const x1 = ox + (f.x1 + .5) * cs, y1 = oy + (f.y1 + .5) * cs, x2 = ox + (f.x2 + .5) * cs, y2 = oy + (f.y2 + .5) * cs; g.moveTo(x1, y1); for (let k = 1; k < 5; k++) g.lineTo(x1 + (x2 - x1) * k / 5 + (Math.random() - .5) * cs * .4, y1 + (y2 - y1) * k / 5 + (Math.random() - .5) * cs * .4); g.lineTo(x2, y2); g.stroke(); }
       }
       g.globalAlpha = 1;
@@ -2361,14 +2447,19 @@ const Stack = (() => {
       for (const [cx, cy] of ROT[t][r].map(([a, c]) => [x + a, y + c])) { if (cy < 2) topOut = true; if (cy >= 0) g[cy][cx] = ci; }
       let lines = 0; for (let yy = H - 1; yy >= 0; yy--) if (g[yy].every(v => v)) { g.splice(yy, 1); g.unshift(Array(W).fill(0)); lines++; yy++; }
       const f = evalGrid(g); const score = -0.510066 * f.agg + 0.760666 * lines * (lines === 4 ? 1.6 : 1) - 0.35663 * f.holes * 1.4 - 0.184483 * f.bump - (topOut ? 50 : 0) - (f.max > 15 ? (f.max - 15) * 2 : 0);
-      out.push({ r, x, y, score, lines, f });
+      out.push({ r, x, y, score, lines, f, grid: g });
     }
     return out.sort((a, b2) => b2.score - a.score);
   }
-  function best(b, noise = 0, useHold = false) {
+  function best(b, noise = 0, useHold = false, look = false, slip = 0) {
     let pl = placements(b, b.p.t).map(p => ({ ...p, hold: false }));
     if (useHold && b.canHoldNow) { const ht = b.hold || b.q[0]; pl = pl.concat(placements(b, ht).map(p => ({ ...p, hold: true }))).sort((a, c) => c.score - a.score); }
+    if (look) { // think one block ahead: score each of the best spots by how well the next block fits afterwards
+      for (const p of pl.slice(0, 10)) { const nb = Object.create(Board.prototype); nb.g = p.grid; const nt = p.hold && !b.hold ? b.q[1] : b.q[0]; const nx = placements(nb, nt)[0]; p.score = p.score * .5 + (nx ? nx.score : -50) * .5 + p.lines * .4; }
+      pl = pl.slice(0, 10);
+    }
     if (noise) pl.forEach(p => p.score += (Math.random() - .5) * noise); pl.sort((a, c) => c.score - a.score);
+    if (slip && Math.random() < slip) return pl[Math.min(pl.length - 1, 1 + rnd(5))]; // a beginner's blunder
     return pl[0];
   }
   return { W, H, VIS, TYPES, ROT, Board, best, evalGrid };
@@ -2377,15 +2468,17 @@ const Stack = (() => {
 registerGame({
   id: 'stack', name: 'Block Stack', tag: 'Solo · Zen · Vs AI', desc: 'Stack the falling blocks and clear full lines. Play solo, relax in Zen, or battle the computer.',
   art: () => { const C = blockPal(); const cells = [[0, 9, 0], [1, 9, 0], [2, 9, 2], [3, 9, 2], [4, 9, 2], [5, 9, 5], [6, 9, 5], [7, 9, 5], [8, 9, 6], [0, 8, 0], [1, 8, 0], [3, 8, 2], [5, 8, 5], [8, 8, 6], [7, 8, 6], [0, 7, 3], [1, 7, 3], [8, 7, 6], [1, 6, 3], [2, 6, 3]]; return `<svg viewBox="0 0 100 100"><rect x="18" y="8" width="64" height="84" rx="4" fill="rgba(0,0,0,.35)"/>${cells.map(([x, y, c]) => `<rect x="${20 + x * 6.4}" y="${26 + (y - 3) * 7}" width="6" height="6.6" rx="1.2" fill="${C[c]}"/>`).join('')}<g fill="${C[4]}"><rect x="39.2" y="14" width="6" height="6.6" rx="1.2"/><rect x="45.6" y="14" width="6" height="6.6" rx="1.2"/><rect x="45.6" y="21" width="6" height="6.6" rx="1.2"/><rect x="52" y="21" width="6" height="6.6" rx="1.2"/></g></svg>`; },
-  how: `<p>Blocks fall from the top. Move and turn them so they fill whole rows — a full row clears.</p><p><b>Touch:</b> drag left/right to move, <b>tap</b> to turn, drag down to drop faster, <b>flick down</b> to slam it in. The buttons under the board do the same, plus <b>Hold</b> to save a block for later.</p><p><b>Keys:</b> ← → move, ↑ or X turn, Z turn back, ↓ soft drop, Space slam, C hold, P pause.</p><p><b>Modes:</b> <b>Solo</b> speeds up every 10 lines. <b>Zen</b> never ends — when the stack reaches the top it melts away. <b>Vs AI</b>: clearing 2, 3 or 4 lines at once sends junk rows to the computer, and it sends them back!</p>`,
+  how: `<p>Blocks fall from the top. Move and turn them so they fill whole rows — a full row clears.</p><p><b>Touch:</b> drag left/right to move, <b>tap</b> to turn, drag down to drop faster, <b>flick down</b> to slam it in. The buttons under the board do the same, plus <b>Hold</b> to save a block for later.</p><p><b>Keys:</b> ← → move, ↑ or X turn, Z turn back, ↓ soft drop, Space slam, C hold, P pause.</p><p><b>Modes:</b> <b>Solo</b> speeds up every 10 lines. <b>Zen</b> never ends — when the stack reaches the top it melts away. <b>Vs AI</b>: clearing 2, 3 or 4 lines at once sends junk rows to the computer, and it sends them back! The AI has five skill settings, from <b>Rookie</b> (slow, makes mistakes) to <b>Master</b> (lightning fast, uses Hold and plans a block ahead).</p>`,
   create(host, opts, o) {
     let mode = store.get('stack.mode', 'solo'), diff = store.get('stack.diff', 'normal'), me, ai, paused = false, over = false, alive = true, t0 = 0, last = 0, hintsUsed = 0, showHint = false, tip = null, aiPlan = null, aiT = 0, msgs = [];
     const cv = el('canvas', { class: 'gcanvas' }); host.appendChild(cv); const g = cv.getContext('2d'); let dpr = Math.min(2, devicePixelRatio || 1);
     const pad = el('div', { class: 'underbar' }, `<button class="btn sm" data-k="hold">Hold</button><button class="btn sm" data-k="ccw" aria-label="Turn back">⟲</button><button class="btn sm" data-k="left" aria-label="Left">◀</button><button class="btn sm" data-k="soft" aria-label="Drop">▼</button><button class="btn sm" data-k="hard" aria-label="Slam">Slam</button><button class="btn sm" data-k="right" aria-label="Right">▶</button><button class="btn sm" data-k="cw" aria-label="Turn">⟳</button><button class="btn sm" data-k="pause" aria-label="Pause">II</button>`); host.appendChild(pad);
-    opts.innerHTML = `<label>Mode</label><div class="seg" id="kM"><button data-m="solo">Solo</button><button data-m="zen">Zen</button><button data-m="vs">Vs AI</button></div><span id="kDw"><label>AI</label> <div class="seg" id="kD"><button data-d="easy">Easy</button><button data-d="normal">Normal</button><button data-d="hard">Hard</button></div></span>`;
+    opts.innerHTML = `<label>Mode</label><div class="seg" id="kM"><button data-m="solo">Solo</button><button data-m="zen">Zen</button><button data-m="vs">Vs AI</button></div><span id="kDw"><label>AI</label> <div class="seg" id="kD"><button data-d="rookie">1 Rookie</button><button data-d="easy">2 Easy</button><button data-d="normal">3 Normal</button><button data-d="hard">4 Hard</button><button data-d="master">5 Master</button></div></span>`;
     $('#kM', opts).onclick = e => { const b = e.target.closest('button'); if (b) { mode = b.dataset.m; store.set('stack.mode', mode); newGame(); } };
     $('#kD', opts).onclick = e => { const b = e.target.closest('button'); if (b) { diff = b.dataset.d; store.set('stack.diff', diff); newGame(); } };
-    const AI = { easy: { delay: 380, noise: 2.2, hold: false }, normal: { delay: 170, noise: .5, hold: false }, hard: { delay: 75, noise: 0, hold: true } };
+    // five skill settings: how fast it moves, how sloppy its judgement is, whether it uses Hold and thinks a block ahead
+    const AI = { rookie: { delay: 620, noise: 4, hold: false, slip: .22 }, easy: { delay: 380, noise: 2.2, hold: false, slip: .08 }, normal: { delay: 170, noise: .5, hold: false }, hard: { delay: 85, noise: .1, hold: true }, master: { delay: 40, noise: 0, hold: true, look: true } };
+    if (!AI[diff]) diff = 'normal';
     function newGame() {
       $$('#kM button', opts).forEach(b => b.classList.toggle('on', b.dataset.m === mode)); $$('#kD button', opts).forEach(b => b.classList.toggle('on', b.dataset.d === diff)); $('#kDw', opts).hidden = mode !== 'vs';
       $$('.win', host).forEach(w => w.remove());
@@ -2414,7 +2507,7 @@ registerGame({
     function popMsg(text, big, gold) { msgs.push({ text, life: 1.6, big, gold }); }
     function finish(res) {
       over = true; const time = performance.now() - t0;
-      if (mode === 'vs') { if (res === 'win') { const r = award('stack', 'Vs ' + diff, { time, stars: { easy: 4, normal: 8, hard: 15 }[diff], hints: hintsUsed }); winOverlay(host, { title: 'You win!', lines: [`Beat the ${diff} AI`, `${me.lines} lines · sent ${me.sent} junk rows`], earned: r.earned, again: newGame }); } else { beep('bad'); winOverlay(host, { title: 'AI wins', lines: [`${me.lines} lines · sent ${me.sent} junk rows`, 'Clear 2+ lines at once to send junk back!'], earned: 0, again: newGame }); } }
+      if (mode === 'vs') { if (res === 'win') { const r = award('stack', 'Vs ' + diff, { time, stars: { rookie: 2, easy: 4, normal: 8, hard: 15, master: 25 }[diff], hints: hintsUsed }); winOverlay(host, { title: 'You win!', lines: [`Beat the ${diff} AI`, `${me.lines} lines · sent ${me.sent} junk rows`], earned: r.earned, again: newGame }); } else { beep('bad'); winOverlay(host, { title: 'AI wins', lines: [`${me.lines} lines · sent ${me.sent} junk rows`, 'Clear 2+ lines at once to send junk back!'], earned: 0, again: newGame }); } }
       else { const st = stat('stack'); const prev = st.best['Solo score']?.moves || 0; const r = award('stack', 'Solo score', { stars: Math.min(20, 1 + Math.floor(me.lines / 5)), hints: hintsUsed }); st.best['Solo score'].moves = Math.max(prev, me.score); saveP(); beep('bad'); winOverlay(host, { title: 'Game over', lines: [`Score ${me.score.toLocaleString()} · ${me.lines} lines · level ${me.level()}`, `Best ${Math.max(prev, me.score).toLocaleString()}`], earned: r.earned, again: newGame }); }
       coach();
     }
@@ -2457,7 +2550,7 @@ registerGame({
     }
     function aiThink(dt) {
       if (!ai || !ai.alive) return; const A = AI[diff];
-      if (!aiPlan) { const bp = Stack.best(ai, A.noise, A.hold); if (!bp) return; const acts = []; if (bp.hold) acts.push('hold'); aiPlan = { bp, acts, started: false }; }
+      if (!aiPlan) { const bp = Stack.best(ai, A.noise, A.hold, A.look, A.slip); if (!bp) return; const acts = []; if (bp.hold) acts.push('hold'); aiPlan = { bp, acts, started: false }; }
       aiT += dt; if (aiT < A.delay) return; aiT = 0;
       const P2 = aiPlan; if (P2.bp.hold && ai.canHoldNow) { act('hold', ai, false); return; }
       if (ai.p.r !== P2.bp.r) { act('cw', ai, false); if (ai.p.r !== P2.bp.r && !P2.rotTried) P2.rotTries = (P2.rotTries || 0) + 1; if ((P2.rotTries || 0) > 6) act('hard', ai, false); return; }
@@ -2512,6 +2605,386 @@ registerGame({
     return { hint, newGame, coach, undo() { toast('No undo here — but Hold can save you!'); }, restyle() { }, resize() { }, destroy() { alive = false; document.removeEventListener('keydown', keyH); document.removeEventListener('visibilitychange', vis); } };
   }
 });
+</script>
+<script>
+/* =====================================================================
+   The Show — the mathematics behind 20 card tricks (pure functions)
+   ===================================================================== */
+const Cards = (() => {
+  const SUITS = ['♣', '♥', '♠', '♦'], RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  const card = (r, s) => ({ r, s }); // r 1..13, s index 0..3 (clubs, hearts, spades, diamonds — the CHaSeD order)
+  const id = c => c.r + ':' + c.s;
+  const name = c => RANKS[c.r - 1] + SUITS[c.s];
+  const long = c => ['Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King'][c.r - 1] + ' of ' + ['Clubs', 'Hearts', 'Spades', 'Diamonds'][c.s];
+  const red = c => c.s === 1 || c.s === 3;
+  const deck = () => { const d = []; for (let s = 0; s < 4; s++) for (let r = 1; r <= 13; r++) d.push(card(r, s)); return d; };
+  const shuffled = () => shuffle(deck());
+  const draw = n => shuffled().slice(0, n);
+  return { SUITS, RANKS, card, id, name, long, red, deck, shuffled, draw };
+})();
+
+const TrickMath = {
+  // 1. Gergonne's 21/27-card piles: deal round-robin into 3 piles
+  deal3(deck) { const p = [[], [], []]; deck.forEach((c, i) => p[i % 3].push(c)); return p; },
+  gather(piles, chosen, where) { // where: 0 top, 1 middle, 2 bottom
+    const others = [0, 1, 2].filter(i => i !== chosen); const order = where === 0 ? [chosen, ...others] : where === 2 ? [...others, chosen] : [others[0], chosen, others[1]];
+    return order.flatMap(i => piles[i]);
+  },
+  digits3(n) { const d = []; let v = n - 1; for (let i = 0; i < 3; i++) { d.push(v % 3); v = Math.floor(v / 3); } return d; }, // least significant first
+  // 3. Kruskal count
+  kval(c) { return c.r > 10 ? 5 : c.r; },
+  kruskal(deck, start) { let i = start - 1; for (; ;) { const n = i + TrickMath.kval(deck[i]); if (n >= deck.length) return i; i = n; } },
+  kruskalPath(deck, start) { const out = []; let i = start - 1; for (; ;) { out.push(i); const n = i + TrickMath.kval(deck[i]); if (n >= deck.length) return out; i = n; } },
+  // 4. Fitch Cheney five-card trick
+  order: c => c.r * 4 + c.s,
+  fitchEncode(hand) {
+    for (let a = 0; a < 5; a++) for (let b = 0; b < 5; b++) {
+      if (a === b || hand[a].s !== hand[b].s) continue; const d = ((hand[b].r - hand[a].r) % 13 + 13) % 13;
+      if (d >= 1 && d <= 6) { // keep a, hide b, encode d with the other three
+        const rest = hand.filter((_, i) => i !== a && i !== b).sort((x, y) => TrickMath.order(x) - TrickMath.order(y));
+        const perms = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+        return { hidden: hand[b], shown: [hand[a], ...perms[d - 1].map(i => rest[i])], d };
+      }
+    }
+    return null;
+  },
+  fitchDecode(shown) {
+    const [k, ...rest] = shown; const sorted = rest.slice().sort((x, y) => TrickMath.order(x) - TrickMath.order(y));
+    const perm = rest.map(c => sorted.indexOf(c)).join('');
+    const d = ['012', '021', '102', '120', '201', '210'].indexOf(perm) + 1;
+    return Cards.card(((k.r - 1 + d) % 13) + 1, k.s);
+  },
+  // 5. Gilbreath: alternate colours, deal some into a pile (reversing them), riffle the two piles together
+  riffle(a, b) { const out = []; a = a.slice(); b = b.slice(); while (a.length || b.length) { const pa = a.length / (a.length + b.length); out.push(Math.random() < pa ? a.pop() : b.pop()); } return out.reverse(); }, // drops from the bottom up
+  gilbreath(deck, k) { const dealt = deck.slice(0, k).reverse(), rest = deck.slice(k); return TrickMath.riffle(dealt, rest); },
+  pairsMixed(deck) { for (let i = 0; i + 1 < deck.length; i += 2) if (Cards.red(deck[i]) === Cards.red(deck[i + 1])) return false; return true; },
+  // 6. binary boards (32 cards)
+  binaryCards() { const d = []; for (let s = 0; s < 4; s++) for (let r = 1; r <= 8; r++) d.push(Cards.card(r, s)); return d; },
+  // 7. down-under deal: deal one down, put the next under, repeat; which position survives?
+  downUnder(n) { let q = [...Array(n)].map((_, i) => i); while (q.length > 1) { q.shift(); if (q.length > 1) q.push(q.shift()); } return q[0]; },
+  downUnderFormula(n) { let p = 1; while (p * 2 <= n) p *= 2; return n === p ? n - 1 : 2 * (n - p) - 1; }, // 0-based
+  // 8. spelling order: A-C-E, T-W-O … each spelled card moves to the bottom, the next card is turned up
+  SPELL: ['ACE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'JACK', 'QUEEN', 'KING'],
+  spellOrder() { // returns ranks top-to-bottom so that spelling deals them out in order
+    let q = [...Array(13)].map((_, i) => i); const slot = new Array(13);
+    TrickMath.SPELL.forEach((w, v) => { for (let k = 0; k < w.length; k++) q.push(q.shift()); slot[q.shift()] = v + 1; });
+    return slot;
+  },
+  // 9. bottom-card sum: start a pile with a face-up card and count on to 13
+  thirteenPiles(deck) { const piles = []; let i = 0; while (i < deck.length) { const v = deck[i].r, need = 14 - v; if (i + need > deck.length) break; piles.push(deck.slice(i, i + need)); i += need; } return { piles, leftover: deck.slice(i) }; },
+  // 10. 1089
+  rev3: n => +String(n).padStart(3, '0').split('').reverse().join(''),
+  // 11. digit sum / casting out nines
+  missingDigit(rest) { const s = rest.reduce((a, b) => a + b, 0) % 9; return s === 0 ? 9 : 9 - s; },
+  // 12. clock: card k (1-based) of 12 goes to hour 13-k
+  clockHour: k => 13 - k,
+  // 15. Si Stebbins: each card is 3 higher than the last, suits in CHSD order
+  stebbins() { const d = []; let r = 1, s = 0; for (let i = 0; i < 52; i++) { d.push(Cards.card(r, s)); r = (r + 3 - 1) % 13 + 1; s = (s + 1) % 4; } return d; },
+  stebNext(c) { return Cards.card((c.r + 3 - 1) % 13 + 1, (c.s + 1) % 4); },
+  // 16. Mutus nomen dedit cocis
+  MUTUS: ['MUTUS', 'NOMEN', 'DEDIT', 'COCIS'],
+  mutusLetters() { const seen = []; for (const ch of TrickMath.MUTUS.join('')) if (!seen.includes(ch)) seen.push(ch); return seen; }, // M U T S N O E D I C
+  mutusLayout(pairs) { const grid = TrickMath.MUTUS.map(w => w.split('').map(() => null)); const L = TrickMath.mutusLetters(); pairs.forEach((pr, k) => { const ch = L[k]; let n = 0; TrickMath.MUTUS.forEach((w, r) => w.split('').forEach((x, c) => { if (x === ch) grid[r][c] = pr[n++]; })); }); return grid; },
+  mutusFind(rows) { // rows: sorted array of 1 or 2 row indexes → the letter whose two places are in those rows
+    const L = TrickMath.mutusLetters(); for (let k = 0; k < L.length; k++) { const where = []; TrickMath.MUTUS.forEach((w, r) => w.split('').forEach(x => { if (x === L[k]) where.push(r); })); const set = [...new Set(where)].sort().join(); if (set === rows.slice().sort().join()) return k; } return -1;
+  },
+  // 17. red/black pairs
+  redBlack(deck) { const R = [], B = [], D = []; for (let i = 0; i + 1 < deck.length; i += 2) { const a = deck[i], b = deck[i + 1]; (Cards.red(a) && Cards.red(b) ? R : !Cards.red(a) && !Cards.red(b) ? B : D).push(a, b); } return { R, B, D }; },
+  // 18. Chinese remainder theorem (mod 3, 4, 5 → 1..60)
+  crt(a, b, c) { for (let n = 1; n <= 60; n++) if (n % 3 === a && n % 4 === b && n % 5 === c) return n; return -1; },
+  // 19. perfect shuffles
+  faroOut(d) { const h = d.length / 2, out = []; for (let i = 0; i < h; i++) out.push(d[i], d[h + i]); return out; },
+  faroIn(d) { const h = d.length / 2, out = []; for (let i = 0; i < h; i++) out.push(d[h + i], d[i]); return out; },
+  elmsley(n) { const k = n - 1; if (k === 0) return []; return k.toString(2).split('').map(b => b === '1' ? 'in' : 'out'); }, // top card to position n
+  // 20. Hummer's CATO
+  cut(d, k) { return d.slice(k).concat(d.slice(0, k)); },
+  turnTwo(d) { const [a, b, ...r] = d; return [{ ...b, up: !b.up }, { ...a, up: !a.up }, ...r]; }
+};
+</script>
+<script>
+/* =====================================================================
+   The Show — a studio of 20 mathematical card tricks.
+   Each act can be performed on you, then explained step by step.
+   ===================================================================== */
+const CANCEL = { cancel: true };
+function cardHTML(c, o = {}) {
+  if (!c) return `<div class="pc blank"></div>`;
+  if (c.blank) return `<div class="pc face num-only"><span class="cbig">${c.blank}</span></div>`;
+  const down = o.down || c.up === false, red = Cards.red(c);
+  return `<div class="pc ${down ? 'down' : 'face'} ${red ? 'red' : ''} ${o.hl ? 'hl' : ''} ${o.pick ? 'pickable' : ''}" ${o.i != null ? `data-i="${o.i}"` : ''} data-id="${Cards.id(c)}">${down ? '' : `<span class="cr">${Cards.RANKS[c.r - 1]}<br>${Cards.SUITS[c.s]}</span><span class="cbig">${Cards.SUITS[c.s]}</span>`}</div>`;
+}
+function ShowStage(root) {
+  root.innerHTML = `<div class="patter" aria-live="polite"></div><div class="ctable"></div><div class="ctrl"></div>`;
+  const P = $('.patter', root), Tb = $('.ctable', root), C = $('.ctrl', root);
+  let tok = 0;
+  const api = {
+    start() { return ++tok; },
+    stop() { tok++; },
+    guard(t) { if (t !== tok) throw CANCEL; },
+    say(html) { P.innerHTML = html; },
+    clear() { Tb.innerHTML = ''; C.innerHTML = ''; },
+    room() { const r = root.getBoundingClientRect(); return { w: r.width - 24, h: Math.max(160, r.height - P.getBoundingClientRect().height - 110) }; },
+    size(n, cols) { const { w, h } = api.room(); const per = Math.min(cols || n, n), rows = Math.ceil(n / per); const cw = clamp(Math.floor(Math.min((w - per * 6) / per, (h - rows * 6) / rows / 1.4)), 24, 92); root.style.setProperty('--cw', cw + 'px'); },
+    sizePiles(np, maxLen, squared) { const { w, h } = api.room(); const vis = squared ? .04 : .35; const cw = clamp(Math.floor(Math.min((w - np * 28) / np, (h - 44) / (1.4 + Math.max(0, maxLen - 1) * vis))), 22, 92); root.style.setProperty('--cw', cw + 'px'); },
+    show(cards, o = {}) { // a spread or grid of cards; o.pick → resolves with index tapped
+      api.size(cards.length, o.cols); Tb.innerHTML = `<div class="crow ${o.fan ? 'fan' : ''}" style="${o.cols ? `max-width:calc(var(--cw) * ${o.cols} + ${o.cols * 6}px)` : ''}">${cards.map((c, i) => cardHTML(c, { i, down: o.down, hl: o.hl && o.hl.has(i), pick: o.pick })).join('')}</div>${o.note ? `<p class="cnote">${o.note}</p>` : ''}`;
+      if (!o.pick) return Promise.resolve();
+      return new Promise(res => Tb.onclick = e => { const el = e.target.closest('[data-i]'); if (el) { Tb.onclick = null; $$('.pickable', Tb).forEach(x => x.classList.remove('pickable')); beep('pick'); res(+el.dataset.i); } });
+    },
+    piles(piles, o = {}) { // columns of cards; o.pick → resolves with pile index tapped
+      const maxLen = Math.max(1, ...piles.map(p => p.length)); api.sizePiles(piles.length, maxLen, o.squared);
+      Tb.innerHTML = `<div class="cpiles">${piles.map((p, i) => `<div class="cpile ${o.pick ? 'pickable' : ''} ${o.hl === i ? 'hl' : ''}" data-p="${i}"><div class="plabel">${o.labels ? o.labels[i] : 'Pile ' + (i + 1)}</div><div class="pstack ${o.squared ? 'squared' : ''}">${p.map((c, j) => cardHTML(c, { down: o.down, hl: o.hlCard && o.hlCard(c) })).join('')}</div>${o.counts ? `<div class="pcount">${p.length} cards</div>` : ''}</div>`).join('')}</div>`;
+      if (!o.pick) return Promise.resolve();
+      return new Promise(res => Tb.onclick = e => { const el = e.target.closest('[data-p]'); if (el) { Tb.onclick = null; $$('.pickable', Tb).forEach(x => x.classList.remove('pickable')); el.classList.add('hl'); beep('pick'); res(+el.dataset.p); } });
+    },
+    html(h) { Tb.innerHTML = h; },
+    ask(btns) { C.innerHTML = btns.map((b, i) => `<button class="btn ${b.primary ? 'primary' : ''}" data-b="${i}">${b.label}</button>`).join(''); return new Promise(res => C.onclick = e => { const el = e.target.closest('[data-b]'); if (el) { C.onclick = null; C.innerHTML = ''; res(btns[+el.dataset.b].value); } }); },
+    next(label = 'Next') { return api.ask([{ label, value: 1, primary: true }]); },
+    num(label, min, max, def) {
+      let v = def ?? min; C.innerHTML = `<div class="numpick"><span class="eyebrow">${label}</span><button class="btn" data-n="-1">−</button><b class="num" id="npv">${v}</b><button class="btn" data-n="1">+</button><button class="btn primary" data-n="ok">OK</button></div>`;
+      return new Promise(res => C.onclick = e => { const el = e.target.closest('[data-n]'); if (!el) return; if (el.dataset.n === 'ok') { C.onclick = null; C.innerHTML = ''; res(v); return; } v = clamp(v + +el.dataset.n, min, max); $('#npv', C).textContent = v; });
+    },
+    wait(ms) { return new Promise(r => setTimeout(r, ms * SPEED())); },
+    reveal(c, text) { api.size(1); Tb.innerHTML = `<div class="creveal">${cardHTML(c)}<p>${text || ''}</p></div>`; Tb.dataset.reveal = c ? Cards.id(c) : ''; beep('win'); buzz([20, 30, 20]); }
+  };
+  return api;
+}
+
+/* ---------- the 20 acts ---------- */
+const PILES3 = ['Left', 'Middle', 'Right'];
+const TRICKS = [
+  { id: 'twentyone', title: 'The 21-Card Trick', principle: 'Gergonne’s pile trick', blurb: 'Think of any card. Three times you tell me which pile it’s in, and I find it.',
+    async perform(u, t) {
+      let d = Cards.draw(21); u.say('Here are 21 cards. <b>Think of any one</b> — don’t tell me or tap it.'); await u.show(d, { cols: 7 }); await u.next('I’ve got one'); u.guard(t);
+      for (let r = 0; r < 3; r++) { const p = TrickMath.deal3(d); u.say(`I deal them into three piles${r ? ' again' : ''}. <b>Which pile is your card in?</b>`); const ch = await u.piles(p, { pick: true, labels: PILES3 }); u.guard(t); d = TrickMath.gather(p, ch, 1); u.say('I gather the piles, with yours in the middle…'); await u.wait(500); u.guard(t); }
+      u.say('Now I count down to the eleventh card…'); await u.wait(700); u.guard(t); u.reveal(d[10], 'Is this your card?');
+    },
+    explain: ['Every time you point at a pile, I put that pile <b>in the middle</b> of the three. Your card is then somewhere in positions 8–14.', 'When those 21 cards are dealt into three piles again, positions 8–14 land in the <b>middle third of each pile</b> (rows 3–5).', 'Picking up with your pile in the middle again squeezes it into positions 10–12.', 'One more round and it can only be at position <b>11</b> — the exact centre of 21. Three choices were enough to trap it.', 'The same idea works with 27 cards and four rounds would trap a card in 81: each round divides where it can be by three.'] },
+  { id: 'twentyseven', title: 'Your Lucky Number (27 cards)', principle: 'Base three', blurb: 'Pick a card and a number from 1 to 27. Your card ends up at exactly that position.',
+    async perform(u, t) {
+      let d = Cards.draw(27); u.say('Choose a <b>lucky number</b> from 1 to 27.'); const n = await u.num('Your number', 1, 27, 9); u.guard(t);
+      const dg = TrickMath.digits3(n); u.say('Now <b>think of any card</b> here.'); await u.show(d, { cols: 9 }); await u.next('Got it'); u.guard(t);
+      for (let r = 0; r < 3; r++) { const p = TrickMath.deal3(d); u.say('Which pile is your card in?'); const ch = await u.piles(p, { pick: true, labels: PILES3 }); u.guard(t); d = TrickMath.gather(p, ch, dg[r]); u.say(`I put your pile on the <b>${['top', 'middle', 'bottom'][dg[r]]}</b>.`); await u.wait(600); u.guard(t); }
+      u.say(`Counting down to card number <b>${n}</b>…`); await u.show(d.slice(0, n), { down: true, cols: 9 }); await u.wait(800); u.guard(t); u.reveal(d[n - 1], `Card number ${n}. Yours?`);
+    },
+    explain: ['Write your number minus one in <b>base three</b>. For 9: 9 − 1 = 8 = 0·9 + 2·3 + 2·1, so the digits (smallest first) are 2, 2, 0.', 'Each digit says where your pile goes: 0 = top, 1 = middle, 2 = bottom.', 'Each placement moves your card into a different block of nine, three and one positions above it — exactly like the place values of base three.', 'After three rounds it is preceded by exactly (number − 1) cards, so it sits at your lucky number.'] },
+  { id: 'kruskal', title: 'The Kruskal Count', principle: 'Coupling of random walks', blurb: 'You follow a secret path through a shuffled deck. I predict where you stop.',
+    async perform(u, t) {
+      const d = Cards.shuffled(); u.say('Secretly choose a number from <b>1 to 10</b>. Count that many cards from the start (left to right, row by row). That’s your first card.<br>Its value is your next count: Ace = 1, number cards their number, J/Q/K = 5. Keep jumping until there aren’t enough cards left. <b>Remember the last card you land on.</b>'); await u.show(d, { cols: 13 }); await u.next('I’ve landed'); u.guard(t);
+      const mine = TrickMath.kruskal(d, 1); u.say('Your final card is…'); await u.wait(600); u.guard(t);
+      await u.show(d, { cols: 13, hl: new Set([mine]) }); u.say(`<b>The ${Cards.long(d[mine])}!</b> Was I right?`);
+      const r = await u.ask([{ label: 'Yes!', value: 1, primary: true }, { label: 'No', value: 0 }]); u.guard(t);
+      const agree = [...Array(10)].filter((_, k) => TrickMath.kruskal(d, k + 1) === mine).length;
+      u.say(r ? `${agree} of the 10 possible starting numbers end on that card. Paths that meet stay together forever.` : `It works about 85% of the time — here ${agree} of the 10 starts end on my card. Tap a start to see your path.`);
+      if (!r) { const s = await u.num('Your secret number', 1, 10, 1); u.guard(t); const path = TrickMath.kruskalPath(d, s); await u.show(d, { cols: 13, hl: new Set(path) }); u.say(`Your path: ${path.map(i => Cards.name(d[i])).join(' → ')}`); }
+    },
+    explain: ['I secretly follow a path too, starting from the first card.', 'Each path jumps about 5–6 cards at a time. With 52 cards, my path and yours each land on about ten cards.', 'If our paths ever land on the <b>same card</b>, they stay together from then on — every later jump is identical.', 'The chance two paths never meet over the whole deck is small, so we usually finish on the same card — about 85% of the time.', 'This is the <b>Kruskal count</b>, named after mathematician Martin Kruskal; the idea of two random walks “coupling” is used in probability theory.'] },
+  { id: 'fitch', title: 'The Five-Card Trick', principle: 'Pigeonhole principle', blurb: 'From five cards, my assistant shows me four in a special order. I name the fifth.',
+    async perform(u, t) {
+      const h = Cards.draw(5); u.say('Here are <b>five random cards</b>. Imagine you picked them. My assistant will hide one and show me the other four.'); await u.show(h); await u.next('Hand them over'); u.guard(t);
+      const e = TrickMath.fitchEncode(h); u.say('My assistant hides one card and lays out four, <b>in a particular order</b>:'); await u.show([...e.shown, { up: false, r: 1, s: 0 }]); await u.next('Name the hidden card'); u.guard(t);
+      const g = TrickMath.fitchDecode(e.shown); u.reveal(g, `The hidden card is the <b>${Cards.long(g)}</b>.`);
+    },
+    explain: ['Five cards, four suits: two cards <b>must</b> share a suit (the pigeonhole principle).', 'The assistant hides one of those two and shows the other <b>first</b> — so I know the suit.', 'Arrange the 13 values in a circle. From either of the two cards, the other is at most <b>6 steps clockwise</b> away. The assistant hides the one that is 1–6 steps ahead.', 'The other three cards encode that number 1–6 by their order: ranking them Low, Middle, High, the orders LMH, LHM, MLH, MHL, HLM, HML mean 1 to 6.', 'So I count that many steps from the first card, in its suit. Ties in value are broken by suit order ♣ ♦ ♥ ♠ — I use clubs, hearts, spades, diamonds.'] },
+  { id: 'gilbreath', title: 'The Gilbreath Shuffle', principle: 'Gilbreath’s principle', blurb: 'You deal and riffle-shuffle the cards yourself, yet every pair is still one red and one black.',
+    async perform(u, t) {
+      const reds = shuffle(Cards.deck().filter(Cards.red)), blacks = shuffle(Cards.deck().filter(c => !Cards.red(c))); const d = []; for (let i = 0; i < 10; i++) d.push(reds[i], blacks[i]);
+      u.say('Twenty cards, colours alternating. Deal <b>as many as you like</b> into a pile on the table.'); await u.show(d, { cols: 10 }); const k = await u.num('Cards to deal', 2, 18, 9); u.guard(t);
+      const mixed = TrickMath.gilbreath(d, k); u.say(`You dealt ${k} (that reverses them). Now I <b>riffle-shuffle</b> the two piles together at random…`); await u.show(mixed, { down: true, cols: 10 }); await u.next('Turn them over'); u.guard(t);
+      await u.show(mixed, { cols: 10, note: 'Look at the cards two at a time…' }); u.say('Take the cards <b>two at a time</b>: every pair is one red and one black!'); Tb_markPairs();
+    },
+    explain: ['Start with colours alternating: R B R B…', 'Dealing some cards into a pile <b>reverses</b> them, so the two piles now start with opposite colours at their bottoms.', 'In a riffle, the cards fall from the bottoms of both piles. Whatever falls, the next card from either pile is always the opposite colour of the last two possibilities.', 'Norman Gilbreath proved that after one such riffle, each pair (cards 1–2, 3–4, …) still contains one of each colour.', 'Magicians and mathematicians love it because the shuffle is genuinely random, yet the order is not.'] },
+  { id: 'binary', title: 'The Mind-Reading Boards', principle: 'Binary numbers', blurb: 'Think of one of 32 cards. Answer yes or no five times and I name it.',
+    async perform(u, t) {
+      const cs = TrickMath.binaryCards(); u.say('Think of <b>one of these 32 cards</b>.'); await u.show(cs, { cols: 8 }); await u.next('Got one'); u.guard(t);
+      let v = 0; for (let b = 0; b < 5; b++) { const board = cs.filter((_, i) => i >> b & 1); u.say(`Board ${b + 1} of 5: <b>is your card here?</b>`); await u.show(board, { cols: 8 }); const y = await u.ask([{ label: 'Yes', value: 1, primary: true }, { label: 'No', value: 0 }]); u.guard(t); if (y) v |= 1 << b; }
+      u.reveal(cs[v], `Your card: the <b>${Cards.long(cs[v])}</b>.`);
+    },
+    explain: ['Each of the 32 cards has a number 0–31. In binary that’s five digits.', 'Board 1 shows every card whose 1s digit is 1, board 2 the 2s digit, then 4s, 8s and 16s.', 'Each “yes” tells me one binary digit is 1. I add up 1 + 2 + 4 + 8 + 16 for the yes boards.', 'That total is your card’s number. Five yes/no questions can split 2⁵ = 32 possibilities exactly.'] },
+  { id: 'downunder', title: 'The Down-Under Deal', principle: 'The Josephus problem', blurb: 'Deal one down, one under, over and over. I already know which card survives.',
+    async perform(u, t) {
+      u.say('How many cards shall we use?'); const n = await u.num('Cards', 4, 20, 10); u.guard(t); const d = Cards.draw(n); const pos = TrickMath.downUnder(n);
+      u.say(`My prediction is sealed. Now: deal the top card <b>down</b> onto the table, put the next one <b>under</b> the packet, and repeat.`); await u.show([d[pos]], { down: true, note: 'Prediction' }); await u.next('Deal'); u.guard(t);
+      let q = d.slice(), out = []; while (q.length > 1) { out.push(q.shift()); if (q.length > 1) q.push(q.shift()); u.html(`<div class="crow">${q.map(c => cardHTML(c, { down: true })).join('')}</div><p class="cnote">${out.length} dealt down · ${q.length} left</p>`); await u.wait(260); u.guard(t); }
+      u.reveal(q[0], `The last card is the <b>${Cards.long(q[0])}</b> — exactly my prediction.`);
+    },
+    explain: ['Write the number of cards as a power of two plus a bit: 10 = 8 + 2.', 'Every full pass halves the packet. If the packet is an exact power of two, the <b>last card</b> of the packet survives.', 'With an extra 2 cards, two cards must go first; after that the packet is a power of two again and the card then at the bottom survives.', 'So the survivor is at position 2 × (extra) — here 2 × 2 = 4th from the top. For an exact power of two it is the bottom card.', 'This is a version of the ancient <b>Josephus problem</b>.'] },
+  { id: 'spell', title: 'Spell It Out', principle: 'Working backwards', blurb: 'Spell each value — A-C-E, T-W-O… — and that very card turns up every time.',
+    async perform(u, t) {
+      const suit = rnd(4); const order = TrickMath.spellOrder(); let q = order.map(r => Cards.card(r, suit));
+      u.say('Thirteen cards of one suit, face down. For each value I move one card to the bottom per letter, then turn the next card over.'); await u.show(q, { down: true }); await u.next('Spell A-C-E'); u.guard(t);
+      const dealt = []; for (let v = 0; v < 13; v++) { const w = TrickMath.SPELL[v]; for (let k = 0; k < w.length; k++) { q.push(q.shift()); u.say(`${w.slice(0, k + 1).split('').join('-')}…`); await u.wait(150); u.guard(t); } dealt.push(q.shift()); u.html(`<div class="crow">${dealt.map(c => cardHTML(c)).join('')}</div><div class="crow" style="margin-top:8px">${q.map(c => cardHTML(c, { down: true })).join('')}</div>`); if (v < 12) { await u.next('Spell ' + TrickMath.SPELL[v + 1].split('').join('-')); u.guard(t); } }
+      u.say('Every value turned up right on its last letter!'); beep('win');
+    },
+    explain: ['The secret is the order the cards start in. I find it by <b>working backwards</b>.', 'Imagine 13 empty slots. Spell A-C-E by moving three slots to the bottom; the next slot must hold the Ace.', 'Keep spelling with the remaining slots: T-W-O marks the slot for the Two, and so on to the King.', 'Filling the slots that way gives the starting order — here 3, 8, 7, A, Q, 6, 4, 2, J, K, 10, 9, 5. Then spelling it forwards always works.'] },
+  { id: 'thirteen', title: 'The Bottom-Card Sum', principle: 'Counting with algebra', blurb: 'Deal piles counting up to 13. You choose three. I tell you what their bottom cards add up to.',
+    async perform(u, t) {
+      const d = Cards.shuffled(); const { piles, leftover } = TrickMath.thirteenPiles(d);
+      u.say('Turn a card up and count on from its value to 13, adding a card for each number — so a 9 gets 4 more cards. Then turn the pile over. Repeat until you can’t finish a pile.'); await u.piles(piles, { down: true, squared: true, counts: true }); await u.next('Next'); u.guard(t);
+      const chosen = []; while (chosen.length < 3) { u.say(`<b>Choose a pile</b> (${chosen.length + 1} of 3).`); const p = await u.piles(piles.map((pp, i) => chosen.includes(i) ? [] : pp), { down: true, squared: true, pick: true }); u.guard(t); if (!chosen.includes(p) && piles[p].length) chosen.push(p); }
+      const left = 52 - chosen.reduce((a, i) => a + piles[i].length, 0); const sum = left - 10;
+      u.say(`I gather everything else: <b>${left} cards</b>. Subtract 10… your three bottom cards add up to <b>${sum}</b>.`); await u.next('Turn them over'); u.guard(t);
+      await u.show(chosen.map(i => piles[i][0])); u.say(`${chosen.map(i => piles[i][0].r).join(' + ')} = <b>${chosen.reduce((a, i) => a + piles[i][0].r, 0)}</b>. (Ace = 1, Jack = 11, Queen = 12, King = 13.)`);
+    },
+    explain: ['A pile that starts with value v has 13 − v + 1 = 14 − v cards.', 'So three piles with bottom values a, b, c hold 42 − (a + b + c) cards altogether.', 'Everything else — the leftovers — is 52 − 42 + (a + b + c) = 10 + (a + b + c).', 'So the sum of the three bottom cards is simply <b>leftovers − 10</b>. Counting the leftovers is all I need.'] },
+  { id: 'n1089', title: 'The 1089 Prediction', principle: 'Place value', blurb: 'Make any 3-digit number from cards, do some sums, and land on my sealed prediction.',
+    async perform(u, t) {
+      u.say('My prediction is sealed. Now <b>tap three cards</b> to make a 3-digit number (first and last digit at least 2 apart).');
+      const digits = [...Array(9)].map((_, i) => Cards.card(i + 1, rnd(4))); let pick;
+      for (; ;) { pick = []; while (pick.length < 3) { const i = await u.show(digits, { pick: true, note: 'Picked: ' + (pick.join('') || '—') }); u.guard(t); pick.push(i + 1); } if (Math.abs(pick[0] - pick[2]) >= 2) break; u.say('First and last digits need to be at least 2 apart. Try again.'); }
+      const n = +pick.join(''), r = TrickMath.rev3(n), dd = Math.abs(n - r), rr = TrickMath.rev3(dd), sum = dd + rr;
+      const line = (a, b, op, c) => `<div class="sum"><div>${String(a).padStart(3, '0')}</div><div>${op} ${String(b).padStart(3, '0')}</div><div class="eq">${c}</div></div>`;
+      u.say('Reverse it and subtract the smaller from the bigger…'); u.html(line(Math.max(n, r), Math.min(n, r), '−', String(dd).padStart(3, '0'))); await u.next(); u.guard(t);
+      u.say('Now reverse the answer and add…'); u.html(line(dd, rr, '+', sum)); await u.next('Open the prediction'); u.guard(t);
+      u.html(`<div class="creveal"><div class="sealed">1089</div><p>The prediction said <b>1089</b>.</p></div>`); beep('win');
+    },
+    explain: ['Call the number abc. Reversed it is cba. Their difference is 99 × (a − c).', 'So the difference is always a multiple of 99: 198, 297, 396, 495, 594, 693, 792 or 891.', 'In each of those the outer digits add to 9 and the middle digit is 9.', 'Adding any of them to its reverse gives 900 + 180 + 9 = <b>1089</b>, every time.'] },
+  { id: 'ninelives', title: 'The Missing Digit', principle: 'Casting out nines', blurb: 'Make a number, scramble it, subtract, hide one digit. I name the hidden digit.',
+    async perform(u, t) {
+      const digits = [...Array(9)].map((_, i) => Cards.card(i + 1, rnd(4))); const pick = [];
+      u.say('Tap <b>four cards</b> to make a 4-digit number.'); while (pick.length < 4) { const i = await u.show(digits, { pick: true, note: 'Your number: ' + (pick.join('') || '—') }); u.guard(t); pick.push(i + 1); }
+      const n = +pick.join(''); let m; let tries = 0; do { m = +shuffle(pick.slice()).join(''); } while (m === n && ++tries < 30 && new Set(pick).size > 1);
+      if (m === n) { u.say('All your digits are the same, so scrambling changes nothing — try again with different digits!'); return; }
+      const res = Math.abs(n - m); u.say(`Scramble it to ${m} and subtract: ${Math.max(n, m)} − ${Math.min(n, m)} = <b>${res}</b>. <b>Tap one digit</b> (not a zero) to hide it.`);
+      const ds = String(res).split('').map(Number); const cards = ds.map(v => v ? Cards.card(v, rnd(4)) : { blank: '0' });
+      let hide; for (; ;) { hide = await u.show(cards, { pick: true }); u.guard(t); if (ds[hide]) break; u.say('Not a zero — tap another digit.'); }
+      const rest = ds.filter((_, i) => i !== hide); u.say(`Read me the others: ${rest.join(', ')}.`); await u.wait(700); u.guard(t);
+      u.reveal(Cards.card(TrickMath.missingDigit(rest), 1), `You hid a <b>${TrickMath.missingDigit(rest)}</b>.`);
+    },
+    explain: ['A number and any scramble of its digits leave the same remainder when divided by 9 (their digit sums are equal).', 'So their difference is always a <b>multiple of 9</b>, and its digits add up to a multiple of 9.', 'When you hide a digit, I add up the rest and see how far it is below the next multiple of 9.', 'That gap is your digit. (If the rest already make a multiple of 9, the hidden digit is 9 — that’s why zeros aren’t allowed.)'] },
+  { id: 'clock', title: 'The Clock', principle: 'Counting backwards', blurb: 'Think of an hour. Cards go round a clock face. The card at your hour is my prediction.',
+    async perform(u, t) {
+      const d = Cards.draw(20); u.say('I peek at one card and write down a prediction. Now <b>think of an hour</b> from 1 to 12.'); const H = await u.num('Your hour', 1, 12, 7); u.guard(t);
+      u.say(`Secretly move <b>${H}</b> cards from the top of the deck to your pocket…`); await u.show(d.slice(0, H), { down: true }); await u.wait(600); u.guard(t);
+      const rest = d.slice(H), clock = {}; rest.slice(0, 12).forEach((c, k) => clock[TrickMath.clockHour(k + 1)] = c);
+      u.say('I deal 12 cards round the clock, starting at 12 and going backwards.'); u.html(`<div class="clock">${[...Array(12)].map((_, i) => { const h = i + 1, a = (h / 12) * Math.PI * 2; return `<div class="ch" style="left:${50 + 40 * Math.sin(a)}%;top:${50 - 40 * Math.cos(a)}%"><span>${h}</span>${cardHTML(clock[h], { down: h !== H })}</div>`; }).join('')}<div class="cmid">Prediction:<br><b>${Cards.name(d[12])}</b></div></div>`);
+      Tb_dataReveal(d[12]); await u.next('Wow'); u.guard(t); beep('win');
+    },
+    explain: ['Before you start, I note the <b>13th card</b> from the top.', 'You take H cards off the top, so my card is now at position 13 − H.', 'I deal card 1 to 12 o’clock, card 2 to 11 o’clock, and so on — card k goes to hour 13 − k.', 'So the card at position 13 − H lands on hour 13 − (13 − H) = <b>H</b>: your hour.'] },
+  { id: 'keycard', title: 'Pick a Card, Any Card', principle: 'The key card', blurb: 'The classic: choose a card, lose it in the deck with as many cuts as you like, and I find it.',
+    async perform(u, t) {
+      let d = Cards.draw(20); u.say('<b>Pick a card, any card</b> — tap it and remember it.'); const i = await u.show(d, { pick: true, cols: 10 }); u.guard(t); const mine = d[i];
+      u.say(`You chose the ${Cards.long(mine)}. It goes on top of the deck…`); d.splice(i, 1); d.unshift(mine); Tb_key = d[d.length - 1]; await u.show(d, { down: true, cols: 10 }); await u.wait(500); u.guard(t);
+      for (let k = 0; ; k++) { u.say(k ? 'Cut again, or stop when you’re happy it’s lost.' : 'Now <b>cut the deck</b> — as many times as you like.'); const v = await u.ask([{ label: 'Cut', value: 1, primary: true }, { label: 'Done cutting', value: 0 }]); u.guard(t); if (!v) break; d = TrickMath.cut(d, 1 + rnd(19)); await u.show(d, { down: true, cols: 10 }); beep('tick'); }
+      u.say('I spread the cards face up and look…'); await u.show(d, { cols: 10 }); await u.wait(900); u.guard(t);
+      const key = Cards.id(Tb_key); const ki = d.findIndex(c => Cards.id(c) === key); u.reveal(d[(ki + 1) % d.length], 'Your card!');
+    },
+    explain: ['When your card goes back, I secretly note the <b>bottom card</b> — my key card.', 'Your card goes on top, so it sits directly after the key card when the deck is thought of as a circle.', 'A cut just rotates the circle. No matter how many cuts, your card stays right after the key.', 'So I find the key card in the spread and your card is the very next one.'],
+  },
+  { id: 'kings', title: 'Chase the Kings', principle: 'Cyclic order', blurb: 'Cut a packet as often as you like and deal it into four piles: all four Kings chase each other into one pile.',
+    async perform(u, t) {
+      const others = Cards.deck().filter(c => c.r !== 13); shuffle(others); let p = []; let o = 0; for (let i = 0; i < 16; i++) p.push(i % 4 === 3 ? Cards.card(13, i / 4 | 0) : others[o++]);
+      u.say('Sixteen cards with the four Kings mixed in. <b>Cut</b> as many times as you like.'); await u.show(p, { cols: 8 });
+      for (; ;) { const v = await u.ask([{ label: 'Cut', value: 1, primary: true }, { label: 'Deal the piles', value: 0 }]); u.guard(t); if (!v) break; p = TrickMath.cut(p, 1 + rnd(15)); await u.show(p, { down: true, cols: 8 }); beep('tick'); }
+      const piles = [[], [], [], []]; p.forEach((c, i) => piles[i % 4].push(c));
+      u.say('Dealing into four piles, one card each in turn…'); await u.piles(piles, { down: true }); await u.next('Turn them up'); u.guard(t);
+      const k = piles.findIndex(x => x.filter(c => c.r === 13).length === 4); await u.piles(piles, { hl: k, hlCard: c => c.r === 13 }); u.say(`All four Kings chased each other into <b>pile ${k + 1}</b>!`); beep('win');
+    },
+    explain: ['The Kings start every 4th card apart.', 'A cut moves cards from the top to the bottom, which doesn’t change the gaps between them — the deck is really a circle.', 'With 16 cards and four piles, cards 4 apart always go to the <b>same pile</b>.', 'So wherever you cut, all four Kings land together.'] },
+  { id: 'stebbins', title: 'The Si Stebbins Stack', principle: 'Modular arithmetic', blurb: 'Cut the deck anywhere. I glimpse the bottom card and name the top one — then every card after it.',
+    async perform(u, t) {
+      let d = TrickMath.stebbins(); u.say('A full deck. <b>Cut</b> as many times as you like.'); await u.show(d, { down: true, cols: 13 });
+      for (; ;) { const v = await u.ask([{ label: 'Cut', value: 1, primary: true }, { label: 'Done', value: 0 }]); u.guard(t); if (!v) break; d = TrickMath.cut(d, 1 + rnd(51)); beep('tick'); }
+      u.say(`I glimpse the bottom card: the <b>${Cards.long(d[51])}</b>. So the top card is…`); await u.next('Name it'); u.guard(t);
+      let c = TrickMath.stebNext(d[51]); for (let i = 0; i < 8; i++) { await u.show(d.slice(0, i + 1).concat([{ up: false, r: 1, s: 0 }])); u.say(`Card ${i + 1}: I say <b>${Cards.long(c)}</b>.`); await u.next(i < 7 ? 'Next card' : 'Finish'); u.guard(t); c = TrickMath.stebNext(c); }
+      u.say('Every card, named in order. Want the secret?');
+    },
+    explain: ['The deck is stacked: each card is <b>3 higher</b> than the one before (Jack = 11, Queen = 12, King = 13, then round to Ace).', 'Suits go round in the order ♣ ♥ ♠ ♦ — CHaSeD.', 'Because the stack wraps around evenly (52 cards, 13 values, 4 suits), cutting never breaks the pattern.', 'Knowing any card tells me the next: add 3 to the value and move to the next suit. The bottom card gives me the top.'] },
+  { id: 'mutus', title: 'Mutus Nomen Dedit Cocis', principle: 'A secret code word', blurb: 'Pick a pair of cards. Tell me which rows they land in, and I name both cards.',
+    async perform(u, t) {
+      const d = Cards.draw(20), pairs = []; for (let i = 0; i < 10; i++) pairs.push([d[2 * i], d[2 * i + 1]]);
+      u.say('Ten pairs of cards. <b>Remember one pair.</b>'); await u.piles(pairs, { labels: pairs.map((_, i) => 'Pair ' + (i + 1)) }); await u.next('Got my pair'); u.guard(t);
+      const g = TrickMath.mutusLayout(pairs); u.say('I lay them out in four rows of five. <b>Which row or rows are your two cards in?</b>'); u.size(24, 6);
+      u.html(`<div class="mgrid">${g.map((row, r) => `<div class="mrow"><span class="eyebrow">Row ${r + 1}</span>${row.map(c => cardHTML(c)).join('')}</div>`).join('')}</div>`);
+      const rows = []; for (; ;) { const v = await u.ask([...[0, 1, 2, 3].filter(r => !rows.includes(r)).map(r => ({ label: 'Row ' + (r + 1), value: r })), ...(rows.length ? [{ label: rows.length === 1 ? 'Both in that row' : 'Done', value: -1, primary: true }] : [])]); u.guard(t); if (v === -1) break; rows.push(v); if (rows.length === 2) break; }
+      const k = TrickMath.mutusFind(rows); u.say('Your pair is…'); await u.show(pairs[k]); Tb_dataReveal(pairs[k][0]); beep('win');
+    },
+    explain: ['The cards are laid out using four Latin words: <b>MUTUS NOMEN DEDIT COCIS</b>.', 'Those 20 letters use only 10 different letters, and each appears exactly <b>twice</b>.', 'Pair 1 goes on the two M’s, pair 2 on the two U’s, and so on in order: M U T S N O E D I C.', 'When you tell me the row(s), only one letter has its two copies in exactly those rows — that letter is your pair.'] },
+  { id: 'redblack', title: 'Out of This World', principle: 'Conservation of colour', blurb: 'Deal the deck in pairs: two reds here, two blacks there, mixed pairs away. Both piles end up the same size.',
+    async perform(u, t) {
+      const d = Cards.shuffled(); u.say('Prediction: <b>the red pile and the black pile will be exactly the same size.</b> Let’s deal the shuffled deck two cards at a time.'); await u.next('Deal'); u.guard(t);
+      const R = [], B = [], D = []; for (let i = 0; i < 52; i += 2) { const a = d[i], b = d[i + 1]; (Cards.red(a) && Cards.red(b) ? R : !Cards.red(a) && !Cards.red(b) ? B : D).push(a, b); if (i % 8 === 0 || i === 50) { await u.piles([R, B, D], { labels: ['Two reds', 'Two blacks', 'Mixed'], counts: true, squared: true }); await u.wait(200); u.guard(t); } }
+      u.say(`Red pile: <b>${R.length}</b>. Black pile: <b>${B.length}</b>. Exactly as predicted!`); beep('win');
+    },
+    explain: ['The deck has 26 reds and 26 blacks.', 'Every mixed pair throws away one red and one black — equal amounts.', 'So whatever is left over, the reds in the red pile must equal the blacks in the black pile.', 'Since each pile is built two-by-two of one colour, the two piles are always the same size.'] },
+  { id: 'remainder', title: 'The Remainder Reader', principle: 'Chinese remainder theorem', blurb: 'Count out a secret number of cards (1–60). Deal them in threes, fours and fives and tell me what’s left over.',
+    async perform(u, t) {
+      u.say('Count out a <b>secret number</b> of cards from 1 to 60 (from a real deck, or just imagine it). Deal them into rows of <b>3</b>. How many are left over?');
+      const a = await u.ask([0, 1, 2].map(v => ({ label: String(v), value: v }))); u.guard(t);
+      u.say('Now deal the same cards in rows of <b>4</b>. Left over?'); const b = await u.ask([0, 1, 2, 3].map(v => ({ label: String(v), value: v }))); u.guard(t);
+      u.say('And rows of <b>5</b>. Left over?'); const c = await u.ask([0, 1, 2, 3, 4].map(v => ({ label: String(v), value: v }))); u.guard(t);
+      const n = TrickMath.crt(a, b, c); u.html(`<div class="creveal"><div class="sealed">${n}</div><p>You counted out <b>${n}</b> cards.</p></div>`); beep('win');
+    },
+    explain: ['3, 4 and 5 share no common factors, and 3 × 4 × 5 = 60.', 'The <b>Chinese remainder theorem</b> says each number from 1 to 60 has its own unique set of three remainders.', 'I just look up which number leaves those three remainders.', 'It’s 1,700 years old — it appears in the Chinese text <i>Sunzi Suanjing</i>.'] },
+  { id: 'faro', title: 'Perfect Shuffles', principle: 'Binary and permutations', blurb: 'Eight perfect shuffles put a deck back in order — and in/out shuffles send a card anywhere you like.',
+    async perform(u, t) {
+      u.say('Pick a position from 1 to 16. I’ll move the <b>top card</b> there using only perfect shuffles.'); const n = await u.num('Position', 1, 16, 6); u.guard(t);
+      let p = Cards.draw(16); const top = p[0]; const seq = TrickMath.elmsley(n);
+      await u.show(p, { cols: 8, hl: new Set([0]) }); u.say(`${n - 1} in binary is <b>${(n - 1).toString(2)}</b>. 1 = in-shuffle, 0 = out-shuffle: ${seq.join(', ') || 'no shuffles needed'}.`); await u.next('Shuffle'); u.guard(t);
+      for (const s of seq) { p = s === 'in' ? TrickMath.faroIn(p) : TrickMath.faroOut(p); await u.show(p, { cols: 8, hl: new Set([p.indexOf(top)]) }); u.say(`${s === 'in' ? 'In' : 'Out'}-shuffle…`); await u.wait(700); u.guard(t); }
+      u.say(`The top card is now at position <b>${p.indexOf(top) + 1}</b>.`); Tb_dataReveal(top); await u.next('And the 8 shuffles?'); u.guard(t);
+      let d = Cards.deck(); for (let i = 1; i <= 8; i++) { d = TrickMath.faroOut(d); await u.show(d, { cols: 13 }); u.say(`Out-shuffle ${i} of 8${i === 8 ? ' — back in perfect order!' : ''}`); await u.wait(500); u.guard(t); }
+    },
+    explain: ['A perfect shuffle cuts exactly in half and interleaves one card from each half.', 'An <b>out</b>-shuffle keeps the top card on top; an <b>in</b>-shuffle tucks it into second place.', 'After an out-shuffle a card at position p (counting from 0) moves to 2p; after an in-shuffle to 2p + 1. That’s writing a binary digit!', 'So to send the top card to position n, write n − 1 in binary and do in for 1, out for 0. Alex Elmsley discovered this.', 'For 52 cards, 2⁸ = 256 leaves remainder 1 when divided by 51, so 8 out-shuffles return every card home.'] },
+  { id: 'cato', title: 'Cut and Turn Over Two', principle: 'Parity (Hummer’s principle)', blurb: 'Mix ten cards by cutting and flipping pairs. I predict exactly how many end up face up.',
+    async perform(u, t) {
+      let d = Cards.draw(10).map(c => ({ ...c, up: false })); const draw = () => u.show(d.map(c => c.up ? c : { ...c, up: false }), { cols: 10 });
+      u.say('Ten cards face down. Do these two moves as often as you like: <b>cut</b>, or <b>turn the top two over together</b>. Prediction: <b>exactly five</b> cards will end up facing each way.'); await draw();
+      for (; ;) { const v = await u.ask([{ label: 'Cut', value: 'c' }, { label: 'Turn over two', value: 't' }, { label: 'Finish', value: 'f', primary: true }]); u.guard(t); if (v === 'f') break; d = v === 'c' ? TrickMath.cut(d, 1 + rnd(9)) : TrickMath.turnTwo(d); await draw(); beep('tick'); }
+      u.say('Now I turn over every second card…'); await u.wait(600); u.guard(t); d = d.map((c, i) => i % 2 ? { ...c, up: !c.up } : c); await draw();
+      u.say(`Face up: <b>${d.filter(c => c.up).length}</b>. Face down: <b>${d.filter(c => !c.up).length}</b>. Five and five!`); beep('win');
+    },
+    explain: ['Think of the ten places as alternately “odd” and “even”.', 'Turning two over flips one card in an odd place and one in an even place, and swaps them.', 'With an even-sized packet, a cut moves every card by the same amount, so odd and even places either stay or all swap together.', 'Charles Hummer noticed the result: the number of face-up cards in odd places always equals the number face-down in even places (or the reverse).', 'So after flipping every second card, exactly half the cards face up.'] }
+];
+let Tb_key = null; function Tb_markPairs() { const cs = $$('.show .pc'); cs.forEach((c, i) => c.classList.add(i % 4 < 2 ? 'pairA' : 'pairB')); }
+function Tb_dataReveal(c) { const t = $('.show .ctable'); if (t) t.dataset.reveal = Cards.id(c); }
+registerGame({
+  id: 'show', name: 'The Show', tag: 'Studio · 20 tricks', desc: 'A studio of 20 mathematical card tricks. Watch each one performed on you, then learn exactly how it works, step by step.',
+  art: () => { const K = kitVal('show'); return `<svg viewBox="0 0 100 100"><path d="M10 88h80" stroke="#f2c14e" stroke-width="3"/><g transform="rotate(-18 50 70)"><rect x="22" y="28" width="30" height="42" rx="4" fill="${K.back}" stroke="#fff" stroke-width="2"/><path d="M26 32h22v34H26z" fill="none" stroke="${K.trim}" stroke-width="1.5"/></g><g transform="rotate(4 50 70)"><rect x="35" y="22" width="30" height="42" rx="4" fill="#fff" stroke="#14111c" stroke-width="1.5"/><text x="40" y="34" font-size="9" font-family="Georgia" fill="#c41e3a">A</text><text x="50" y="50" font-size="16" text-anchor="middle" fill="#c41e3a">♥</text></g><g transform="rotate(22 50 70)"><rect x="48" y="26" width="30" height="42" rx="4" fill="${K.back}" stroke="#fff" stroke-width="2"/><path d="M52 30h22v34H52z" fill="none" stroke="${K.trim}" stroke-width="1.5"/></g><path d="M18 14l4 6 6-4-2 7 7 2-7 2 2 7-6-4-4 6-1-7-7-1 6-4-4-6 7 2z" fill="#f2c14e" transform="scale(.6) translate(10 0)"/></svg>`; },
+  how: `<p>Welcome to <b>The Show</b>: 20 card tricks that work by mathematics, not sleight of hand.</p><p>Tap <b>Perform it on me</b> and the trick is done to you — you think of cards, choose piles, cut the deck. Then tap <b>How it works</b> and Professor Pip explains it step by step, so you can do it for your friends with a real deck.</p>`,
+  create(host, opts) {
+    const root = el('div', { class: 'show' }); host.appendChild(root);
+    const paintBack = () => { const K = kitVal('show'); root.style.setProperty('--back', K.back); root.style.setProperty('--trim', K.trim); }; paintBack();
+    let mode = 'program', cur = null, step = 0, stage = null;
+    opts.innerHTML = `<button class="btn sm" id="shProg">🎩 The programme</button><span class="muted" style="font-size:.85rem">${TRICKS.length} acts · each explained step by step</span>`;
+    $('#shProg', opts).onclick = program;
+    const seen = () => P.showSeen || (P.showSeen = {});
+    function program() {
+      if (stage) stage.stop(); mode = 'program'; cur = null; root.className = 'show programme'; root.style.removeProperty('--cw');
+      root.innerHTML = `<div class="patter"><b>Tonight’s programme.</b> Pick an act. Every trick works by mathematics — watch it, then learn the secret.</div><div class="acts">${TRICKS.map((x, i) => `<div class="act ${seen()[x.id] ? 'done' : ''}"><div class="anum">${String(i + 1).padStart(2, '0')}</div><div class="grow"><b>${esc(x.title)}</b><div class="muted">${esc(x.blurb)}</div><div class="aprin">${esc(x.principle)}</div></div><div class="abtn"><button class="btn sm primary" data-perform="${i}">▶ Perform</button><button class="btn sm" data-explain="${i}">How it works</button></div></div>`).join('')}</div>`;
+      $('#gStats').innerHTML = `<span>Seen <b>${Object.keys(seen()).length}/${TRICKS.length}</b></span>`;
+      coach();
+    }
+    root.addEventListener('click', e => { const a = e.target.closest('[data-perform]'), b = e.target.closest('[data-explain]'); if (a) perform(+a.dataset.perform); if (b) explain(+b.dataset.explain); });
+    async function perform(i) {
+      if (stage) stage.stop(); cur = TRICKS[i]; mode = 'perform'; root.className = 'show'; const my = stage = ShowStage(root); const t = my.start(); coach();
+      try { await cur.perform(my, t); my.guard(t);
+        if (!seen()[cur.id]) { seen()[cur.id] = 1; const r = award('show', 'acts', { stars: 2 }); toast(`New act seen! +${r.earned} ★`); }
+        saveP(); $('#gStats').innerHTML = `<span>Seen <b>${Object.keys(seen()).length}/${TRICKS.length}</b></span>`;
+        const c = $('.ctrl', root); c.innerHTML = `<button class="btn primary" data-explain="${i}">How does it work?</button><button class="btn" data-perform="${i}">Again</button><button class="btn" data-prog>Programme</button>`; c.onclick = e => { if (e.target.closest('[data-prog]')) program(); };
+      } catch (e) { if (e !== CANCEL) throw e; }
+    }
+    function explain(i, k = 0) {
+      if (stage) stage.stop(); cur = TRICKS[i]; mode = 'explain'; step = k; root.className = 'show explain';
+      const n = cur.explain.length;
+      root.innerHTML = `<div class="patter"><span class="eyebrow">${esc(cur.principle)}</span><br><b>${esc(cur.title)}</b> — how it works</div><div class="estep"><div class="enum">Step ${step + 1} of ${n}</div><p>${cur.explain[step]}</p><div class="edots">${cur.explain.map((_, j) => `<i class="${j <= step ? 'on' : ''}"></i>`).join('')}</div></div><div class="ctrl"><button class="btn" data-eb ${step ? '' : 'disabled'}>← Back</button>${step < n - 1 ? '<button class="btn primary" data-en>Next step →</button>' : `<button class="btn primary" data-perform="${i}">▶ Try it now</button>`}<button class="btn" data-prog>Programme</button></div>`;
+      $('.ctrl', root).onclick = e => { if (e.target.closest('[data-eb]')) explain(i, step - 1); if (e.target.closest('[data-en]')) explain(i, step + 1); if (e.target.closest('[data-prog]')) program(); };
+      coach();
+    }
+    function coach(why) {
+      if (teacherOffMsg(why)) return;
+      if (mode === 'program' || !cur) { T.set({ stage: 'The Show · tonight’s programme', steps: null, prog: Object.keys(seen()).length / TRICKS.length, msg: 'Every act here works by <b>mathematics</b>. Watch one performed on you, then tap <b>How it works</b> and I’ll walk you through it, step by step, so you can perform it with a real deck.', next: null, acts: [{ label: '▶ Start with a classic', fn: () => perform(0), primary: true }] }); return; }
+      const i = TRICKS.indexOf(cur);
+      if (mode === 'explain') T.set({ stage: cur.title, steps: cur.explain.map((_, j) => 'Step ' + (j + 1)), cur: step, prog: (step + 1) / cur.explain.length, msg: `<b>${esc(cur.principle)}.</b> ${cur.explain[step]}`, next: null, acts: [{ label: '▶ Try it now', fn: () => perform(i), primary: true }, { label: '🎩 Programme', fn: program }] });
+      else T.set({ stage: cur.title, steps: ['Perform', 'Explain'], cur: 0, prog: .5, msg: `Play along — I’m performing <b>${esc(cur.title)}</b> on you. Afterwards I’ll show you the secret: <b>${esc(cur.principle)}</b>.`, next: null, acts: [{ label: '💡 How it works', fn: () => explain(i), primary: true }, { label: '🎩 Programme', fn: program }] });
+    }
+    GAMES.show._api = { perform, explain, program };
+    setTimeout(program, 20);
+    return { coach, hint() { if (cur) explain(TRICKS.indexOf(cur)); else toast('Pick an act first'); }, newGame: program, undo() { toast('Tricks can’t be undone — but they can be repeated!'); }, restyle() { paintBack(); }, resize() { }, destroy() { if (stage) stage.stop(); } };
+  }
+});
+// every act's explanation is also a page in the lesson book
+TRICKS.forEach((x, i) => page('SH-' + String(i + 1).padStart(2, '0'), 'show', x.title, x.principle + ' card trick ' + x.id + ' ' + x.blurb, `<p><i>${esc(x.blurb)}</i></p><ol>${x.explain.map(s => `<li>${s}</li>`).join('')}</ol>`).practice = { label: '▶ Perform it on me', fn: () => { if (curId !== 'show') openGame('show'); setTimeout(() => GAMES.show._api.perform(i), 80); } });
 </script>
 <script>
 /* =====================================================================
@@ -2663,8 +3136,8 @@ page('B-001', 'balls', 'Ball Sort strategy', 'ball sort tubes strategy empty spa
 
 page('M-001', 'maze', 'The right-hand rule', 'maze right hand rule wall follower lost strategy', `<p>Put your right hand on the wall and never let go: at every junction take the right-most opening. In a maze whose start and exit are on the outside edge, this always gets you out — it may not be the shortest way, but it never gets lost.</p><p>The teacher's gold dots show the <b>shortest</b> way, worked out by searching every corridor at once (breadth-first search).</p>`);
 page('M-002', 'maze', 'Maze levels and fog', 'maze levels stroll easy medium hard expert fog dead end loops junction hexagon save spot jump back', `<p><b>Stroll</b> and <b>Easy</b> mazes have one long winding path. <b>Medium</b> and <b>Hard</b> branch much more and have a few loops, so there's more than one way through. <b>Expert</b> is big and foggy: you only see what you've been near.</p><p>Spot a <b>dead end</b> early — if a corridor only leads one way, it's not the path. Every junction is a hexagon ⬢. Once you've passed through one it fills in and becomes a <b>save spot</b>: tap it any time to zip straight back there and try another way.</p>`);
-page('A-001', 'arcade', 'Specials from match shapes', 'arcade match shapes special blaster bomb prism four five L T', `<p>The shape of your match decides what you get:</p><ul><li><b>3 in a line</b> — just clears.</li><li><b>4 in a line</b> — a <b>Blaster</b> (striped gem). Clearing it wipes a full row or column.</li><li><b>L or T shape</b> (two lines crossing) — a <b>Bomb</b>. Clears the 3×3 around it.</li><li><b>5 in a line</b> — a <b>Prism</b>. Swap it with any gem to clear every gem of that colour.</li></ul>`);
-page('A-002', 'arcade', 'Numbers, combos and mega swaps', 'arcade number gems multiplier combo cascade storm mega swap', `<p><b>Number gems</b> (×2, ×3, ×5) multiply the points of the match they're in. Put <b>two or more</b> numbers in one match and a <b>Number Storm</b> zaps extra gems.</p><p>When falling gems make new matches by themselves, that's a <b>combo</b> — each step scores more. Match low on the board to set them off.</p><p><b>Swap two specials together:</b> Blaster + Blaster = cross, Bomb + Bomb = mega bomb, Blaster + Bomb = giant cross, Prism + special = every gem of that colour becomes that special, Prism + Prism = the whole board.</p>`);
+page('A-001', 'arcade', 'Match shapes and what they make', 'glitters sparkles arcade match shapes special blaster bomb prism four five L T square 2x2 wild gnomes', `<p>The shape of your match decides what you get:</p><ul><li><b>3 in a line</b> — just clears.</li><li><b>4 in a line</b> — a <b>Blaster</b> (striped gem). Clearing it wipes a full row or column.</li><li><b>T shape</b> (lines crossing in the middle) — a <b>Bomb</b>. Clears the 3×3 around it.</li><li><b>L shape</b> (lines meeting at a corner) — <b>4 gnomes</b> run out and smash 4 gems. They choose helpful ones: specials to set off, gems whose fall makes a new match, and number gems.</li><li><b>2×2 square</b> — a <b>Wild gem</b> ✦ that counts as every colour, so it can finish any line.</li><li><b>5 in a line</b> — a <b>Prism</b>. Swap it with any gem to clear every gem of that colour.</li></ul>`);
+page('A-002', 'arcade', 'Numbers, combos and mega swaps', 'glitters sparkles arcade number gems multiplier combo cascade storm mega swap wild', `<p><b>Number gems</b> (×2, ×3, ×5) multiply the points of the match they're in. Put <b>two or more</b> numbers in one match and a <b>Number Storm</b> zaps extra gems.</p><p>When falling gems make new matches by themselves, that's a <b>combo</b> — each step scores more. Match low on the board to set them off.</p><p><b>Swap two specials together:</b> Blaster + Blaster = cross, Bomb + Bomb = mega bomb, Blaster + Bomb = giant cross, Prism + special = every gem of that colour becomes that special, Prism + Wild = the most common colour vanishes, Prism + Prism = the whole board. A Wild gem swapped with an ordinary gem just joins whatever line it lands in.</p>`);
 page('K-001', 'stack', 'Stacking basics', 'stack blocks lines clear flat holes hold tetris basics', `<p>Keep your stack <b>flat and low</b>. Avoid <b>holes</b> (gaps covered by blocks) — they stop rows from clearing. Leave one column open at the edge, and drop a long I-block in to clear <b>four lines at once</b> for big points.</p><p><b>Hold</b> saves a block for later — great for keeping an I-block ready. The faint outline shows where your block will land.</p>`);
 page('K-002', 'stack', 'Beating the AI', 'stack vs ai junk garbage rows send combo battle zen solo modes', `<p>In <b>Vs AI</b>, clearing 2 lines sends 1 junk row, 3 lines sends 2, and 4 lines sends 4. Back-to-back clears (combos) and clearing the whole board send even more. Junk waiting to hit you shows as a red bar; clearing lines first cancels it out.</p><p><b>Solo</b> speeds up every 10 lines. <b>Zen</b> never ends — reach the top and the stack simply melts away.</p>`);
 page('L-004', 'all', 'The shop, kits and dyes', 'shop kits dye colours felt buy reset turn off on custom', `<p>Every game has its own tab in the 🛍 shop and remembers its own look.</p><ul><li><b>Colour kits</b> are premade combos. Buy once; turn on or off whenever you like.</li><li><b>Table felts</b> are bought once and can go on any table; each table keeps its own.</li><li>A <b>dye</b> lets you pick your own colours for one game. Only the colours you change are dyed. They're remembered until you reset them, and switching them off and on is free — but changing them again takes another dye.</li></ul>`);
