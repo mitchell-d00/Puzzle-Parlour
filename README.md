@@ -11,7 +11,7 @@ guesses what you're thinking from 1,004 things (and learns new ones) or you
 guess what it's thinking. Next door, **The Show** is a studio of 20 easy card tricks: you
 make one simple choice at a time, the computer does the magic, then it shows
 you how to do it yourself. And in the workshop, **Machines & Mechanics**, you
-build Rube Goldberg machines from 53 parts with real physics — dominoes, gears,
+build Rube Goldberg machines from 54 parts with real physics — dominoes, gears,
 springs, motors, rockets, cars, fairground rides and musical instruments — then
 sell your inventions to collectors to buy more parts and tools.
 A jukebox plays ten original music tracks while you play. Every table
@@ -160,8 +160,8 @@ A physics workshop. Build a machine, press **▶ Play**, and real physics takes
 over. Everything is in real units: one big grid square is 1 metre, gravity is
 9.8 m/s², masses are in kilograms, and a ruler runs along the floor.
 
-**Parts (53, in 9 categories).** Basics (marbles, rubber, steel, bowling and
-beach balls, dominoes, crates, planks, beams, ramps, buckets); mechanisms
+**Parts (54, in 9 categories).** Basics (marbles, rubber, steel, bowling and
+beach balls, a 25 kg anvil, dominoes, crates, planks, beams, ramps, buckets); mechanisms
 (pivots, seesaws, pendulums, ropes, springs, trampolines, gears, wheels,
 conveyor belts); engines (electric motor, steam engine, fan); jets & rockets
 (rocket, jet engine, cannon, balloons, spikes, fireworks); vehicles (toy car,
@@ -172,6 +172,22 @@ laser tripwire, lamp, finish flag, star, trapdoor, wires); and art (pinwheel,
 confetti popper, paint).
 
 **Building.**
+- **Part brush:** tap a part in the shelf and it becomes your brush: every tap
+  on the bench places one (a row of dominoes is tap, tap, tap) until you tap
+  **✋ Done** or pick a different part. Free parts settle onto the floor, plank
+  or ramp just below where you tap. A brush only clicks onto axles, hooks and
+  gear teeth, so it never welds parts by accident.
+- **Edit while it plays:** during ▶ Play you can tap any part for its wheel,
+  drag fixed parts to new spots, change settings, add or remove parts, and grab
+  moving parts to throw them. The running machine is rebuilt live, and
+  everything already moving keeps its place, speed and spin.
+- **🧹 Clear:** one button in the bottom bar (and ↻ New) clears the bench. It
+  always asks whether to save the machine as a blueprint first, and so does
+  loading another design over it. ↶ Undo brings a cleared bench back.
+- **🎥 View:** switch between flat 2D and **3D graphics** (every part gets real
+  depth, the wall sits behind and the floor becomes a stage), and move the
+  camera: straight on, **look up** (like lying on the floor watching balls
+  drop), look down, or from the left or right. You can build from any camera.
 - **Snapping:** drop a part near another and their snap points click together,
   as a **pin** (turns freely) or a **weld** (rigid); tap the marker to switch.
   Gears click into mesh when their rims touch.
@@ -182,6 +198,10 @@ confetti popper, paint).
   and turning the whole machine. A long press pulls a single part out.
 - **Like the cube:** drag the background to look around, pinch to zoom, and
   twist a selected part with two fingers; the view stays put.
+- **🔍 Zoom lock:** the button at the top of every table freezes the zoom, so a
+  stray pinch or scroll can't zoom the puzzle (or the page itself); dragging
+  still moves the view. It works in the workshop, the jigsaw and everywhere
+  else, and is remembered.
 - **Parts list:** a bill of materials for your machine, with each part's value.
 
 **Physics.** Matter.js handles rigid bodies, with these upgrades so it behaves

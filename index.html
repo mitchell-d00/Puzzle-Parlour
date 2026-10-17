@@ -346,6 +346,16 @@ select{background:var(--panel);border:1px solid var(--line);border-radius:9px;pa
 .mmlevels button b{display:block}.mmlevels button small{color:var(--muted)}.mmlevels button.done{border-color:var(--good)}
 .mmfact h3{margin:.2rem 0}.mmfact .f{font-family:var(--mono);background:var(--well);padding:6px 10px;border-radius:8px;display:inline-block;margin:4px 0}
 .mmcogs{font-weight:800;color:var(--brass)}
+html.zlock,html.zlock body{touch-action:pan-x pan-y}
+#gZoom.on{background:var(--brass,#f2c14e);color:#14111c;border-color:var(--brass,#f2c14e)}
+.mmvh{margin:.4rem 0 0;font-size:1rem}.mmvp{margin:.15rem 0 .5rem;font-size:.88rem}
+.mmviewopts{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-bottom:6px}
+.mmviewopts button{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--well);color:var(--ink);font-weight:700;font-size:.92rem;text-align:left;min-height:44px}
+.mmviewopts button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{background:#b4322c;border-color:#ff7a6b;color:#fff}
+.mm .mmbar .btn.clear{background:rgba(180,50,44,.78);border-color:#ff7a6b}
+.mm .mmbar .btn.brush{background:#f2c14e;color:#14111c;border-color:#fff;box-shadow:0 0 0 3px rgba(242,193,78,.35)}
+.mm{background:var(--mmwall,#16314f)}
 </style>
 </head>
 <body>
@@ -372,6 +382,7 @@ select{background:var(--panel);border:1px solid var(--line);border-radius:9px;pa
           <h2 id="gTitle">Puzzle</h2>
           <div class="gstats" id="gStats"></div>
           <span class="grow"></span>
+          <button class="btn sm" id="gZoom" title="Zoom lock: stop pinches and scrolls from zooming" aria-pressed="false"><span class="ico">🔍</span><span class="lbl"> Zoom</span></button>
           <button class="btn sm" id="gUndo" title="Undo">↶<span class="lbl"> Undo</span></button>
           <button class="btn sm" id="gHint" title="Hint">💡<span class="lbl"> Hint</span></button>
           <button class="btn sm" id="gNew" title="New puzzle">↻<span class="lbl"> New</span></button>
@@ -429,7 +440,7 @@ const DEFAULTS = {
   theme: 'system', sound: true, haptics: true, speak: false, teacher: 'live', speed: 'normal',
   tutorials: true, autoHide: true, colorblind: false, kit: {}, feltBy: {}, dye: {}, dyeOn: {},
   music: false, musicTrack: 0, musicVol: 0.6,
-  jigRotate: false, jigGhost: true, owned: [], seenTour: false, seenHow: {}
+  jigRotate: false, jigGhost: true, owned: [], seenTour: false, seenHow: {}, zoomLock: false
 };
 const S = Object.assign({}, DEFAULTS, store.get('settings', {}));
 const save = () => store.set('settings', S);
@@ -563,7 +574,7 @@ function beep(type = 'tick') {
   } catch (e) { }
 }
 const buzz = ms => { if (S.haptics && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } };
-function toast(msg, ms = 1800) { const t = el('div', { class: 'toast', role: 'status' }, esc(msg)); document.body.appendChild(t); setTimeout(() => t.remove(), ms); }
+function toast(msg, ms = 1800) { $$('.toast').forEach(x => x.remove()); const t = el('div', { class: 'toast', role: 'status' }, esc(msg)); document.body.appendChild(t); setTimeout(() => t.remove(), ms); }
 function speak(text) {
   if (!S.speak || !('speechSynthesis' in window)) return;
   try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g, '').replace(/'/g, ' prime ')); u.rate = 1.02; speechSynthesis.speak(u); } catch (e) { }
@@ -704,6 +715,20 @@ function goLounge() {
 }
 $('#gBack').onclick = goLounge; $('#hHome').onclick = goLounge;
 $('#gUndo').onclick = () => cur?.undo?.();
+/* ---------- zoom lock: one tap freezes the zoom in every game (and stops the page itself pinch-zooming) ---------- */
+function paintZoomLock() {
+  const b = $('#gZoom'); b.classList.toggle('on', !!S.zoomLock); b.setAttribute('aria-pressed', !!S.zoomLock);
+  b.innerHTML = S.zoomLock ? '<span class="ico">🔒</span><span class="lbl"> Zoom</span>' : '<span class="ico">🔍</span><span class="lbl"> Zoom</span>';
+  document.documentElement.classList.toggle('zlock', !!S.zoomLock);
+}
+$('#gZoom').onclick = () => { S.zoomLock = !S.zoomLock; save(); paintZoomLock(); beep('tick'); toast(S.zoomLock ? '🔒 Zoom locked — pinching and scrolling won’t zoom. Drag still moves the view.' : '🔍 Zoom unlocked — pinch or scroll to zoom'); };
+// the browser's own zoom: pinch on iPhone/iPad, ctrl/⌘ + scroll or trackpad pinch on computers, double-tap zoom
+document.addEventListener('gesturestart', e => { if (S.zoomLock) e.preventDefault(); }, { passive: false });
+document.addEventListener('gesturechange', e => { if (S.zoomLock) e.preventDefault(); }, { passive: false });
+document.addEventListener('touchmove', e => { if (S.zoomLock && e.touches.length > 1) e.preventDefault(); }, { passive: false });
+document.addEventListener('wheel', e => { if (S.zoomLock && e.ctrlKey) e.preventDefault(); }, { passive: false });
+document.addEventListener('keydown', e => { if (S.zoomLock && (e.ctrlKey || e.metaKey) && ['+', '=', '-', '_', '0'].includes(e.key)) e.preventDefault(); });
+paintZoomLock();
 $('#gHint').onclick = () => cur?.hint?.();
 $('#gNew').onclick = () => cur?.newGame?.();
 $('#gLearn').onclick = () => curId && showLessons(curId);
@@ -1656,11 +1681,11 @@ registerGame({
         if (phase === 'start' || (phase === 'move' && !pinch)) { if (dragG) { drop(dragG); dragG = null; } panStart = null; const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), m: [(a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top], cam: { ...cam } }; return; }
         if (phase === 'end') { pinch = null; return; }
         const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y), m = [(a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top];
-        const z = clamp(pinch.cam.z * d / pinch.d, .05, 6); const wx = (pinch.m[0] - pinch.cam.x) / pinch.cam.z, wy = (pinch.m[1] - pinch.cam.y) / pinch.cam.z;
+        const z = S.zoomLock ? pinch.cam.z : clamp(pinch.cam.z * d / pinch.d, .05, 6); const wx = (pinch.m[0] - pinch.cam.x) / pinch.cam.z, wy = (pinch.m[1] - pinch.cam.y) / pinch.cam.z;
         cam = { z, x: m[0] - wx * z, y: m[1] - wy * z }; draw();
       }
     });
-    cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); const sx = e.clientX - r.left, sy = e.clientY - r.top; const [wx, wy] = toWorld(sx, sy); const z = clamp(cam.z * Math.exp(-e.deltaY * .0015), .05, 6); cam = { z, x: sx - wx * z, y: sy - wy * z }; draw(); }, { passive: false });
+    cv.addEventListener('wheel', e => { e.preventDefault(); if (S.zoomLock) { if (!e.ctrlKey) { cam.x -= e.deltaX; cam.y -= e.deltaY; draw(); } return; } const r = cv.getBoundingClientRect(); const sx = e.clientX - r.left, sy = e.clientY - r.top; const [wx, wy] = toWorld(sx, sy); const z = clamp(cam.z * Math.exp(-e.deltaY * .0015), .05, 6); cam = { z, x: sx - wx * z, y: sy - wy * z }; draw(); }, { passive: false });
 
     function merge(A, B) { // move A's pieces into B (same rotation, already aligned)
       if (A === B) return; for (const p of A.pcs) { p.g = B; B.pcs.push(p); } A.pcs = []; A.dead = true; const i = groups.indexOf(A); if (i >= 0) groups.splice(i, 1);
@@ -4485,7 +4510,7 @@ const MM = (() => {
   const MAT = {
     wood: { fr: .55, re: .15, snd: 'wood' }, steel: { fr: .25, re: .2, snd: 'metal' }, rubber: { fr: .9, re: .72, snd: 'rubber' },
     glass: { fr: .08, re: .45, snd: 'glass' }, plastic: { fr: .35, re: .35, snd: 'plastic' }, soft: { fr: .6, re: .5, snd: 'soft' },
-    brass: { fr: .3, re: .25, snd: 'metal' }, felt: { fr: .8, re: .05, snd: 'soft' }, slick: { fr: .002, re: .05, snd: 'metal' }
+    brass: { fr: .3, re: .25, snd: 'metal' }, iron: { fr: .45, re: .05, snd: 'metal' }, felt: { fr: .8, re: .05, snd: 'soft' }, slick: { fr: .002, re: .05, snd: 'metal' }
   };
 
   /* ---------------- part catalogue ----------------
@@ -4510,6 +4535,9 @@ const MM = (() => {
   def('sball', { cat: 'basic', name: 'Steel ball', icon: '⚪', price: 5, mat: 'steel', m: .9, shapes: () => [C(0, 0, 12)], snaps: () => [{ x: 0, y: 0, k: 'axle' }], fact: 'inertia' });
   def('bowl', { cat: 'basic', name: 'Bowling ball', icon: '🎳', price: 12, mat: 'plastic', m: 6, shapes: () => [C(0, 0, 22)], snaps: () => [{ x: 0, y: 0, k: 'axle' }], fact: 'momentum' });
   def('beach', { cat: 'basic', name: 'Beach ball', icon: '🏐', price: 6, mat: 'soft', m: .1, air: .02, shapes: () => [C(0, 0, 30)], snaps: () => [{ x: 0, y: 0, k: 'axle' }], fact: 'drag' });
+  def('anvil', { cat: 'basic', name: 'Anvil', icon: '⚒️', price: 15, mat: 'iron', fxOpts: ['free', 'bolted'], m: 25,
+    shapes: () => [R(6, -18, 72, 14), Pg([[-30, -25], [-30, -11], [-58, -19]]), R(4, -1, 30, 20), Pg([[-14, 9], [22, 9], [32, 25], [-24, 25]])],
+    snaps: () => [{ x: 6, y: -25, k: 'mid' }, { x: 4, y: 25, k: 'mid' }, { x: 42, y: -18, k: 'mid' }], fact: 'anvil' });
   def('domino', { cat: 'basic', name: 'Domino', icon: '🁢', price: 1, mat: 'plastic', m: .12, fr: .3, re: .02, shapes: () => [R(0, 0, 9, 46)], snaps: () => [{ x: 0, y: -23, k: 'end' }, { x: 0, y: 23, k: 'end' }], fact: 'domino' });
   def('crate', { cat: 'basic', name: 'Wooden crate', icon: '📦', price: 5, m: 2, mass: p => 2 * (p.s / 46) ** 2, props: { s: ['Size', 'r', 46, 24, 90, 2, 'len'] }, shapes: p => [R(0, 0, p.s, p.s)], snaps: p => [{ x: 0, y: -p.s / 2, k: 'mid' }, { x: 0, y: p.s / 2, k: 'mid' }, { x: -p.s / 2, y: 0, k: 'mid' }, { x: p.s / 2, y: 0, k: 'mid' }, { x: 0, y: 0, k: 'axle' }], fact: 'friction' });
   def('plank', { cat: 'basic', name: 'Plank', icon: '🪵', price: 3, m: .5, props: { len: ['Length', 'r', 200, 60, 480, 10, 'len'] }, shapes: p => [R(0, 0, p.len, 12)], snaps: p => along(p.len, 20).concat([{ x: 0, y: 0, k: 'axle' }]), mass: p => .25 * p.len / 100, fact: 'lever' });
@@ -4858,6 +4886,38 @@ const MM = (() => {
     rt.dyn = () => rt._dyn || (rt._dyn = Composite.allBodies(world).filter(b => !b.isStatic && !b.mmDead));
     return rt;
   }
+  /* Rebuild a running machine after an edit, so you can change it while it plays. Everything that is moving keeps
+     its place, speed and spin; fixed parts take their new blueprint spot; a free part you turned or nudged with the
+     wheel gets that same turn or nudge where it is now. Fuel, timers, lamps and released holds carry over. */
+  function rebuild(old, bpIn) {
+    const rt = build(bpIn, { w: old.W, h: old.H });
+    rt.t = old.t; rt.frames = old.frames; rt.m = old.m; rt.touched = old.touched;
+    const prev = Object.fromEntries(old.bp.parts.map(P => [P.id, P])), done = new Set();
+    const setPose = (b, x, y, a, src) => {
+      if (b.isStatic) return; Body.setAngle(b, a); Body.setPosition(b, { x, y });
+      if (src && !src.isStatic) { Body.setVelocity(b, Body.getVelocity(src)); Body.setAngularVelocity(b, Body.getAngularVelocity(src)); } else { Body.setVelocity(b, { x: 0, y: 0 }); Body.setAngularVelocity(b, 0); }
+    };
+    for (const I of rt.I) {
+      const O = old.by[I.id], P0 = prev[I.id], P1 = I.P; if (!O || O.spawned || !P0) continue;
+      I.on = O.on; I.fuel = O.fuel; I.burn = O.burn; I.st = O.st; if (O.y0 != null) { I.y0 = O.y0; I.x0 = O.x0; }
+      if (I.held && !O.held && !I.d.holdAlways) holdPart(I, false);
+      if (I.d.id === 'trapdoor' && !O.held) holdPart(I, false);
+      const flipped = (P0.f || 1) !== (P1.f || 1), sameProps = JSON.stringify(P0.p) === JSON.stringify(P1.p);
+      const R0 = O.host || O.pose0 ? pose(O) : { x: P0.x, y: P0.y, a: P0.a };
+      const hostDyn = I.host && !I.host.isStatic;
+      // where this part should be now: live pose plus the blueprint change (free parts), or the blueprint (fixed parts)
+      const R1 = hostDyn && !flipped && O.host && !O.host.isStatic ? { x: R0.x + P1.x - P0.x, y: R0.y + P1.y - P0.y, a: R0.a + P1.a - P0.a } : { x: P1.x, y: P1.y, a: P1.a };
+      if (hostDyn && !done.has(I.host)) { done.add(I.host); const ha = R1.a - I.rel.a, [rx, ry] = rot(I.rel.x, I.rel.y, ha); setPose(I.host, R1.x - rx, R1.y - ry, ha, O.host); }
+      if (!flipped && sameProps && O.subs.length === I.subs.length) {
+        const da = R1.a - R0.a;
+        I.subs.forEach((s, k) => { const ob = O.subs[k].body; if (ob.mmDead) return; const [rx, ry] = rot(ob.position.x - R0.x, ob.position.y - R0.y, da); setPose(s.body, R1.x + rx, R1.y + ry, ob.angle + da, ob); });
+      }
+    }
+    for (const O of old.I) if (O.spawned && !O.dead && O.host) { const N = spawn(rt, O.P); setPose(N.host, O.host.position.x, O.host.position.y, O.host.angle, O.host); N.st = O.st; }
+    for (const I of rt.I) if (old.by[I.id]?.dead && !I.spawned) kill(rt, I);
+    for (const G2 of rt.meshes) { G2.a0 = G2.a.host.angle; G2.b0 = G2.b.host.angle; }
+    rt._dyn = null; return rt;
+  }
   const relOf = (body, x, y, a) => { const [rx, ry] = rot(x - body.position.x, y - body.position.y, -body.angle); return { x: rx, y: ry, a: a - body.angle }; };
   const poseOf = (body, rel) => { const [rx, ry] = rot(rel.x, rel.y, body.angle); return { x: body.position.x + rx, y: body.position.y + ry, a: body.angle + rel.a }; };
   function pose(I) { return I.host ? poseOf(I.host, I.rel) : I.pose0; }
@@ -5122,7 +5182,7 @@ const MM = (() => {
   }
 
   return { SC, G, STEP, SUB, V2MS, PARTS, CATS, LICENCE, MAT, NOTES, noteHz, xyLen, propsOf, massOf, rot, toW, toL, subPose, hitPart, snapsW, bounds, gearPairs, gearPhase, teeth, trackPts, TRACK,
-    newBP, addPart, component, fixJoints, findSnap, jointKind, partsValue, build, frame, step, pose, poseOf, wp, wdir, energy, readout, signal, COLLECTORS, score, offers, dayBuyers, designKey };
+    newBP, addPart, component, fixJoints, findSnap, jointKind, partsValue, build, rebuild, frame, step, pose, poseOf, wp, wdir, energy, readout, signal, COLLECTORS, score, offers, dayBuyers, designKey };
 })();
 </script>
 <script>
@@ -5135,7 +5195,7 @@ const MMD = (() => {
   const shade = (h, k) => { const [r, g, b] = hex2(h), f = c => Math.round(k >= 0 ? c + (255 - c) * k : c * (1 + k)); return `rgb(${f(r)},${f(g)},${f(b)})`; };
   const rgba = (h, a) => { const [r, g, b] = hex2(h); return `rgba(${r},${g},${b},${a})`; };
   const hash = s => { let h = 2166136261; for (const c of String(s)) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0) / 4294967296; };
-  const COL = { marble: '#3ab0f2', rball: '#ff4d6d', sball: '#b8c2cc', bowl: '#2b2d6e', beach: '#ff5c93', domino: '#f6f1e3', crate: '#c48a4a', plank: '#cf9a5c', beam: '#8d99a6', ramp: '#b9824a',
+  const COL = { marble: '#3ab0f2', rball: '#ff4d6d', sball: '#b8c2cc', bowl: '#2b2d6e', anvil: '#4a4f58', beach: '#ff5c93', domino: '#f6f1e3', crate: '#c48a4a', plank: '#cf9a5c', beam: '#8d99a6', ramp: '#b9824a',
     bucket: '#8fa3b5', pivot: '#d4a73c', seesaw: '#e04f5f', pendulum: '#c0c8d0', rope: '#c9a46a', spring: '#9aa5b1', tramp: '#3a86ff', gear: '#d4a73c', wheel: '#2c2c33', conveyor: '#3b3f46',
     motor: '#3a86ff', steam: '#2f7d5b', fan: '#5fd0c6', rocket: '#f4f4f4', jet: '#9aa5b1', cannon: '#3b3b44', balloon: '#ff4d6d', spike: '#b8c2cc', firework: '#ff8a3d', car: '#ff4d6d', truck: '#27c4b4',
     cart: '#b9824a', skate: '#a77bff', track: '#c0392b', coaster: '#f2c14e', slide: '#ffcf33', swing: '#3a86ff', ferris: '#e85dce', ship: '#8b5a2b', bell: '#d4a73c', xylo: '#e4572e', drum: '#d63031',
@@ -5184,6 +5244,12 @@ const MMD = (() => {
   D.bowl = (g, d) => { ballLit(g, d, 22, d.col, .45, () => { g.strokeStyle = 'rgba(160,140,255,.25)'; g.lineWidth = 3; g.beginPath(); g.arc(4, 3, 14, 1, 3.5); g.stroke(); g.fillStyle = '#0c0c1a'; for (const [x, y, r] of [[-6, -9, 3.2], [2, -11, 3.2], [-2, -2, 3.8]]) { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); } }); };
   D.beach = (g, d) => { const r = 30, cols = ['#ff4d6d', '#ffffff', '#3a86ff', '#ffffff', '#ffd166', '#ffffff']; ballLit(g, d, r, '#ffffff', .4, () => { cols.forEach((c, i) => { g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, r, i * TAU / 6, (i + 1) * TAU / 6); g.fillStyle = i % 2 ? '#fafafa' : (d.p.col2 && i === 0 ? d.col : c); g.globalAlpha = .9; g.fill(); }); g.globalAlpha = 1; g.beginPath(); g.arc(0, 0, 5, 0, TAU); g.fillStyle = '#fff'; g.fill(); }); };
   D.domino = (g, d) => { const c = d.col; rr(g, -4.5, -23, 9, 46, 2); g.fillStyle = lin(g, -4.5, 0, 4.5, 0, [[0, shade(c, -.15)], [.4, c], [1, shade(c, -.3)]]); g.fill(); g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = .8; g.stroke(); g.fillStyle = '#2a2420'; g.fillRect(-3.5, -.5, 7, 1); const h = hash(d.id); const pip = (n, y0) => { const P = [[0, 0], [-1.8, -5], [1.8, 5], [-1.8, 5], [1.8, -5], [-1.8, 0], [1.8, 0]]; for (let i = 0; i < n; i++) { g.beginPath(); g.arc(P[i][0], y0 + P[i][1] * .9, 1.1, 0, TAU); g.fill(); } }; pip(1 + Math.floor(h * 6), -11.5); pip(1 + Math.floor(hash(d.id + 'b') * 6), 11.5); };
+  D.anvil = (g, d) => { const c = d.col;
+    g.beginPath(); g.moveTo(-58, -19); g.lineTo(-30, -25); g.lineTo(42, -25); g.lineTo(42, -12); g.quadraticCurveTo(22, -11, 19, -3); g.lineTo(19, 9); g.lineTo(22, 9); g.lineTo(32, 25); g.lineTo(-24, 25); g.lineTo(-14, 9); g.lineTo(-11, 9); g.lineTo(-11, -3); g.quadraticCurveTo(-14, -11, -30, -11); g.quadraticCurveTo(-46, -12, -58, -19); g.closePath();
+    g.fillStyle = lin(g, 0, -25, 0, 25, [[0, shade(c, .35)], [.25, c], [.7, shade(c, -.25)], [1, shade(c, -.5)]]); g.fill(); g.strokeStyle = shade(c, -.65); g.lineWidth = 1.2; g.stroke();
+    g.fillStyle = lin(g, -30, 0, 42, 0, [[0, shade(c, .25)], [.5, shade(c, .7)], [1, shade(c, .3)]]); g.fillRect(-30, -25, 72, 3); // polished face
+    g.fillStyle = shade(c, -.7); g.fillRect(30, -24, 5, 4); g.beginPath(); g.arc(22, -22.5, 1.6, 0, TAU); g.fill(); // hardy and pritchel holes
+    g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 1; g.beginPath(); g.moveTo(-54, -19); g.quadraticCurveTo(-42, -21, -30, -22); g.stroke(); };
   D.crate = (g, d) => { const s = d.p.s, c = d.col; wood(g, -s / 2, -s / 2, s, s, c, 2, d.id); g.strokeStyle = shade(c, -.4); g.lineWidth = Math.max(2, s * .09); g.strokeRect(-s / 2 + 3, -s / 2 + 3, s - 6, s - 6); g.beginPath(); g.moveTo(-s / 2 + 4, -s / 2 + 4); g.lineTo(s / 2 - 4, s / 2 - 4); g.stroke(); for (const [x, y] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) bolt(g, x * (s / 2 - 5), y * (s / 2 - 5), 1.5, '#888'); };
   D.plank = (g, d) => wood(g, -d.p.len / 2, -6, d.p.len, 12, d.col, 2, d.id);
   D.beam = (g, d) => { const L = d.p.len; metal(g, -L / 2, -7, L, 14, d.col, 1.5); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(-L / 2 + 1, -2, L - 2, 4); for (let x = -L / 2 + 10; x < L / 2 - 4; x += 20) bolt(g, x, -4.5, 1.4); };
@@ -5567,6 +5633,7 @@ function MM_goal(rt, level) {
 const MM_FACTS = {
   mass: { t: 'Mass and weight', b: 'Mass is how much stuff something is made of (kilograms). Weight is the pull of gravity on that mass: W = m × g, where g = 9.8 m/s² on Earth. A glass marble is only about 20 grams, so it weighs about 0.2 newtons.', f: 'W = m·g', w: 'Bathroom scales, lifts with a maximum load, astronauts weighing less on the Moon (same mass, smaller g).', try: 'Drop a marble and a steel ball together — they land at the same time. Gravity accelerates everything equally (if air resistance is small).' },
   bounce: { t: 'Bouncing and restitution', b: 'When a ball hits the floor it squashes, storing energy, then springs back. Some energy is lost as heat and sound. The “coefficient of restitution” e is how much speed survives: bounce height ≈ e² × drop height.', f: 'h₂ = e²·h₁', w: 'Tennis balls are tested by dropping them from 254 cm — they must bounce 135–147 cm. A cold squash ball barely bounces.', try: 'Drop a rubber ball from 2 m. It comes back to about half the height (e ≈ 0.72).' },
+  anvil: { t: 'Heavy things fall just as fast', b: 'Drop an anvil and a marble together and — without air in the way — they land at the same moment. Galileo worked this out about 400 years ago: gravity pulls harder on heavy things, but they are harder to get moving by exactly the same amount, so everything falls with the same acceleration, g = 9.8 m/s². What an anvil does have is a huge <b>momentum</b> (mass × velocity), so whatever it lands on gets a mighty shove.', f: 'p = m·v', w: 'Blacksmiths hammer hot metal on an anvil: its 25 kg of inertia barely moves, so the hammer’s energy goes into shaping the metal. Pile drivers and cartoon anvils work the same way.', try: 'Drop the anvil on one end of a seesaw with a ball on the other — and compare its fall with a marble dropped beside it.' },
   inertia: { t: 'Inertia', b: 'Inertia is an object’s resistance to changing its motion. Heavy things are hard to start and hard to stop — that’s Newton’s first law: things keep doing what they’re doing unless a force acts.', f: 'F = m·a', w: 'Seatbelts stop you continuing forward when a car brakes. A tablecloth trick works because the dishes’ inertia keeps them still.', try: 'Roll a steel ball and a marble at the same speed into a domino. The steel ball barely notices; the marble bounces back.' },
   momentum: { t: 'Momentum', b: 'Momentum is mass × velocity. In a collision the total momentum stays the same — so a heavy, slow bowling ball can send a light pin flying fast.', f: 'p = m·v', w: 'Bowling, snooker, crash tests, Newton’s cradle.', try: 'Drop the bowling ball on one end of a seesaw: its momentum becomes a fast launch at the other end.' },
   drag: { t: 'Air resistance (drag)', b: 'Moving through air means pushing air out of the way. Big, light things (a beach ball, a feather) feel drag much more than small heavy things — that’s why a beach ball floats down slowly.', f: 'F ≈ ½·ρ·v²·C·A', w: 'Parachutes, cyclists crouching low, car designers using wind tunnels.', try: 'Drop a beach ball and a steel ball from the same height and watch who wins.' },
@@ -5614,7 +5681,7 @@ const MM_FACTS = {
   gas: { t: 'Compressed gas', b: 'Squeezing a gas into a small space stores energy. Let it out suddenly and it expands with a pop, throwing whatever’s in the way.', w: 'Party poppers, aerosol cans, airbags (inflate in 0.03 s), tyres.', try: 'Wire a confetti popper to the end of your machine.' }
 };
 // lessons in the shared lesson book
-page('MM-01', 'machines', 'Welcome to the workshop', 'machines mechanics workshop build controls snap wheel rotate twist parts', `<p>Build a machine from parts, press <b>▶ Play</b>, and real physics takes over: gravity (9.8 m/s²), friction, bouncing, momentum, gears and springs. In this workshop <b>1 metre = one big grid square</b>; the ruler on the floor shows metres.</p><ul><li><b>Add parts:</b> tap <b>＋ Parts</b>, then tap a part (it appears in the middle) or drag it out.</li><li><b>Move:</b> drag a part. Drag the background to look around; pinch or scroll to zoom.</li><li><b>Snap:</b> drop a part near another and its snap points click together — a <b>pin</b> (turns freely) or a <b>weld</b> (rigid). Tap a joint’s marker to switch.</li><li><b>Manipulation wheel:</b> tap a part to get its wheel. Drag the knob to rotate, use ⟲ ⟳ for 15° steps, ⇋ to flip, ✂ to take it off the machine, ⚙ for settings, ⓘ for the science.</li><li><b>Part or machine:</b> the middle of the wheel switches between turning just this part and turning the whole machine it belongs to. Two fingers on a selected part twist it — the view stays put, just like twisting one layer of the cube.</li></ul>`);
+page('MM-01', 'machines', 'Welcome to the workshop', 'machines mechanics workshop build controls snap wheel rotate twist parts', `<p>Build a machine from parts, press <b>▶ Play</b>, and real physics takes over: gravity (9.8 m/s²), friction, bouncing, momentum, gears and springs. In this workshop <b>1 metre = one big grid square</b>; the ruler on the floor shows metres.</p><ul><li><b>Add parts:</b> tap <b>＋ Parts</b>, then tap a part to make it your <b>brush</b>: each tap on the bench now places one, until you tap <b>✋ Done</b> or choose a different part. You can also drag a part straight out of the shelf.</li><li><b>Edit while it plays:</b> during ▶ Play, tap a part for its wheel, drag fixed parts, and grab moving ones to throw them.</li><li><b>Clear:</b> <b>🧹 Clear</b> in the bottom bar empties the bench, and always asks whether to save the machine as a blueprint first.</li><li><b>View:</b> <b>🎥 View</b> turns on 3D graphics and moves the camera — look up, look down, or watch from the side. <b>🔍 Zoom</b> at the top locks the zoom.</li><li><b>Move:</b> drag a part. Drag the background to look around; pinch or scroll to zoom.</li><li><b>Snap:</b> drop a part near another and its snap points click together — a <b>pin</b> (turns freely) or a <b>weld</b> (rigid). Tap a joint’s marker to switch.</li><li><b>Manipulation wheel:</b> tap a part to get its wheel. Drag the knob to rotate, use ⟲ ⟳ for 15° steps, ⇋ to flip, ✂ to take it off the machine, ⚙ for settings, ⓘ for the science.</li><li><b>Part or machine:</b> the middle of the wheel switches between turning just this part and turning the whole machine it belongs to. Two fingers on a selected part twist it — the view stays put, just like twisting one layer of the cube.</li></ul>`);
 page('MM-02', 'machines', 'Simple machines: the inclined plane', 'simple machines inclined plane ramp slope incline gravity sin', `<p>There are six classic <b>simple machines</b>: lever, wheel and axle, pulley, inclined plane, wedge and screw. Almost every machine is built from them.</p><p>A ramp — an <b>inclined plane</b> — lets gravity move something sideways. On a slope of angle θ, only part of gravity pulls along the slope: <b>g × sin θ</b>. A ball rolls a little slower again, because some energy goes into spinning it (about 5/7 of that for a solid ball).</p><p>Real world: wheelchair ramps, zig-zag mountain roads, the wedge of an axe (two ramps back to back), and a screw (a ramp wrapped round a rod).</p>`).practice = { label: 'Try “Ring the bell”', fn: () => GAMES.machines.practice?.('bell') };
 page('MM-03', 'machines', 'Energy and chain reactions', 'energy potential kinetic chain reaction dominoes rube goldberg', `<p>Energy is never made or lost — it changes form. A raised ball has <b>potential energy</b> (m·g·h). As it falls it becomes <b>kinetic energy</b> (½·m·v²). When it hits something, energy passes on — some becomes sound and heat.</p><p>A <b>Rube Goldberg machine</b> (named after the cartoonist Rube Goldberg) chains many small energy hand-offs to do something simple in the most delightful way possible.</p><p>Turn on the <b>🔬 Science lens</b> while playing to see energy bars and every part’s speed and height.</p>`).practice = { label: 'Try “Domino effect”', fn: () => GAMES.machines.practice?.('domino') };
 page('MM-04', 'machines', 'Levers and torque', 'lever torque seesaw fulcrum pivot force distance archimedes', `<p>A <b>lever</b> is a bar that turns about a pivot. The turning effect of a force is its <b>torque</b>: force × distance from the pivot. Balance happens when torques match: F₁·d₁ = F₂·d₂.</p><p>Three classes: pivot in the middle (seesaw, scissors), load in the middle (wheelbarrow, nutcracker), effort in the middle (tweezers, your forearm).</p>`).practice = { label: 'Try “Lever launch”', fn: () => GAMES.machines.practice?.('lever') };
@@ -5653,7 +5720,7 @@ const MM_TOOLS = {
   cabinet: { name: 'Blueprint cabinet', icon: '🗄️', price: 40, desc: '12 blueprint slots instead of 3.' },
   bigshop: { name: 'Big workshop', icon: '🏭', price: 120, desc: 'Twice the floor: 30 m × 10 m.' }
 };
-const MM_START_INV = { marble: 6, rball: 4, sball: 2, bowl: 1, beach: 1, domino: 24, crate: 3, plank: 4, beam: 5, ramp: 3, bucket: 2, pivot: 3, seesaw: 1, pendulum: 1, rope: 2, spring: 1, tramp: 1, gear: 3, wheel: 4, motor: 1, fan: 1, bell: 1, xylo: 4, drum: 1, pinwheel: 1 };
+const MM_START_INV = { anvil: 1, marble: 6, rball: 4, sball: 2, bowl: 1, beach: 1, domino: 24, crate: 3, plank: 4, beam: 5, ramp: 3, bucket: 2, pivot: 3, seesaw: 1, pendulum: 1, rope: 2, spring: 1, tramp: 1, gear: 3, wheel: 4, motor: 1, fan: 1, bell: 1, xylo: 4, drum: 1, pinwheel: 1 };
 const mmUnits = { len: v => (v * 100 / MM.SC).toFixed(0) + ' cm', deg: v => v + '°', rpm: v => v + ' rpm', N: v => v + ' N', 'N·m': v => v + ' N·m', 'm/s': v => v + ' m/s', s: v => v + ' s', '%': v => v + '%', 'N/m': v => v + ' N/m', '': v => v };
 let mmApi = null;
 
@@ -5661,7 +5728,7 @@ registerGame({
   id: 'machines', name: 'Machines & Mechanics', tag: 'Physics workshop',
   desc: 'Build Rube Goldberg machines with real physics — dominoes, gears, rockets, cars, rides and music. Snap parts together, sell your inventions, learn how it all works.',
   art: () => `<svg viewBox="0 0 100 100"><g fill="#f2c14e" stroke="#7a5a10" stroke-width="1.5"><path d="M38 22l4-8h8l4 8 8 3 8-4 6 6-4 8 3 8 8 4v8l-8 4-3 8 4 8-6 6-8-4-8 3-4 8h-8l-4-8-8-3-8 4-6-6 4-8-3-8-8-4v-8l8-4 3-8-4-8 6-6 8 4z" transform="translate(-6 8) scale(.8)"/></g><circle cx="34" cy="54" r="9" fill="#1d1a24"/><path d="M70 18c10 6 14 20 10 34l-12-4c3-10 1-18-4-24z" fill="#fff"/><path d="M66 48l14 4-6 14z" fill="#ff4d6d"/><path d="M74 64l4 12 4-12z" fill="#ffb703"/><circle cx="74" cy="34" r="4" fill="#4fd6ff"/></svg>`,
-  how: `<p><b>Build a machine, press ▶ Play, and real physics takes over</b> — gravity, friction, bounces, gears, springs and thrust, all in real units (1 grid square = 1 metre).</p><ul><li><b>＋ Parts</b> opens your shelf. Tap a part to drop it in, or drag it out.</li><li><b>Snap:</b> drop a part near another and their snap points click together — a <b>pin</b> turns, a <b>weld</b> holds rigid. Tap a joint marker to switch.</li><li><b>Manipulation wheel:</b> tap a part. Drag the gold knob to rotate it; ⟲ ⟳ turn in steps; ✂ takes it off the machine; ⚙ settings; ⓘ the real-world science.</li><li><b>Like the cube:</b> drag the background to look around, pinch to zoom, and twist a selected part with two fingers — the view stays put. The pill on the wheel switches between turning one <b>part</b> or the whole <b>machine</b>.</li><li><b>🏆 Challenges</b> teach one idea each. <b>🎪 Showcase</b> runs big demo machines with the teacher explaining. <b>🖼 Exhibit & sell</b> your inventions for cogs ⚙ to buy parts, tools and licences.</li></ul>`,
+  how: `<p><b>Build a machine, press ▶ Play, and real physics takes over</b> — gravity, friction, bounces, gears, springs and thrust, all in real units (1 grid square = 1 metre).</p><ul><li><b>＋ Parts</b> opens your shelf. Tap a part to pick it as your <b>brush</b> — then every tap on the bench places one (perfect for a row of dominoes) until you tap <b>✋ Done</b> or pick another part. Or drag a part straight out of the shelf.</li><li><b>Edit while it plays:</b> tap any part during ▶ Play to get its wheel, drag fixed parts to move them, and grab moving parts to throw them. Changes happen live.</li><li><b>🧹 Clear</b> empties the bench — it always asks if you want to save the machine first.</li><li><b>🎥 View</b> switches on 3D graphics and lets you change the camera: look up at balls dropping, look down, or from the side.</li><li><b>Snap:</b> drop a part near another and their snap points click together — a <b>pin</b> turns, a <b>weld</b> holds rigid. Tap a joint marker to switch.</li><li><b>Manipulation wheel:</b> tap a part. Drag the gold knob to rotate it; ⟲ ⟳ turn in steps; ✂ takes it off the machine; ⚙ settings; ⓘ the real-world science.</li><li><b>Like the cube:</b> drag the background to look around, pinch to zoom, and twist a selected part with two fingers — the view stays put. The pill on the wheel switches between turning one <b>part</b> or the whole <b>machine</b>.</li><li><b>🏆 Challenges</b> teach one idea each. <b>🎪 Showcase</b> runs big demo machines with the teacher explaining. <b>🖼 Exhibit & sell</b> your inventions for cogs ⚙ to buy parts, tools and licences.</li></ul>`,
   practice(id) { if (curId === 'machines' && mmApi) mmApi.openLevel(id); else openGame('machines', { level: id }); },
   create(host, opts, o) {
     /* ---------------- state ---------------- */
@@ -5670,11 +5737,14 @@ registerGame({
     const saveWS = () => store.set('machines.ws', ws);
     const has = k => !!ws.tools[k];
     const today = () => new Date().toISOString().slice(0, 10);
+    if (ws.inv.anvil === undefined) ws.inv.anvil = 1; // workshops saved before the anvil arrived get one free
     if (ws.day.d !== today()) ws.day = { d: today(), sold: [], plans: [] };
     let mode = 'build', bp = null, level = null, show = null, tray = [], rt = null, playing = false, exhibit = null, won = false, failedNote = false;
     let sel = null, scope = 'machine', tool = 'hand', wireFrom = null, lens = !!store.get('machines.lens', false), slow = false, showGhost = false;
     let cam = { x: 1500, y: 800, z: .5 }, hist = [], hintsUsed = 0, drag = null, snapPrev = null, dirty = true, lastChange = 0, raf = 0, alive = true, poke = null, energyHist = [], trails = new Map(), seenEv = new Set();
     let vw = 300, vh = 300, dpr = Math.min(2, devicePixelRatio || 1), drawerCat = store.get('machines.cat', 'basic'), drawerOpen = false;
+    let brush = null, lastSwap = 0, swapDue = false, Hm = null, Hi = null, zoomNag = 0;
+    const view = Object.assign({ d3: false, cam: 'front' }, store.get('machines.view', {}));
     const look = () => kitVal('machines');
     const worldW = () => bp.w, worldH = () => bp.h;
     const benchSize = () => has('bigshop') ? { w: 6000, h: 2000 } : { w: 3000, h: 1600 };
@@ -5698,26 +5768,62 @@ registerGame({
     const paintOpts = () => { $$('#mmMode button', opts).forEach(b => b.classList.toggle('on', b.dataset.m === mode)); $('#mmCogs', opts).textContent = '⚙ ' + ws.cogs + ' cogs'; $('#mmSell', opts).hidden = mode !== 'build'; $('#mmSlots', opts).hidden = mode !== 'build'; };
 
     /* ---------------- camera ---------------- */
+    // three spaces: world (px, 200 = 1 m) → plane (the canvas, before any camera tilt) → screen (what you see; the
+    // tilted canvas is a true perspective plane, so screen ↔ plane is a homography)
     const toWorld = (sx, sy) => [cam.x + (sx - vw / 2) / cam.z, cam.y + (sy - vh / 2) / cam.z];
-    const toScreen = (wx, wy) => [vw / 2 + (wx - cam.x) * cam.z, vh / 2 + (wy - cam.y) * cam.z];
-    const evPos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+    const toPlane = (wx, wy) => [vw / 2 + (wx - cam.x) * cam.z, vh / 2 + (wy - cam.y) * cam.z];
+    const hom = (H, x, y) => { const w = H[2][0] * x + H[2][1] * y + H[2][2]; return [(H[0][0] * x + H[0][1] * y + H[0][2]) / w, (H[1][0] * x + H[1][1] * y + H[1][2]) / w]; };
+    const toScreen = (wx, wy) => { const q = toPlane(wx, wy); return Hm ? hom(Hm, ...q) : q; };
+    const evPos = e => { const r = root.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; return Hi ? hom(Hi, x, y) : [x, y]; };
+    const CAMS = { front: { name: 'Straight on', icon: '🎯', vp: [.5, .36] }, up: { name: 'Look up', icon: '⬆️', rx: 22, vp: [.5, 1.05], oy: .6 }, down: { name: 'Look down', icon: '⬇️', rx: -20, vp: [.5, -.15], oy: .42 },
+      left: { name: 'From the left', icon: '⬅️', ry: -22, vp: [-.2, .4] }, right: { name: 'From the right', icon: '➡️', ry: 22, vp: [1.2, .4] } };
+    function applyCam() {
+      const C = CAMS[view.cam] || CAMS.front;
+      if (!C.rx && !C.ry) { cv.style.transform = ''; Hm = Hi = null; return; }
+      const P = Math.max(vw, vh) * 1.05, cx = vw / 2, cy = vh * (C.oy || .5), sc = 1.32;
+      const persp = new DOMMatrix([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, -1 / P, 0, 0, 0, 1]);
+      const M = new DOMMatrix().translate(cx, cy).multiply(persp).rotate(C.rx || 0, C.ry || 0, 0).scale(sc, sc, 1).translate(-cx, -cy);
+      cv.style.transformOrigin = '0 0'; cv.style.transform = M.toString();
+      Hm = [[M.m11, M.m21, M.m41], [M.m12, M.m22, M.m42], [M.m14, M.m24, M.m44]];
+      const [[a, b, c], [d, e, f], [g2, h, i]] = Hm, A = e * i - f * h, B = -(d * i - f * g2), Cc = d * h - e * g2, det = a * A + b * B + c * Cc;
+      Hi = [[A / det, -(b * i - c * h) / det, (b * f - c * e) / det], [B / det, (a * i - c * g2) / det, -(a * f - c * d) / det], [Cc / det, -(a * h - b * g2) / det, (a * e - b * d) / det]];
+    }
     function fit(parts) {
       let b = { x0: 0, y0: Math.max(0, worldH() - 900), x1: Math.min(worldW(), 1600), y1: worldH() + 40 };
       const list = parts || bp.parts; if (list.length) { b = { x0: 1e9, y0: 1e9, x1: -1e9, y1: -1e9 }; for (const P of list) { const q = MM.bounds(P); b.x0 = Math.min(b.x0, q.x0); b.y0 = Math.min(b.y0, q.y0); b.x1 = Math.max(b.x1, q.x1); b.y1 = Math.max(b.y1, q.y1); } b.y1 = Math.max(b.y1, worldH() + 40); b.x0 -= 60; b.x1 += 60; b.y0 -= 80; }
-      const z = clamp(Math.min(vw / (b.x1 - b.x0), (vh - 90) / (b.y1 - b.y0)), .12, 2.2); cam = { x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 + 20 / z, z }; dirty = true;
+      // the part of the canvas you can actually see (a tilted camera pushes its near edge off-screen)
+      let R = { x0: 0, y0: 0, x1: vw, y1: vh - 70 };
+      if (Hi) { const c = [[0, 0], [vw, 0], [0, vh - 70], [vw, vh - 70]].map(([x, y]) => hom(Hi, x, y)); R = { x0: Math.max(c[0][0], c[2][0], 0), x1: Math.min(c[1][0], c[3][0], vw), y0: Math.max(c[0][1], c[1][1], 0), y1: Math.min(c[2][1], c[3][1], vh) }; }
+      const z = clamp(Math.min((R.x1 - R.x0) / (b.x1 - b.x0), (R.y1 - R.y0 - 20) / (b.y1 - b.y0)), .12, 2.2);
+      cam = { x: (b.x0 + b.x1) / 2 - ((R.x0 + R.x1) / 2 - vw / 2) / z, y: (b.y0 + b.y1) / 2 - ((R.y0 + R.y1) / 2 - vh / 2) / z + 10 / z, z }; dirty = true;
     }
-    function resize() { const r = host.getBoundingClientRect(); vw = Math.max(200, r.width); vh = Math.max(200, r.height); dpr = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr); dirty = true; placeWheel(); }
+    function resize() { const r = host.getBoundingClientRect(); vw = Math.max(200, r.width); vh = Math.max(200, r.height); dpr = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr); applyCam(); dirty = true; placeWheel(); }
 
     /* ---------------- helpers ---------------- */
     const byId = id => bp.parts.find(P => P.id === id);
     const defOf = P => MM.PARTS[P.t];
     const locked = P => P && P.lk === 1;
-    const canEdit = () => !playing && !exhibit && mode !== 'show';
+    const canEdit = () => !exhibit && mode !== 'show';   // you can edit while the machine plays, too
+    // where a part is right now: its live body while playing, else its blueprint spot
+    const livePos = P => { const I = playing && rt && rt.by[P.id]; return I && !I.dead && (I.host || I.pose0) ? MM.pose(I) : P; };
+    // an edit made while the machine runs: rebuild the live world from the blueprint, keeping all motion
+    function hotSwap() {
+      if (!playing || !rt) return; swapDue = false; lastSwap = performance.now();
+      let anchor = null; if (poke) { const c = poke.c, b = c.bodyB; anchor = { x: b.position.x + c.pointB.x, y: b.position.y + c.pointB.y, id: poke.I.id }; Matter.Composite.remove(rt.world, c); poke = null; }
+      try { rt = MM.rebuild(rt, bp); } catch (e) { console.warn(e); return; }
+      if (anchor) { const I = rt.by[anchor.id]; if (I && I.host && !I.host.isStatic) grabLive(I, anchor, gest && gest.type === 'poke' ? toWorld(...gest.last) : [anchor.x, anchor.y]); }
+      dirty = true;
+    }
+    const softSwap = () => { if (performance.now() - lastSwap > 70) hotSwap(); else swapDue = true; };
+    function grabLive(I, at, finger) {
+      const b = I.host, c = Matter.Constraint.create({ pointA: { x: finger[0], y: finger[1] }, bodyB: b, pointB: { x: at.x - b.position.x, y: at.y - b.position.y }, stiffness: .06, damping: .12, length: 0 });
+      Matter.Composite.add(rt.world, c); poke = { c, I };
+    }
     const licensed = t => { const L = MM.LICENCE[MM.PARTS[t].cat]; return !L || has(L); };
     function snapshot() { hist.push(JSON.stringify({ bp, tray })); if (hist.length > 80) hist.shift(); }
-    function changed() { dirty = true; lastChange = performance.now(); if (mode === 'build') { ws.bench = bp; saveWS(); } paintChip(); placeWheel(); paintCard(); coach(); }
+    function changed() { dirty = true; lastChange = performance.now(); if (mode === 'build') { ws.bench = bp; saveWS(); } if (playing && rt) hotSwap(); paintChip(); paintBar(); placeWheel(); paintCard(); coach(); }
     function partHitAt(wx, wy, pad = 6 / cam.z) { for (let i = bp.parts.length - 1; i >= 0; i--) { const P = bp.parts[i]; if (MM.hitPart(P, wx, wy, pad)) return P; } return null; }
-    function liveHitAt(wx, wy) { const bodies = Matter.Query.point(rt.dyn().concat(rt.hosts.filter(h => h.isStatic)), { x: wx, y: wy }); for (const b of bodies) { const I = b.mmI || b.mmG?.[0]; if (I) return I; } let best = null, bd = 30 / cam.z; for (const I of rt.I) { if (I.dead || !I.host) continue; const d = Math.hypot(I.host.position.x - wx, I.host.position.y - wy); if (d < bd) { bd = d; best = I; } } return best; }
+    function liveHitAt(wx, wy, strict) { const bodies = Matter.Query.point(rt.dyn().concat(rt.hosts.filter(h => h.isStatic)), { x: wx, y: wy }); for (const b of bodies) { const I = b.mmI || (b.parent && b.parent.mmI) || b.mmG?.[0]; if (I) return I; } if (strict) return null; let best = null, bd = 30 / cam.z; for (const I of rt.I) { if (I.dead || !I.host) continue; const d = Math.hypot(I.host.position.x - wx, I.host.position.y - wy); if (d < bd) { bd = d; best = I; } } return best; }
     function moveSet(set, dx, dy) { for (const P of bp.parts) if (set.has(P.id)) { P.x += dx; P.y += dy; } }
     function setBounds(set) { const b = { x0: 1e9, y0: 1e9, x1: -1e9, y1: -1e9 }; for (const P of bp.parts) if (set.has(P.id)) { const q = MM.bounds(P); b.x0 = Math.min(b.x0, q.x0); b.y0 = Math.min(b.y0, q.y0); b.x1 = Math.max(b.x1, q.x1); b.y1 = Math.max(b.y1, q.y1); } return b; }
     function keepInside(set) { const b = setBounds(set); let dx = 0, dy = 0; if (b.x0 < 0) dx = -b.x0; if (b.x1 > worldW()) dx = worldW() - b.x1; if (b.y1 > worldH()) dy = worldH() - b.y1; if (dx || dy) moveSet(set, dx, dy); }
@@ -5761,11 +5867,14 @@ registerGame({
     /* ---------------- bottom bar ---------------- */
     function paintBar() {
       const B = [];
-      if (!playing) { if (mode !== 'show') B.push(['＋ ' + (mode === 'challenge' ? 'Tray' : 'Parts'), toggleDrawer, drawerOpen ? 'on' : '']); if (mode === 'build' && has('wire')) B.push(['⚡ Wire', () => { tool = tool === 'wire' ? 'hand' : 'wire'; wireFrom = null; toast(tool === 'wire' ? 'Wire tool: tap a trigger, then what it switches on' : 'Wire tool off'); paintBar(); dirty = true; }, tool === 'wire' ? 'on' : '']); }
+      if (brush && canEdit()) B.push([`🖌 ${MM.PARTS[brush.t].icon} ${MM.PARTS[brush.t].name} · ✋ Done`, endBrush, 'on brush']);
+      if (canEdit()) { B.push(['＋ ' + (mode === 'challenge' ? 'Tray' : 'Parts'), toggleDrawer, drawerOpen ? 'on' : '']); if (mode === 'build' && has('wire')) B.push(['⚡ Wire', () => { tool = tool === 'wire' ? 'hand' : 'wire'; wireFrom = null; toast(tool === 'wire' ? 'Wire tool: tap a trigger, then what it switches on' : 'Wire tool off'); paintBar(); dirty = true; }, tool === 'wire' ? 'on' : '']); }
       B.push(playing ? ['■ Stop', () => { stopRun(); coach(); }, 'stop'] : ['▶ Play', () => play(), 'go']);
       if (!playing && mode === 'challenge') B.push(['↺ Reset', () => { snapshot(); openLevel(level.id); }, '']);
+      if (mode === 'build' && !exhibit && bp && bp.parts.length) B.push(['🧹 Clear', () => clearBench(), 'clear']);
       B.push(['🔬 Lens', () => { lens = !lens; store.set('machines.lens', lens); paintBar(); paintLens(); dirty = true; if (lens) toast('Science lens: speeds, heights and energy in real units'); }, lens ? 'on' : '']);
       if (has('slowmo')) B.push(['🐢', () => { slow = !slow; paintBar(); }, slow ? 'on' : '']);
+      B.push([view.d3 ? '🧊 3D view' : '🎥 View', viewModal, view.d3 || view.cam !== 'front' ? 'on' : '']);
       B.push(['⤢', () => fit(), '']);
       bar.innerHTML = ''; for (const [label, fn, cls] of B) { const b = el('button', { class: 'btn sm ' + cls }, label); b.onclick = () => fn(); bar.appendChild(b); }
     }
@@ -5796,10 +5905,12 @@ registerGame({
       const d = MM.PARTS[t], lockd = mode === 'build' && !licensed(t);
       const b = el('button', { class: 'mmtile' + (n ? '' : ' out') + (lockd ? ' lock' : ''), title: d.name }); b.appendChild(MMD.thumb(t, 52, p)); b.appendChild(el('span', {}, esc(d.name)));
       b.appendChild(el('span', { class: 'n' }, mode === 'build' ? '×' + n : '×' + n)); if (lockd) b.appendChild(el('span', { class: 'lk' }, '🔒'));
-      let sx = 0, sy = 0, started = false, pid = null;
+      let sx = 0, sy = 0, started = false, pid = null, tapped = false;
       const mv = e => { if (e.pointerId !== pid) return; if (!started) { const dx = e.clientX - sx, dy = e.clientY - sy; if (dy < -14 && Math.abs(dy) > Math.abs(dx)) { started = true; const w = toWorld(...evPos(e)); const P = addFromShelf(t, p, ...w); if (P) { closeDrawer(); beginDrag(P, w, 'part', true); } } } else if (drag) dragMove(toWorld(...evPos(e))); };
       const up = e => { if (e.pointerId !== pid) return; window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
-        if (started) { if (drag) dragEnd(); } else if (e.type === 'pointerup' && Math.hypot(e.clientX - sx, e.clientY - sy) < 10) { const P = addFromShelf(t, p, cam.x, cam.y); if (P) { const set = new Set([P.id]); floorSnap(set); keepInside(set); select(P.id); changed(); } } pid = null; };
+        if (started) { if (drag) dragEnd(); } else if (e.type === 'pointerup' && Math.hypot(e.clientX - sx, e.clientY - sy) < 10) tapped = true; pid = null; };
+      // the brush is picked on the click itself, so the closing drawer can't pass that click on to the bar beneath it
+      b.addEventListener('click', () => { if (tapped) { tapped = false; setBrush(t, p); } });
       b.addEventListener('pointerdown', e => { sx = e.clientX; sy = e.clientY; started = false; pid = e.pointerId; window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up); });
       return b;
     }
@@ -5810,6 +5921,29 @@ registerGame({
       if (!(ws.inv[t] > 0)) { buyPrompt(t); return null; }
       snapshot(); ws.inv[t]--; const P = MM.addPart(bp, t, x, y, 0, {}); paintDrawer(); beep('pick'); return P;
     }
+    /* ---------------- the part brush: pick a part once, then every tap places one ---------------- */
+    function setBrush(t, p) {
+      if (mode === 'build' && !licensed(t)) { openStore('tools'); return; }
+      brush = { t, p }; tool = 'hand'; wireFrom = null; closeDrawer(); select(null); paintBar(); coach(); beep('pick');
+      toast(`🖌 ${MM.PARTS[t].name} brush: tap where each one goes. Tap ✋ when you’re done.`, 2600);
+    }
+    function endBrush() { if (!brush) return; brush = null; paintBar(); coach(); cv.style.cursor = 'default'; }
+    // let a free part settle onto whatever is just below where you tapped (the floor, a plank, a ramp)
+    function settle(P) {
+      if (P.p.fx !== 'free' || P.p.hold) return;
+      const b = MM.bounds(P), reach = Math.max(40, 80 / cam.z), floorGap = worldH() - b.y1;
+      if (floorGap < 0) return; let drop = Math.min(floorGap, reach + 1);
+      const xs = [0, .25, .5, .75, 1].map(k => b.x0 + 2 + (b.x1 - b.x0 - 4) * k), under = bp.parts.filter(Q => { if (Q === P) return false; const q = MM.bounds(Q); return q.x1 >= b.x0 && q.x0 <= b.x1 && q.y1 >= b.y1 - 2 && q.y0 <= b.y1 + drop; });
+      for (let dy = 0; dy < drop && under.length; dy += 2) if (under.some(Q => xs.some(x => MM.hitPart(Q, x, b.y1 + dy, 0)))) { drop = dy; break; }
+      if (drop > reach || drop <= 0) return; P.y += drop;
+    }
+    function placeBrush(w) {
+      const P = addFromShelf(brush.t, brush.p, w[0], w[1]); if (!P) { if (mode === 'challenge') endBrush(); return; }
+      const set = new Set([P.id]); drag = { set, start: w, orig: [[P, P.x, P.y]], id: P.id };
+      // a brush only clicks onto axles, hooks and gear teeth, never welds on its own (drag a part if you want a weld)
+      snapPrev = MM.findSnap(bp, set, Math.max(8, 14 / cam.z)); if (snapPrev && !snapPrev.mesh && MM.jointKind(snapPrev.sa, snapPrev.sb) !== 'pin') snapPrev = null; if (!snapPrev) settle(P);
+      sel = null; dragEnd(); MMD.emit({ k: 'hit', x: P.x, y: MM.bounds(P).y1, v: .5, ma: 'wood', mb: 'wood' });
+    }
     function buyPrompt(t) { const d = MM.PARTS[t]; modal('Out of ' + d.name.toLowerCase() + 's', `<p>Your shelf has none left. Buy one for <b>${d.price} ⚙</b>? (You have ${ws.cogs} ⚙.)</p><div class="row"><button class="btn primary" data-b1>Buy 1</button><button class="btn" data-b5>Buy 5 (${Math.round(d.price * 5 * .9)} ⚙)</button><button class="btn" data-s>Open the store</button></div>`, mb => { $('[data-b1]', mb).onclick = () => { buy(t, 1); closeModal(); }; $('[data-b5]', mb).onclick = () => { buy(t, 5); closeModal(); }; $('[data-s]', mb).onclick = () => { closeModal(); openStore(); }; }); }
     function buy(t, n) { const d = MM.PARTS[t], cost = n >= 5 ? Math.round(d.price * n * .9) : d.price * n; if (ws.cogs < cost) { toast('Not enough cogs — sell an invention or trade stars at the bank'); beep('bad'); return false; } ws.cogs -= cost; ws.inv[t] = (ws.inv[t] || 0) + n; saveWS(); MMD.SND.coin(); paintOpts(); paintChip(); paintDrawer(); return true; }
 
@@ -5818,13 +5952,13 @@ registerGame({
     // while the knob is being dragged, only the knob moves (rebuilding the wheel would drop the drag)
     function moveKnob() {
       const P = sel && byId(sel), k = $('.knob', wheel); if (!P || !k) return placeWheel();
-      const rad = +wheel.dataset.rad, kA = P.a - Math.PI / 2, kx = Math.cos(kA) * rad, ky = Math.sin(kA) * rad, [sx, sy] = toScreen(P.x, P.y);
+      const rad = +wheel.dataset.rad, kA = P.a - Math.PI / 2, kx = Math.cos(kA) * rad, ky = Math.sin(kA) * rad, q = livePos(P), [sx, sy] = toScreen(q.x, q.y);
       wheel.style.left = sx + 'px'; wheel.style.top = sy + 'px'; k.setAttribute('cx', kx); k.setAttribute('cy', ky); const ln = $('line', wheel); if (ln) { ln.setAttribute('x2', kx); ln.setAttribute('y2', ky); }
       const lab = $('.ang', wheel); if (lab) { lab.style.left = kx * 1.28 + 'px'; lab.style.top = ky * 1.28 + 'px'; lab.textContent = Math.round(((P.a * 180 / Math.PI) % 360 + 540) % 360 - 180) + '°'; }
     }
     function placeWheel() {
-      const P = sel && byId(sel); if (!P || !canEdit() || drag || tool === 'wire') { wheel.hidden = true; return; }
-      const b = MM.bounds(P), [sx, sy] = toScreen(P.x, P.y), rad = clamp(Math.max(b.x1 - b.x0, b.y1 - b.y0) / 2 * cam.z + 30, 64, Math.min(150, Math.min(vw, vh) / 2 - 30));
+      const P = sel && byId(sel); if (!P || !canEdit() || drag || tool === 'wire' || (playing && rt?.by[P.id]?.dead)) { wheel.hidden = true; return; }
+      const q = livePos(P), b = MM.bounds(P), [sx, sy] = toScreen(q.x, q.y), rad = clamp(Math.max(b.x1 - b.x0, b.y1 - b.y0) / 2 * cam.z + 30, 64, Math.min(150, Math.min(vw, vh) / 2 - 30));
       wheel.hidden = false; wheel.style.left = sx + 'px'; wheel.style.top = sy + 'px'; wheel.dataset.rad = rad;
       const lk = P.lk, canMove = lk !== 1, canRot = lk !== 1, inMachine = jointOf(P.id).length > 0;
       const btn = (ang, label, title, fn, en = true, cls = '') => `<button style="left:${Math.cos(ang) * rad}px;top:${Math.sin(ang) * rad}px" title="${title}" aria-label="${title}" class="${cls}" ${en ? '' : 'disabled'} data-w="${fn}">${label}</button>`;
@@ -5873,11 +6007,11 @@ registerGame({
       if (set.size === 1) { const js = jointOf(P.id); if (js.length === 1) { const j = js[0], other = byId(j.a === P.id ? j.b : j.a), s = MM.snapsW(other)[j.a === P.id ? j.sb : j.sa]; if (s) { px = s.x; py = s.y; } } }
       const c = Math.cos(dA), s = Math.sin(dA);
       for (const Q of bp.parts) if (set.has(Q.id)) { const dx = Q.x - px, dy = Q.y - py; Q.x = px + dx * c - dy * s; Q.y = py + dx * s + dy * c; Q.a += dA; }
-      if (!live) { const n = MM.fixJoints(bp); if (n) toast(`Unsnapped ${n} — rotate the whole machine to keep it together`); beep('turn'); changed(); } else { dirty = true; moveKnob(); }
+      if (!live) { const n = MM.fixJoints(bp); if (n) toast(`Unsnapped ${n} — rotate the whole machine to keep it together`); beep('turn'); changed(); } else { dirty = true; moveKnob(); if (playing) softSwap(); }
     }
     function knobDrag(knob, P) {
       let last = null, total = 0, a0 = 0, pid = null;
-      const ang = e => { const r = cv.getBoundingClientRect(), [sx, sy] = toScreen(P.x, P.y); return Math.atan2(e.clientY - r.top - sy, e.clientX - r.left - sx); };
+      const ang = e => { const q = livePos(P), [sx, sy] = toPlane(q.x, q.y), [ex, ey] = evPos(e); return Math.atan2(ey - sy, ex - sx); };
       knob.addEventListener('pointerdown', e => { e.stopPropagation(); pid = e.pointerId; knob.setPointerCapture(pid); last = ang(e); total = 0; a0 = P.a; snapshot(); });
       knob.addEventListener('pointermove', e => {
         if (e.pointerId !== pid) return; const a = ang(e); let d = a - last; if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; last = a; total += d;
@@ -5940,7 +6074,7 @@ registerGame({
     function dragMove(w) {
       if (!drag) return; const dx = w[0] - drag.start[0], dy = w[1] - drag.start[1];
       for (const [Q, x, y] of drag.orig) { Q.x = x + dx; Q.y = y + dy; }
-      snapPrev = MM.findSnap(bp, drag.set, Math.max(14, 24 / cam.z)); dirty = true;
+      snapPrev = MM.findSnap(bp, drag.set, Math.max(14, 24 / cam.z)); dirty = true; if (playing) softSwap();
       // drag near the screen edge pans the view
       const [sx, sy] = toScreen(...w), m = 36; if (sx < m) cam.x -= 6 / cam.z; if (sx > vw - m) cam.x += 6 / cam.z; if (sy < m) cam.y -= 6 / cam.z; if (sy > vh - m - 50) cam.y += 6 / cam.z;
     }
@@ -5956,52 +6090,61 @@ registerGame({
       if (msg) toast(msg); drag = null; snapPrev = null; changed();
     }
     const pts = new Map(); let gest = null, pressTimer = 0;
-    cv.addEventListener('pointerdown', e => {
-      cv.setPointerCapture?.(e.pointerId); const p = evPos(e); pts.set(e.pointerId, p);
-      if (pts.size === 2) { clearTimeout(pressTimer); if (drag) { for (const [Q, x, y] of drag.orig) { Q.x = x; Q.y = y; } drag = null; snapPrev = null; }
+    // pointer events land on the workshop itself, so the corners a tilted camera leaves bare still work
+    const onCanvas = e => e.target === cv || e.target === root;
+    const zoomLocked = () => { if (!S.zoomLock) return false; if (performance.now() - zoomNag > 4000) { zoomNag = performance.now(); toast('🔒 Zoom is locked — tap 🔒 Zoom at the top to unlock'); } return true; };
+    root.addEventListener('pointerdown', e => {
+      if (!onCanvas(e)) return;
+      root.setPointerCapture?.(e.pointerId); const p = evPos(e); pts.set(e.pointerId, p);
+      if (pts.size === 2) { clearTimeout(pressTimer); if (drag) { for (const [Q, x, y] of drag.orig) { Q.x = x; Q.y = y; } drag = null; snapPrev = null; if (playing) hotSwap(); } if (poke) { Matter.Composite.remove(rt.world, poke.c); poke = null; }
         const [a, b] = [...pts.values()], mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], P = sel && byId(sel), w = toWorld(...mid);
         const twist = canEdit() && P && P.lk !== 1 && (MM.hitPart(P, ...w, 40 / cam.z) || MM.hitPart(P, ...toWorld(...a), 30 / cam.z) || MM.hitPart(P, ...toWorld(...b), 30 / cam.z));
         if (twist) snapshot();
         gest = { type: 'multi', twist, ang: Math.atan2(b[1] - a[1], b[0] - a[0]), dist: Math.hypot(b[0] - a[0], b[1] - a[1]), mid }; return; }
       if (pts.size > 2) return;
       const w = toWorld(...p);
-      gest = { type: 'tap', p, w, t: performance.now() };
-      if (playing) { if (rt && mode === 'build' && !exhibit) { const I = liveHitAt(...w); if (I && I.host && !I.host.isStatic) { const b = I.host, off = { x: w[0] - b.position.x, y: w[1] - b.position.y }, [rx, ry] = MM.rot(off.x, off.y, -b.angle); const c = Matter.Constraint.create({ pointA: { x: w[0], y: w[1] }, bodyB: b, pointB: { x: rx, y: ry }, stiffness: .02, damping: .08, length: 0 }); Matter.Composite.add(rt.world, c); poke = { c, I }; gest.type = 'poke'; sel = I.id; paintCard(); return; } } gest.type = 'pan0'; return; }
+      gest = { type: 'tap', p, w, t: performance.now(), last: p };
       if (!canEdit()) { gest.type = 'pan0'; return; }
       if (tool === 'wire') { gest.type = 'wire'; return; }
-      const P = partHitAt(...w);
+      let P = null, I = null;
+      if (playing && rt) { I = liveHitAt(...w, !!brush); P = I && !I.spawned ? byId(I.id) : null;
+        // a moving part: grab it and throw it (on release without moving, it is selected for editing instead)
+        if (P && I.host && !I.host.isStatic) { gest.type = 'grab'; gest.I = I; gest.P = P; return; } }
+      else P = partHitAt(...w, brush ? 0 : undefined);
       if (P) { gest.type = 'press'; gest.P = P; pressTimer = setTimeout(() => { if (gest && gest.type === 'press' && !locked(P) && P.lk !== 'r') { gest.long = true; buzz(25); toast('🧩 Pulling just this part out'); } }, 480); }
     });
-    cv.addEventListener('pointermove', e => {
-      if (!pts.has(e.pointerId)) { if (!playing && !drag && tool === 'hand' && e.pointerType === 'mouse') { const P = partHitAt(...toWorld(...evPos(e))); cv.style.cursor = P ? (P.lk === 1 ? 'not-allowed' : 'grab') : 'default'; } return; }
+    root.addEventListener('pointermove', e => {
+      if (!pts.has(e.pointerId)) { if (onCanvas(e) && !playing && !drag && tool === 'hand' && e.pointerType === 'mouse') { const P = partHitAt(...toWorld(...evPos(e))); cv.style.cursor = P ? (P.lk === 1 ? 'not-allowed' : 'grab') : brush ? 'copy' : 'default'; } return; }
       const p = evPos(e), prev = pts.get(e.pointerId); pts.set(e.pointerId, p);
-      if (!gest) return;
+      if (!gest) return; gest.last = p;
       if (gest.type === 'multi' && pts.size >= 2) {
         const [a, b] = [...pts.values()], ang = Math.atan2(b[1] - a[1], b[0] - a[0]), dist = Math.hypot(b[0] - a[0], b[1] - a[1]), mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
         if (gest.twist) { let d = ang - gest.ang; if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; rotateSel(d, true); }
-        else { const before = toWorld(...mid); cam.z = clamp(cam.z * dist / gest.dist, .12, 3); const after = toWorld(...mid); cam.x += before[0] - after[0]; cam.y += before[1] - after[1]; cam.x -= (mid[0] - gest.mid[0]) / cam.z; cam.y -= (mid[1] - gest.mid[1]) / cam.z; }
+        else { const before = toWorld(...mid); if (Math.abs(dist / gest.dist - 1) > .002 && !(S.zoomLock && zoomLocked())) cam.z = clamp(cam.z * dist / gest.dist, .12, 3); const after = toWorld(...mid); cam.x += before[0] - after[0]; cam.y += before[1] - after[1]; cam.x -= (mid[0] - gest.mid[0]) / cam.z; cam.y -= (mid[1] - gest.mid[1]) / cam.z; }
         gest.ang = ang; gest.dist = dist; gest.mid = mid; dirty = true; placeWheel(); return;
       }
       const moved = Math.hypot(p[0] - gest.p[0], p[1] - gest.p[1]) > 7;
+      if (gest.type === 'grab' && moved) { if (!rt || gest.I.dead) { gest.type = 'pan'; } else { const I = rt.by[gest.I.id] || gest.I; grabLive(I, { x: gest.w[0], y: gest.w[1] }, toWorld(...p)); gest.type = 'poke'; sel = I.id; wheel.hidden = true; paintCard(); if (mode === 'challenge' && !rt.touched) { rt.touched = true; toast('✋ Hands-on run — it won’t count as a solve. Stop and Play again to solve it.'); } } }
       if (gest.type === 'poke' && poke) { const w = toWorld(...p); poke.c.pointA.x = w[0]; poke.c.pointA.y = w[1]; return; }
       if (gest.type === 'press' && moved) { clearTimeout(pressTimer); const P = gest.P; if (locked(P) || P.lk === 'r') { gest.type = 'pan'; } else { beginDrag(P, gest.w, gest.long ? 'part' : null); gest.type = 'drag'; } }
       if ((gest.type === 'tap' || gest.type === 'pan0' || gest.type === 'wire') && moved) gest.type = gest.type === 'wire' ? 'wirepan' : 'pan';
       if (gest.type === 'drag') { dragMove(toWorld(...p)); return; }
-      if (gest.type === 'pan' || gest.type === 'wirepan') { cam.x -= (p[0] - prev[0]) / cam.z; cam.y -= (p[1] - prev[1]) / cam.z; dirty = true; placeWheel(); }
+      if (gest.type === 'pan' || gest.type === 'wirepan') { const a = toWorld(...prev), b = toWorld(...p); cam.x -= b[0] - a[0]; cam.y -= b[1] - a[1]; dirty = true; placeWheel(); }
     });
     const endPtr = e => {
       if (!pts.has(e.pointerId)) return; pts.delete(e.pointerId); clearTimeout(pressTimer);
       if (gest && gest.type === 'multi') { if (pts.size === 0) { if (gest.twist) { const n = MM.fixJoints(bp); if (n) toast(`Unsnapped ${n}`); changed(); } gest = null; } return; }
       if (!gest) return; const G = gest; gest = null;
-      if (G.type === 'poke' && poke) { Matter.Composite.remove(rt.world, poke.c); poke = null; return; }
+      if (G.type === 'poke') { if (poke && rt) Matter.Composite.remove(rt.world, poke.c); poke = null; return; }
+      if (G.type === 'grab') { select(G.P.id); beep('tick'); return; }
       if (G.type === 'drag') { dragEnd(); return; }
-      if (G.type === 'tap') { if (playing && rt) { const I = liveHitAt(...G.w); sel = I ? I.id : null; paintCard(); dirty = true; return; } if (tapJointOrWire(G.w)) return; select(null); return; }
+      if (G.type === 'tap') { if (!playing && tapJointOrWire(G.w)) return; if (brush && canEdit()) { placeBrush(G.w); return; } if (playing && rt) { const I = liveHitAt(...G.w); if (I && !I.spawned && byId(I.id)) { select(I.id); return; } } select(null); return; }
       if (G.type === 'pan0') { if (playing && rt) { const I = liveHitAt(...G.w); sel = I ? I.id : null; paintCard(); dirty = true; } return; }
-      if (G.type === 'press') { if (tapJointOrWire(G.w)) return; select(G.P.id); beep('tick'); return; }
+      if (G.type === 'press') { if (!playing && tapJointOrWire(G.w)) return; select(G.P.id); beep('tick'); return; }
       if (G.type === 'wire') wireTap(G.w);
     };
-    cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
-    cv.addEventListener('wheel', e => { e.preventDefault(); const p = evPos(e), before = toWorld(...p); cam.z = clamp(cam.z * Math.exp(-e.deltaY * .0015), .12, 3); const after = toWorld(...p); cam.x += before[0] - after[0]; cam.y += before[1] - after[1]; dirty = true; placeWheel(); }, { passive: false });
+    root.addEventListener('pointerup', endPtr); root.addEventListener('pointercancel', endPtr);
+    root.addEventListener('wheel', e => { if (!onCanvas(e)) return; e.preventDefault(); if (S.zoomLock && !e.ctrlKey) { cam.x += e.deltaX / cam.z; cam.y += e.deltaY / cam.z; dirty = true; placeWheel(); return; } if (S.zoomLock) { zoomLocked(); return; } const p = evPos(e), before = toWorld(...p); cam.z = clamp(cam.z * Math.exp(-e.deltaY * .0015), .12, 3); const after = toWorld(...p); cam.x += before[0] - after[0]; cam.y += before[1] - after[1]; dirty = true; placeWheel(); }, { passive: false });
     function tapJointOrWire(w) {
       if (!canEdit()) return false; const R = 11 / cam.z;
       for (const j of bp.joints) { const A = byId(j.a), s = A && MM.snapsW(A)[j.sa]; if (s && Math.hypot(s.x - w[0], s.y - w[1]) < R) { const B = byId(j.b), sb = MM.snapsW(B)[j.sb]; if (s.b != null || sb.b != null) { toast('This joint must be a pin (it holds a moving piece)'); return true; } if (A.lk === 1 && B.lk === 1) return true; snapshot(); j.k = j.k === 'pin' ? 'weld' : 'pin'; toast(j.k === 'pin' ? '📍 Pin — the parts can turn' : '🔩 Weld — the parts are rigid'); MMD.SND.snap(j.k); changed(); return true; } }
@@ -6168,12 +6311,44 @@ registerGame({
       });
     }
 
+    /* ---------------- clearing and saving ---------------- */
+    // clearing always asks whether to save the machine as a blueprint first
+    function clearBench() {
+      if (mode !== 'build') return; if (!bp.parts.length) { toast('The bench is already empty'); return; }
+      modal('🧹 Clear the bench?', `<p>Do you want to <b>save this machine</b> before you clear it? Clearing puts all ${bp.parts.length} parts back on your shelf.</p><div class="row"><button class="btn primary" data-sv>💾 Save it, then clear</button><button class="btn danger" data-cl>🧹 Clear without saving</button><button class="btn" data-close>Cancel</button></div>`, mb => {
+        $('[data-sv]', mb).onclick = () => saveDialog(doClear);
+        $('[data-cl]', mb).onclick = () => { closeModal(); doClear(); };
+      });
+    }
+    function doClear() { stopRun(); snapshot(); for (const P of bp.parts) ws.inv[P.t] = (ws.inv[P.t] || 0) + 1; bp.parts = []; bp.joints = []; bp.wires = []; sel = null; changed(); paintBar(); paintDrawer(); beep('pick'); toast('🧹 Bench cleared — ↶ Undo brings it back'); }
+    // ask before something replaces the machine on the bench
+    function askSave(verb, then) {
+      if (mode !== 'build' || !bp.parts.length) return then();
+      modal('Save your machine first?', `<p>${esc(verb)} replaces the machine on your bench. Save it as a blueprint first?</p><div class="row"><button class="btn primary" data-sv>💾 Save it first</button><button class="btn" data-go>Don’t save</button><button class="btn" data-close>Cancel</button></div>`, mb => {
+        $('[data-sv]', mb).onclick = () => saveDialog(then);
+        $('[data-go]', mb).onclick = () => { closeModal(); then(); };
+      });
+    }
+    function saveDialog(then, slot) {
+      if (!bp.parts.length) { toast('The bench is empty'); return; }
+      const max = has('cabinet') ? 12 : 3, first = [...Array(max)].findIndex((_, i) => !ws.slots[i]), pick = slot ?? (first < 0 ? 0 : first);
+      modal('💾 Save this machine', `<label class="muted" for="mmNm">Name</label><div class="askrow"><input id="mmNm" maxlength="40" value="${esc(ws.slots[pick]?.name || 'My machine ' + (ws.slots.filter(Boolean).length + 1))}"></div>
+        <p class="muted" style="margin-top:10px">Choose a blueprint slot:</p>${[...Array(max)].map((_, i) => { const S2 = ws.slots[i]; return `<div class="mmrow"><div class="info"><b>Slot ${i + 1}: ${S2 ? esc(S2.name) : '<span class="muted">empty</span>'}</b><small>${S2 ? S2.bp.parts.length + ' parts · ' + S2.when : ''}</small></div><div class="btns"><button class="btn sm ${i === pick ? 'primary' : ''}" data-slot="${i}">${S2 ? 'Replace' : 'Save here'}</button></div></div>`; }).join('')}
+        ${max === 3 ? '<p class="muted" style="font-size:.85rem">The 🗄️ Blueprint cabinet in the store gives you 12 slots.</p>' : ''}<div class="row"><button class="btn" data-close>Cancel</button></div>`, mb => {
+        const nm = $('#mmNm', mb); setTimeout(() => { nm.focus(); nm.select(); }, 60);
+        $$('[data-slot]', mb).forEach(b => b.onclick = () => { const i = +b.dataset.slot; ws.slots[i] = { name: nm.value.trim().slice(0, 40) || 'Machine', bp: JSON.parse(JSON.stringify(bp)), when: today() }; saveWS(); MMD.SND.coin(); toast(`💾 Saved “${ws.slots[i].name}” in slot ${i + 1}`); closeModal(); then && then(); });
+        nm.onkeydown = e => { if (e.key === 'Enter') $(`[data-slot="${pick}"]`, mb).click(); };
+      });
+    }
+
     /* ---------------- blueprints ---------------- */
     function needFor(src) { const need = {}; src.parts.forEach(P => need[P.t] = (need[P.t] || 0) + 1); const have = { ...ws.inv }; bp.parts.forEach(P => have[P.t] = (have[P.t] || 0) + 1); const miss = {}; let cost = 0; for (const [t, n] of Object.entries(need)) { const m = n - (have[t] || 0); if (m > 0) { miss[t] = m; cost += m * MM.PARTS[t].price; } } const lic = [...new Set(src.parts.map(P => MM.LICENCE[MM.PARTS[P.t].cat]).filter(L => L && !has(L)))]; return { miss, cost, lic }; }
-    function loadDesign(src, name) {
+    function loadDesign(src, name, asked) {
+      if (mode !== 'build') openBench();   // a design always goes onto your own bench (whatever is there is offered a save first)
       const { miss, cost, lic } = needFor(src);
-      const go = () => { snapshot(); for (const P of bp.parts) ws.inv[P.t] = (ws.inv[P.t] || 0) + 1; const copy = JSON.parse(JSON.stringify(src)); copy.parts.forEach(P => { delete P.lk; ws.inv[P.t] = (ws.inv[P.t] || 0) - 1; }); const sz = benchSize(); copy.w = sz.w; copy.h = sz.h; copy.nid = Math.max(copy.nid || 1, ...copy.parts.map(P => +P.id.slice(1) || 0)) + 1; bp = copy; ws.bench = bp; sel = null; mode = 'build'; level = null; show = null; saveWS(); fit(); afterMode(); toast(`Loaded “${name}”`); };
+      const go = () => { stopRun(); endBrush(); snapshot(); for (const P of bp.parts) ws.inv[P.t] = (ws.inv[P.t] || 0) + 1; const copy = JSON.parse(JSON.stringify(src)); copy.parts.forEach(P => { delete P.lk; ws.inv[P.t] = (ws.inv[P.t] || 0) - 1; }); const sz = benchSize(); copy.w = sz.w; copy.h = sz.h; copy.nid = Math.max(copy.nid || 1, ...copy.parts.map(P => +P.id.slice(1) || 0)) + 1; bp = copy; ws.bench = bp; sel = null; mode = 'build'; level = null; show = null; saveWS(); fit(); afterMode(); toast(`Loaded “${name}”`); };
       if (lic.length) { toast('Needs licences: ' + lic.map(L => MM_TOOLS[L].name).join(', ')); openStore('tools'); return; }
+      if (bp.parts.length && !asked) return askSave(`Loading “${name}”`, () => loadDesign(src, name, true));
       if (!Object.keys(miss).length) return go();
       modal('Missing parts', `<p>To build <b>${esc(name)}</b> you need:</p><ul>${Object.entries(miss).map(([t, n]) => `<li>${n} × ${MM.PARTS[t].icon} ${MM.PARTS[t].name}</li>`).join('')}</ul><p>Buy them all for <b>${cost} ⚙</b>? (You have ${ws.cogs} ⚙.)</p><div class="row"><button class="btn primary" data-b ${ws.cogs < cost ? 'disabled' : ''}>Buy and load</button><button class="btn" data-close>Not now</button></div>`, mb => { $('[data-b]', mb).onclick = () => { ws.cogs -= cost; for (const [t, n] of Object.entries(miss)) ws.inv[t] = (ws.inv[t] || 0) + n; MMD.SND.coin(); closeModal(); go(); }; });
     }
@@ -6182,10 +6357,21 @@ registerGame({
       modal('💾 Blueprints', `<p class="muted">Save designs and load them back later. Loading puts the bench’s current parts back on your shelf first. ${max === 3 ? 'Buy the 🗄️ Blueprint cabinet for 12 slots.' : ''}</p>${[...Array(max)].map((_, i) => { const s = ws.slots[i]; return `<div class="mmrow"><div class="info"><b>Slot ${i + 1}: ${s ? esc(s.name) : '<span class="muted">empty</span>'}</b><small>${s ? s.bp.parts.length + ' parts · ' + s.when : ''}</small></div><div class="btns"><button class="btn sm" data-save="${i}">Save here</button>${s ? `<button class="btn sm primary" data-load="${i}">Load</button><button class="btn sm" data-del="${i}">✕</button>` : ''}</div></div>`; }).join('')}
         <h3 style="margin-top:14px">Showcase designs</h3><p class="muted">Copy a showcase machine onto your bench to take apart (you need the parts).</p>${MM_SHOWS.map(Sx => `<div class="mmrow"><div class="info"><b>${esc(Sx.name)}</b><small>${esc(Sx.desc)}</small></div><div class="btns"><button class="btn sm" data-copy="${Sx.id}">Copy to bench</button></div></div>`).join('')}
         ${ws.gallery.length ? `<h3 style="margin-top:14px">Your sales</h3>${ws.gallery.slice(0, 8).map(gl => `<div class="mmrow"><div class="info"><b>${gl.what === 'plans' ? '📜 Plans' : '⚙ Machine'} → ${esc(gl.buyer)}</b><small>${gl.when} · ${gl.parts} parts · score ${gl.score}</small></div><b class="mmcogs">+${gl.price} ⚙</b></div>`).join('')}` : ''}`, mb => {
-        $$('[data-save]', mb).forEach(b => b.onclick = () => { if (!bp.parts.length) { toast('The bench is empty'); return; } const i = +b.dataset.save, name = prompt('Name this design', ws.slots[i]?.name || 'My machine ' + (i + 1)); if (name == null) return; ws.slots[i] = { name: name.slice(0, 40) || 'Machine', bp: JSON.parse(JSON.stringify(bp)), when: today() }; saveWS(); toast('Saved'); closeModal(); slotsModal(); });
+        $$('[data-save]', mb).forEach(b => b.onclick = () => saveDialog(slotsModal, +b.dataset.save));
         $$('[data-load]', mb).forEach(b => b.onclick = () => { const s = ws.slots[+b.dataset.load]; closeModal(); loadDesign(s.bp, s.name); });
         $$('[data-del]', mb).forEach(b => b.onclick = () => { ws.slots[+b.dataset.del] = null; saveWS(); closeModal(); slotsModal(); });
         $$('[data-copy]', mb).forEach(b => b.onclick = () => { const Sx = MM_SHOWS.find(s => s.id === b.dataset.copy), sb = MM.newBP(); sb.w = Sx.w; sb.h = Sx.h; Sx.build(sb, (t, x, y, a = 0, p = {}) => MM.addPart(sb, t, x, y, a, p), (A, B) => sb.wires.push({ a: A.id, b: B.id })); closeModal(); loadDesign(sb, Sx.name); });
+      });
+    }
+
+    /* ---------------- view: 3D graphics and camera ---------------- */
+    function viewModal() {
+      const segs = () => `<h3 class="mmvh">Graphics</h3><p class="muted mmvp">3D gives every part depth, with the wall behind and the floor as a stage.</p>
+        <div class="mmviewopts" data-k="d3"><button data-v="0" class="${view.d3 ? '' : 'on'}">▭ Flat 2D</button><button data-v="1" class="${view.d3 ? 'on' : ''}">🧊 3D</button></div>
+        <h3 class="mmvh">Camera</h3><p class="muted mmvp">Where you watch from. “Look up” is like lying on the floor watching the balls drop.</p>
+        <div class="mmviewopts" data-k="cam">${Object.entries(CAMS).map(([k, C]) => `<button data-v="${k}" class="${view.cam === k ? 'on' : ''}">${C.icon} ${C.name}</button>`).join('')}</div>`;
+      modal('🎥 View', `<div id="mmV">${segs()}</div><p class="muted" style="font-size:.85rem">You can still drag, tap and build from any camera. Your choice is remembered.</p><div class="row"><button class="btn primary" data-close>Done</button></div>`, mb => {
+        mb.addEventListener('click', e => { const b = e.target.closest('[data-k] button'); if (!b) return; const k = b.parentElement.dataset.k; view[k] = k === 'd3' ? b.dataset.v === '1' : b.dataset.v; store.set('machines.view', view); applyCam(); if (k === 'cam') fit(); dirty = true; placeWheel(); paintBar(); $('#mmV', mb).innerHTML = segs(); beep('tick'); });
       });
     }
 
@@ -6201,27 +6387,71 @@ registerGame({
     }
 
     /* ---------------- rendering ---------------- */
-    let tAnim = 0;
+    let tAnim = 0, lay = null, sil = null;
+    // 3D: parts are drawn on their own layer, then extruded back towards a vanishing point (one-point perspective),
+    // so every part gets real-looking sides; the wall sits at the back of that depth and the floor becomes a stage
+    function layers() {
+      if (!lay || lay.width !== cv.width || lay.height !== cv.height) { lay = document.createElement('canvas'); sil = document.createElement('canvas'); lay.width = sil.width = cv.width; lay.height = sil.height = cv.height; }
+      return lay.getContext('2d');
+    }
+    const depthK = () => clamp(.05 + .045 * cam.z, .055, .15) * (view.cam === 'left' || view.cam === 'right' ? .6 : 1);
+    const vpOf = () => { const C = CAMS[view.cam] || CAMS.front; return [vw * C.vp[0], vh * C.vp[1]]; };
+    function stage3D(L) {
+      const z = cam.z, D = depthK(), k = 1 - D, [vx, vy] = vpOf(), H = worldH(), W = worldW();
+      // the wall, pushed back
+      const c2 = { x: cam.x + D * (vw / 2 - vx) / (k * z), y: cam.y + D * (vh / 2 - vy) / (k * z), z: z * k };
+      g.setTransform(dpr * c2.z, 0, 0, dpr * c2.z, dpr * (vw / 2 - c2.x * c2.z), dpr * (vh / 2 - c2.y * c2.z));
+      MMD.backdrop(g, c2, W, H, L, vw, vh);
+      // the floor: its top surface (from the wall out to you) and its front edge
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const yb = vh / 2 + (H - c2.y) * c2.z, yf = vh / 2 + (H - cam.y) * z, fl = L.floor;
+      if (yf > yb + .5) {
+        const gr = g.createLinearGradient(0, yb, 0, yf); gr.addColorStop(0, MMD.shade(fl, -.15)); gr.addColorStop(1, MMD.shade(fl, .22)); g.fillStyle = gr; g.fillRect(0, yb, vw, yf - yb);
+        g.strokeStyle = MMD.shade(fl, -.35); g.lineWidth = 1; g.beginPath();
+        const x0 = cam.x - vw / 2 / z - 400, x1 = cam.x + vw / 2 / z + 400;
+        for (let x = Math.floor(x0 / 160) * 160; x < x1; x += 160) { g.moveTo(vw / 2 + (x - c2.x) * c2.z, yb); g.lineTo(vw / 2 + (x - cam.x) * z, yf); }
+        g.stroke(); g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(0, yb, vw, Math.min(6, yf - yb));
+      }
+      if (yf < vh) {
+        const gr = g.createLinearGradient(0, yf, 0, yf + 70); gr.addColorStop(0, MMD.shade(fl, -.05)); gr.addColorStop(1, MMD.shade(fl, -.45)); g.fillStyle = gr; g.fillRect(0, yf, vw, vh - yf);
+        g.fillStyle = 'rgba(255,255,255,.22)'; g.fillRect(0, yf, vw, 1.5);
+        g.fillStyle = MMD.rgba(L.accent, .9); g.font = '11px system-ui'; g.textAlign = 'center';
+        if (z > .25) for (let x = Math.max(0, Math.floor((cam.x - vw / 2 / z) / MM.SC) * MM.SC); x <= Math.min(W, cam.x + vw / 2 / z); x += MM.SC) { const sx = vw / 2 + (x - cam.x) * z; g.fillRect(sx - .75, yf, 1.5, 9); g.fillText(x / MM.SC + ' m', sx, yf + 21); }
+      }
+    }
+    function composite3D() {
+      const D = depthK(), [vx, vy] = vpOf(), X = vx * dpr, Y = vy * dpr, sg = sil.getContext('2d');
+      sg.setTransform(1, 0, 0, 1, 0, 0); sg.globalCompositeOperation = 'copy'; sg.drawImage(lay, 0, 0); sg.globalCompositeOperation = 'source-atop'; sg.fillStyle = 'rgba(8,10,18,.58)'; sg.fillRect(0, 0, sil.width, sil.height); sg.globalCompositeOperation = 'source-over';
+      // a soft shadow on the wall behind
+      let s = 1 - D; g.globalAlpha = .2; g.setTransform(s, 0, 0, s, X * (1 - s) + 9 * dpr, Y * (1 - s) + 12 * dpr); g.drawImage(sil, 0, 0); g.globalAlpha = 1;
+      const n = 10; for (let i = n; i >= 1; i--) { s = 1 - D * i / n; g.setTransform(s, 0, 0, s, X * (1 - s), Y * (1 - s)); g.drawImage(sil, 0, 0); }
+      g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(lay, 0, 0);
+    }
     function render(dt) {
-      const L = look(), z = cam.z;
+      const L = look(), z = cam.z, d3 = view.d3, worldT = [dpr * z, 0, 0, dpr * z, dpr * (vw / 2 - cam.x * z), dpr * (vh / 2 - cam.y * z)];
+      root.style.setProperty('--mmwall', MMD.shade(L.wall, -.1));
       g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, vw, vh);
-      g.setTransform(dpr * z, 0, 0, dpr * z, dpr * (vw / 2 - cam.x * z), dpr * (vh / 2 - cam.y * z));
-      MMD.backdrop(g, cam, worldW(), worldH(), L, vw, vh);
+      if (d3) stage3D(L); else { g.setTransform(...worldT); MMD.backdrop(g, cam, worldW(), worldH(), L, vw, vh); }
+      g.setTransform(...worldT);
       const hq = bp.parts.length < 160, phase = rt ? rt.phase : MM.gearPhase(bp.parts);
       // trails (science lens)
       if (lens && playing) for (const tr of trails.values()) { if (tr.length < 2) continue; g.beginPath(); tr.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.strokeStyle = 'rgba(79,214,255,.45)'; g.lineWidth = 2 / z; g.setLineDash([4 / z, 4 / z]); g.stroke(); g.setLineDash([]); }
       // hint ghosts
       if (showGhost && mode === 'challenge' && !playing) { const gh = ghostBP(); if (gh) for (const P of gh) MMD.drawPart(g, P, { t: tAnim, alpha: .35 + .15 * Math.sin(tAnim * 4), floorY: worldH() }); }
-      // the parts
-      const drawn = new Set();
+      // the parts (on their own layer in 3D)
+      const pg = d3 ? layers() : g; if (d3) { pg.setTransform(1, 0, 0, 1, 0, 0); pg.clearRect(0, 0, lay.width, lay.height); pg.setTransform(...worldT); }
+      const round = [];   // balls are already round: in 3D they're drawn whole, after the extrusion, not stretched into tubes
       for (const P of bp.parts) {
         const I = rt ? rt.by[P.id] : null; if (I && I.dead) continue;
-        if (P.id === sel && !playing) { g.save(); g.shadowColor = L.accent; g.shadowBlur = 16; MMD.drawPart(g, P, { I, rt, t: tAnim, phase: phase[P.id], floorY: worldH() }); g.restore(); }
-        else MMD.drawPart(g, P, { I, rt, t: tAnim, phase: phase[P.id], floorY: worldH(), shadow: hq && !playing });
-        drawn.add(P.id);
+        if (d3 && MM.PARTS[P.t].ball) { round.push([P, I]); continue; }
+        if (P.id === sel && (!playing || !wheel.hidden)) { pg.save(); pg.shadowColor = L.accent; pg.shadowBlur = 16; MMD.drawPart(pg, P, { I, rt, t: tAnim, phase: phase[P.id], floorY: worldH() }); pg.restore(); }
+        else MMD.drawPart(pg, P, { I, rt, t: tAnim, phase: phase[P.id], floorY: worldH(), shadow: hq && !playing && !d3 });
       }
-      if (rt) for (const I of rt.I) if (I.spawned && !I.dead) MMD.drawPart(g, I.P, { I, rt, t: tAnim });
+      if (rt) for (const I of rt.I) if (I.spawned && !I.dead) (d3 ? round.push([I.P, I]) : MMD.drawPart(pg, I.P, { I, rt, t: tAnim }));
+      if (d3) { composite3D(); g.setTransform(...worldT);
+        for (const [P, I] of round) { g.save(); if (P.id === sel) { g.shadowColor = L.accent; g.shadowBlur = 16; } else { g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 10; g.shadowOffsetX = 5 * dpr; g.shadowOffsetY = 7 * dpr; } MMD.drawPart(g, P, { I, rt, t: tAnim, floorY: worldH() }); g.restore(); } }
       if (playing && sel && rt?.by[sel] && !rt.by[sel].dead) { const I = rt.by[sel], q = MM.pose(I); g.strokeStyle = L.accent; g.lineWidth = 2 / z; g.setLineDash([5 / z, 4 / z]); g.beginPath(); g.arc(q.x, q.y, 30, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); }
+      if (poke && rt) { const c = poke.c, b = c.bodyB, ax = b.position.x + c.pointB.x, ay = b.position.y + c.pointB.y; g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 2 / z; g.beginPath(); g.moveTo(ax, ay); g.lineTo(c.pointA.x, c.pointA.y); g.stroke(); g.beginPath(); g.arc(c.pointA.x, c.pointA.y, 8 / z, 0, Math.PI * 2); g.fillStyle = 'rgba(242,193,78,.8)'; g.fill(); }
       // wires
       for (const w of bp.wires) { const A = byId(w.a), B = byId(w.b); if (!A || !B) continue; const qa = rt?.by[A.id] ? MM.pose(rt.by[A.id]) : A, qb = rt?.by[B.id] ? MM.pose(rt.by[B.id]) : B, mx = (qa.x + qb.x) / 2, my = (qa.y + qb.y) / 2 + Math.hypot(qa.x - qb.x, qa.y - qb.y) * .3;
         g.beginPath(); g.moveTo(qa.x, qa.y); g.quadraticCurveTo(mx, my, qb.x, qb.y); g.strokeStyle = 'rgba(20,20,30,.6)'; g.lineWidth = 4 / Math.max(z, .5); g.stroke(); g.strokeStyle = playing ? '#4fd6ff' : '#ffd166'; g.lineWidth = 2 / Math.max(z, .5); g.setLineDash(playing ? [] : [6 / z, 4 / z]); g.stroke(); g.setLineDash([]);
@@ -6229,7 +6459,7 @@ registerGame({
         else if (canEdit()) { const m2 = wireMid(w); g.beginPath(); g.arc(m2[0], m2[1], 6 / z, 0, Math.PI * 2); g.fillStyle = '#ffd166'; g.fill(); g.fillStyle = '#14111c'; g.font = `${9 / z}px system-ui`; g.textAlign = 'center'; g.fillText('⚡', m2[0], m2[1] + 3 / z); } }
       if (wireFrom) { const A = byId(wireFrom); if (A) { g.beginPath(); g.arc(A.x, A.y, 26 + 4 * Math.sin(tAnim * 8), 0, Math.PI * 2); g.strokeStyle = '#4fd6ff'; g.lineWidth = 3 / z; g.stroke(); } }
       // joints and snap points (editing)
-      if (!playing) {
+      if (!playing || drag) {
         for (const j of bp.joints) { const A = byId(j.a), s = A && MM.snapsW(A)[j.sa]; if (!s) continue; const r = Math.max(5, 7 / z);
           if (j.k === 'pin') { g.beginPath(); g.arc(s.x, s.y, r, 0, Math.PI * 2); g.fillStyle = '#d4a73c'; g.fill(); g.strokeStyle = '#5b4210'; g.lineWidth = 1.2 / z; g.stroke(); g.beginPath(); g.moveTo(s.x - r * .5, s.y); g.lineTo(s.x + r * .5, s.y); g.moveTo(s.x, s.y - r * .5); g.lineTo(s.x, s.y + r * .5); g.stroke(); }
           else { g.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; g.lineTo(s.x + Math.cos(a) * r, s.y + Math.sin(a) * r); } g.closePath(); g.fillStyle = '#9aa5b1'; g.fill(); g.strokeStyle = '#3b3f46'; g.lineWidth = 1.2 / z; g.stroke(); g.beginPath(); g.arc(s.x, s.y, r * .4, 0, Math.PI * 2); g.fillStyle = '#3b3f46'; g.fill(); } }
@@ -6245,7 +6475,7 @@ registerGame({
     function loop(now) {
       if (!alive) return; raf = requestAnimationFrame(loop);
       const dt = Math.min(.05, (now - lastT) / 1000 || .016); lastT = now; tAnim += dt;
-      if (playing && rt) stepRun(dt);
+      if (playing && rt) { if (swapDue && performance.now() - lastSwap > 70) hotSwap(); stepRun(dt); if (sel && !wheel.hidden && !gest) { const P = byId(sel), I = P && rt && rt.by[P.id]; if (!P || !I || I.dead) wheel.hidden = true; else { const q = MM.pose(I), [sx, sy] = toScreen(q.x, q.y); wheel.style.left = sx + 'px'; wheel.style.top = sy + 'px'; } } }
       const idle = !playing && !drag && !dirty && !snapPrev && !wireFrom && !showGhost && !gest && !MMD.count() && performance.now() - lastChange > 800;
       if (document.hidden || idle) return;
       render(dt); dirty = false;
@@ -6264,7 +6494,7 @@ registerGame({
       } else {
         const P = sel && byId(sel), d = P && defOf(P), F = d && MM_FACTS[d.fact];
         const steps = ['Add parts', 'Snap together', 'Play & test', 'Exhibit & sell'], cur = !bp.parts.length ? 0 : !bp.joints.length && bp.parts.length < 4 ? 1 : ws.sales ? 3 : 2;
-        let msg = !bp.parts.length ? 'Your bench is empty. Tap <b>＋ Parts</b> and drop in a ramp, a ball and some dominoes — then press ▶ Play.' : playing ? 'Watch the physics: tap a moving part with the 🔬 lens on to see its speed, height and energy.' : F ? `<b>${esc(d.name)}</b> — ${esc(F.t)}. ${F.b.split('. ')[0]}. Tap ⓘ for the full story.` : 'Drag parts to move them. Drop one near another to snap. Tap a part for its manipulation wheel. When you’re proud of it, 🖼 Exhibit & sell.';
+        let msg = brush ? `🖌 <b>${esc(MM.PARTS[brush.t].name)} brush.</b> Every tap on the bench places one${MM.PARTS[brush.t].fx === 'free' ? ' — tap just above the floor or a plank and it settles onto it' : ''}. Tap <b>✋ Done</b> (or pick another part) when you’re done.` : !bp.parts.length ? 'Your bench is empty. Tap <b>＋ Parts</b>, pick a part, then tap the bench to place it — a ramp, a ball and a row of dominoes make a great start. Then press ▶ Play.' : playing ? 'It’s running — and you can still edit: tap a part for its wheel, drag fixed parts, or grab a moving one and throw it. With the 🔬 lens on you’ll see speeds, heights and energy.' : F ? `<b>${esc(d.name)}</b> — ${esc(F.t)}. ${F.b.split('. ')[0]}. Tap ⓘ for the full story.` : 'Drag parts to move them. Drop one near another to snap. Tap a part for its manipulation wheel. When you’re proud of it, 🖼 Exhibit & sell.';
         T.set({ stage: 'Workshop', steps, cur, prog: cur / 3, msg, next: null, acts: [{ label: playing ? '■ Stop' : '▶ Play', fn: () => { playing ? stopRun() : play(); coach(); }, primary: true }, { label: '🏆 Challenges', fn: levelPicker }, { label: '🎪 Showcase', fn: showPicker }] });
       }
     }
@@ -6275,7 +6505,7 @@ registerGame({
       if (e.key === ' ') { e.preventDefault(); playing ? stopRun() : play(); coach(); }
       else if ((e.key === 'Delete' || e.key === 'Backspace') && sel && canEdit()) { const P = byId(sel); if (P && (mode === 'build' || P.tray)) { snapshot(); removePart(P); changed(); } }
       else if ((e.key === 'q' || e.key === 'e') && sel && canEdit()) rotateSel((e.key === 'q' ? -1 : 1) * (e.shiftKey ? 1 : 15) * Math.PI / 180);
-      else if (e.key === 'Escape') { select(null); tool = 'hand'; wireFrom = null; paintBar(); }
+      else if (e.key === 'Escape') { select(null); tool = 'hand'; wireFrom = null; endBrush(); paintBar(); }
     };
     document.addEventListener('keydown', onKey);
 
@@ -6283,11 +6513,11 @@ registerGame({
     const ro = new ResizeObserver(() => resize()); ro.observe(host); resize();
     if (o.level) openLevel(o.level); else if (o.show) openShow(o.show); else openBench();
     raf = requestAnimationFrame(loop);
-    mmApi = { openLevel };
+    mmApi = { openLevel, _t: { toScreen: (x, y) => { const r = root.getBoundingClientRect(), q = toScreen(x, y); return [r.left + q[0], r.top + q[1]]; }, bp: () => bp, rt: () => rt, cam: () => cam, sel: () => sel, view } }; // _t: hooks for automated tests
     const api = {
-      undo() { if (playing) stopRun(); const s = hist.pop(); if (!s) { toast('Nothing to undo'); return; } const o2 = JSON.parse(s); if (mode === 'build') { const before = {}; bp.parts.forEach(P => before[P.t] = (before[P.t] || 0) + 1); const after = {}; o2.bp.parts.forEach(P => after[P.t] = (after[P.t] || 0) + 1); for (const t of new Set([...Object.keys(before), ...Object.keys(after)])) ws.inv[t] = (ws.inv[t] || 0) + (before[t] || 0) - (after[t] || 0); } bp = o2.bp; tray = o2.tray || []; if (mode === 'build') ws.bench = bp; sel = null; paintDrawer(); changed(); beep('tick'); },
-      hint() { hintsUsed++; if (mode === 'challenge') { showGhost = true; dirty = true; T.set({ msg: '👻 ' + level.hints[0] }); toast('Ghost shows where the parts go'); coach(); } else if (mode === 'show') { T.note('Tap any part, then ⓘ, to learn the science behind it.'); } else { const tips = ['Put a ball at the top of a ramp — gravity does the rest.', 'Dominoes topple best about three-quarters of their height apart.', 'Snap a wheel onto a motor’s shaft to make it spin.', 'A seesaw plus a heavy drop makes a catapult.', 'Wire a button to a rocket on a cart for a surprise.', 'Collectors pay more for music, chain reactions and flight.', 'Tap a joint marker to switch between pin (turns) and weld (rigid).', 'Two fingers on a selected part twist just that part.']; T.set({ msg: '💡 ' + tips[Math.floor(Math.random() * tips.length)] }); } },
-      newGame() { if (mode === 'challenge') openLevel(level.id); else if (mode === 'show') openShow(show.id); else { if (!bp.parts.length) return; modal('Clear the bench?', '<p>All parts go back on your shelf.</p><div class="row"><button class="btn primary" data-ok>Clear it</button><button class="btn" data-close>Cancel</button></div>', mb => $('[data-ok]', mb).onclick = () => { closeModal(); stopRun(); snapshot(); for (const P of bp.parts) ws.inv[P.t] = (ws.inv[P.t] || 0) + 1; bp.parts = []; bp.joints = []; bp.wires = []; sel = null; changed(); }); } },
+      undo() { const s = hist.pop(); if (!s) { toast('Nothing to undo'); return; } const o2 = JSON.parse(s); if (mode === 'build') { const before = {}; bp.parts.forEach(P => before[P.t] = (before[P.t] || 0) + 1); const after = {}; o2.bp.parts.forEach(P => after[P.t] = (after[P.t] || 0) + 1); for (const t of new Set([...Object.keys(before), ...Object.keys(after)])) ws.inv[t] = (ws.inv[t] || 0) + (before[t] || 0) - (after[t] || 0); } bp = o2.bp; tray = o2.tray || []; if (mode === 'build') ws.bench = bp; sel = null; paintDrawer(); changed(); beep('tick'); },
+      hint() { hintsUsed++; if (mode === 'challenge') { showGhost = true; dirty = true; T.set({ msg: '👻 ' + level.hints[0] }); toast('Ghost shows where the parts go'); coach(); } else if (mode === 'show') { T.note('Tap any part, then ⓘ, to learn the science behind it.'); } else { const tips = ['Put a ball at the top of a ramp — gravity does the rest.', 'Dominoes topple best about three-quarters of their height apart.', 'Snap a wheel onto a motor’s shaft to make it spin.', 'A seesaw plus a heavy drop makes a catapult.', 'Wire a button to a rocket on a cart for a surprise.', 'Collectors pay more for music, chain reactions and flight.', 'Tap a joint marker to switch between pin (turns) and weld (rigid).', 'Two fingers on a selected part twist just that part.', 'Pick dominoes as your brush and tap, tap, tap along the floor for a quick chain.', 'Drop the anvil on a seesaw to launch something light into the air.', 'Try 🎥 View → Look up while a ball drops.']; T.set({ msg: '💡 ' + tips[Math.floor(Math.random() * tips.length)] }); } },
+      newGame() { if (mode === 'challenge') openLevel(level.id); else if (mode === 'show') openShow(show.id); else clearBench(); },
       coach, resize, restyle() { dirty = true; },
       destroy() { alive = false; cancelAnimationFrame(raf); ro.disconnect(); document.removeEventListener('keydown', onKey); MMD.SND.stopLoops(); MMD.clearParticles(); saveWS(); mmApi = null; }
     };
