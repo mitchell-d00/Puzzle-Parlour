@@ -10,7 +10,10 @@ computer at five skill levels), plus **20 Questions**, where the computer
 guesses what you're thinking from 1,004 things (and learns new ones) or you
 guess what it's thinking. Next door, **The Show** is a studio of 20 easy card tricks: you
 make one simple choice at a time, the computer does the magic, then it shows
-you how to do it yourself.
+you how to do it yourself. And in the workshop, **Machines & Mechanics**, you
+build Rube Goldberg machines from 53 parts with real physics — dominoes, gears,
+springs, motors, rockets, cars, fairground rides and musical instruments — then
+sell your inventions to collectors to buy more parts and tools.
 A jukebox plays ten original music tracks while you play. Every table
 has a live teacher, Professor Pip, who watches your moves, shows the next one
 right on the puzzle, and teaches you the method so you can solve it alone.
@@ -151,6 +154,77 @@ Also in the parlour:
   tiles and walk the maze (Shift runs); Block Stack uses ← → ↓, ↑/X and Z to
   turn, Space to slam, C to hold and P to pause.
 
+## Machines & Mechanics
+
+A physics workshop. Build a machine, press **▶ Play**, and real physics takes
+over. Everything is in real units: one big grid square is 1 metre, gravity is
+9.8 m/s², masses are in kilograms, and a ruler runs along the floor.
+
+**Parts (53, in 9 categories).** Basics (marbles, rubber, steel, bowling and
+beach balls, dominoes, crates, planks, beams, ramps, buckets); mechanisms
+(pivots, seesaws, pendulums, ropes, springs, trampolines, gears, wheels,
+conveyor belts); engines (electric motor, steam engine, fan); jets & rockets
+(rocket, jet engine, cannon, balloons, spikes, fireworks); vehicles (toy car,
+monster truck with suspension, cart, skateboard); playground & rides (swing,
+slide, coaster track and car, Ferris wheel, pirate ship); music (bells,
+xylophone bars tuned by length, drums, cymbals); triggers (push button, timer,
+laser tripwire, lamp, finish flag, star, trapdoor, wires); and art (pinwheel,
+confetti popper, paint).
+
+**Building.**
+- **Snapping:** drop a part near another and their snap points click together,
+  as a **pin** (turns freely) or a **weld** (rigid); tap the marker to switch.
+  Gears click into mesh when their rims touch.
+- **Manipulation wheel:** every part has its own wheel. Drag the gold knob to
+  rotate (with magnetic 15° stops), or use ⟲ ⟳, flip, ✂ take it off the
+  machine, ⚙ settings, ⓘ the science and 🗑 put it back on the shelf.
+- **Part or machine:** the pill on the wheel switches between turning one part
+  and turning the whole machine. A long press pulls a single part out.
+- **Like the cube:** drag the background to look around, pinch to zoom, and
+  twist a selected part with two fingers; the view stays put.
+- **Parts list:** a bill of materials for your machine, with each part's value.
+
+**Physics.** Matter.js handles rigid bodies, with these upgrades so it behaves
+like the real world:
+- a replacement contact solver with true Coulomb friction (sliding distance
+  matches v²/2μg) and exact restitution;
+- exact circle collisions, so balls and wheels roll instead of bumping over
+  polygon corners;
+- true moments of inertia (solid spheres roll at 5/7·g·sinθ);
+- Hooke's-law springs, torque-limited motors, gear meshing and propeller
+  reaction;
+- 240 physics steps a second.
+
+**The economy.** Your workshop runs on cogs ⚙.
+- **🖼 Exhibit & sell:** your machine runs for 12 seconds in front of three
+  collectors, a new set each day. They score it on motion, chain reaction,
+  music, flight, driving, craft and show, and each makes an offer.
+- **Selling:** sell the machine (its parts go with it) or sell the plans
+  (about a third, and you keep it). Re-selling the same design pays less each
+  time.
+- **🏪 Supply store:** spend cogs on parts, tools (paint gun, protractor,
+  duplicator, slow-motion stopwatch, blueprint cabinet, big workshop) and
+  licences (wiring kit, rockets, garage, fairground). Spare parts sell back for
+  half.
+- **Other income:** challenges pay cogs, and the bank trades lounge stars for
+  cogs.
+
+**Learning the real world.**
+- **Science cards:** every part has a card covering the physics, the formula,
+  where you meet it in real life and something to try.
+- **🔬 Science lens:** speed arrows, trails, and kinetic and potential energy
+  in joules, plus the mass, speed, height and rpm of any part you tap.
+- **🏆 Challenges:** ten, each teaching one idea: the inclined plane, chain
+  reactions, levers, pendulums, gear ratios, elastic energy, Newton's second
+  and third laws, buoyancy, and a final Rube Goldberg machine.
+- **🎪 Showcase:** four demo machines — Marble Melody, Domino Dash, Clockwork
+  Tower and The Fairground — with the teacher explaining each event as it
+  happens.
+- **Lessons:** 13 lesson pages in the book.
+
+Sounds are synthesised live: impacts by material, tuned bells and bars, drums,
+cymbals, rockets, jets, fans, motors, steam, cannon booms and fireworks.
+
 ## How the solvers work
 
 The engine is written from scratch in JavaScript and was tested in Node and a
@@ -189,6 +263,30 @@ Questions brain was played against all 1,004 things it knows (see above). The fi
 playing 400 blocks with junk rows: Rookie lasts about 50 blocks, Easy about 80,
 Normal about 220, and Hard and Master survive all 400.
 
+**Machines & Mechanics** was checked against textbook physics in headless
+tests (27 of 27 pass):
+- free fall;
+- pendulum and swing periods (within 0.2%);
+- gear ratio and direction, car speed = rpm × circumference;
+- rocket acceleration (T − mg)/m;
+- Hooke's law sag mg/k;
+- Coulomb sliding distance at two values of μ;
+- rolling down an incline at 5/7·g·sinθ, and low rolling resistance;
+- cannon range v²sin2θ/g;
+- trampoline restitution;
+- a 60-crate stack that stays put.
+
+The challenges and showcases were checked the same way:
+- **Challenges:** all ten are solved by the teacher's solution, none solves
+  itself, and each still works with randomly jittered placements (118 of 120
+  runs). Wrong ideas really fail: an even number of gears, a rocket pointing
+  up, and a single balloon.
+- **Showcases:** all four were verified event by event (all eight notes
+  played, rocket ignition, finish line, crates in the bin).
+- **In the browser:** 42 tests drive real touches and clicks: snapping,
+  wheel, knob, two-finger twist, pinch, play, lens, store, exhibition and
+  sale, every challenge, every showcase, blueprints and the parts list.
+
 ## Files
 
 - `index.html`: the whole parlour: markup, styles, engine and puzzles
@@ -197,4 +295,6 @@ Normal about 220, and Hard and Master survive all 400.
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See `LICENSE`. Machines & Mechanics embeds
+[Matter.js](https://github.com/liabru/matter-js) 0.19.0 (MIT, © Liam Brummitt
+and contributors).
